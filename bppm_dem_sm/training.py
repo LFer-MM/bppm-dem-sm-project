@@ -69,12 +69,13 @@ def train_and_save(config: PipelineConfig, plot_history=True):
     )
     model.summary()
 
+    print("Fitting GRU surrogate...")
     history = model.fit(
         Xtr, ytr,
         validation_data=(Xval, yval),
         epochs=train.epochs,
         batch_size=train.batch_size,
-        verbose=2,
+        verbose=1,
     )
 
     save_path = Path(config.model_path)

@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from .config import FEATURE_COLS, ID_COL, TARGET_COLS
+from .progress import track
 
 
 def sorted_frame_files(frames_dir, pattern="frame_*.parquet"):
@@ -54,7 +55,11 @@ def load_frames_stacked(frames_dir, pattern="frame_*.parquet", feature_cols=None
     feature_cols = feature_cols or FEATURE_COLS
     cols = [ID_COL] + [c for c in feature_cols if c != ID_COL]
 
-    frames = [pd.read_parquet(f, columns=cols).sort_values(ID_COL) for f in sorted_frame_files(frames_dir, pattern)]
+    paths = sorted_frame_files(frames_dir, pattern)
+    frames = [
+        pd.read_parquet(f, columns=cols).sort_values(ID_COL)
+        for f in track(paths, desc="Loading frames", unit="frame")
+    ]
     base_ids = frames[0][ID_COL].to_numpy()
 
     pos = np.stack([df[TARGET_COLS].to_numpy(np.float32) for df in frames])  # [T, N, 3]

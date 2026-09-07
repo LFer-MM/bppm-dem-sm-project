@@ -10,6 +10,7 @@ from . import data_io
 from . import lacey_mixing_index as lacey
 from .config import FIGURES_DIR, PipelineConfig
 from .lacey_mixing_index import GT_FRAME_RE, PRED_FRAME_RE
+from .progress import track
 
 
 def compute_lacey_over_dir(frames_dir, pattern, frame_re, tracer_r, config, out_name, label):
@@ -31,7 +32,8 @@ def compute_lacey_over_dir(frames_dir, pattern, frame_re, tracer_r, config, out_
         ``tracer_fraction_global``, ``mean_particles_per_cell``.
     """
     rows = []
-    for pth in data_io.sorted_frame_files(frames_dir, pattern):
+    paths = data_io.sorted_frame_files(frames_dir, pattern)
+    for pth in track(paths, desc=f"Lacey [{label}]", unit="frame"):
         frame_idx = lacey.extract_frame_index(pth, frame_re)
         df = pd.read_parquet(pth)
         M, n_cells, p_global, mean_n = lacey.lacey_index_for_frame(

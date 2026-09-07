@@ -157,3 +157,28 @@ def test_run_pipeline_accepts_flat_overrides(monkeypatch):
     )
     assert results["config"].training.epochs == 9
     assert results["config"].do_predict is False
+
+
+def test_run_pipeline_prints_enabled_stage_banners(capsys, monkeypatch):
+    monkeypatch.setattr("bppm_dem_sm.pipeline.silence_tensorflow", lambda: None)
+    run_pipeline(
+        PipelineConfig(do_train=False, do_predict=False, do_metrics=False, do_visualization=False)
+    )
+    out = capsys.readouterr().out
+    assert "bppm-pipeline" in out
+    assert "Stages: (none enabled)" in out
+    assert "Pipeline complete." in out
+    assert "STAGE" not in out
+
+
+def test_progress_helpers_emit_banners_and_track(capsys):
+    from bppm_dem_sm.progress import complete, plan, stage, track
+
+    plan(["Prediction", "Metrics"])
+    stage(1, 2, "Prediction")
+    assert list(track(range(3), desc="test", unit="n", disable=True)) == [0, 1, 2]
+    complete()
+    out = capsys.readouterr().out
+    assert "Stages: Prediction -> Metrics" in out
+    assert "STAGE 1/2: Prediction" in out
+    assert "Pipeline complete." in out

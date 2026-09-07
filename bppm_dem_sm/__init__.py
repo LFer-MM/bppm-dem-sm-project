@@ -3,7 +3,7 @@
 All code lives in flat modules at the package root (config, data_io, training,
 prediction, run_metrics, lacey_mixing_index, run_visualization, cell_grid,
 animate_particles, csv_to_parquet, verify_particle_integrity, sim_functions,
-simulation, pipeline).
+simulation, pipeline, progress).
 """
 
 from .config import (

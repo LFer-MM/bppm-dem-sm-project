@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from . import prediction, run_metrics, run_visualization, training
 from .config import PipelineConfig
+from .progress import complete, plan, stage
 from .tf_quiet import silence_tensorflow
 
 
@@ -38,17 +39,34 @@ def run_pipeline(config: PipelineConfig | None = None, **overrides):
     results: dict = {"config": config}
     model = None
 
+    titles = [
+        name
+        for enabled, name in (
+            (config.do_train, "Training"),
+            (config.do_predict, "Prediction"),
+            (config.do_metrics, "Metrics"),
+            (config.do_visualization, "Visualization"),
+        )
+        if enabled
+    ]
+    plan(titles)
+    n_stages = len(titles)
+    step = 0
+
     if config.do_train:
-        print("STAGE 1/4: Training")
+        step += 1
+        stage(step, n_stages, "Training")
         model, results["history"] = training.train_and_save(config)
         results["model"] = model
 
     if config.do_predict:
-        print("STAGE 2/4: Prediction")
+        step += 1
+        stage(step, n_stages, "Prediction")
         results["predictions"] = prediction.predict_frames(config, model=model)
 
     if config.do_metrics:
-        print("STAGE 3/4: Metrics")
+        step += 1
+        stage(step, n_stages, "Metrics")
         metrics = run_metrics.compute_metrics(config)
         results["metrics"] = metrics
         viz = config.visualization
@@ -56,8 +74,9 @@ def run_pipeline(config: PipelineConfig | None = None, **overrides):
             run_metrics.plot_lacey_comparison(metrics, config, show=viz.show_plots)
 
     if config.do_visualization:
-        print("STAGE 4/4: Visualization")
+        step += 1
+        stage(step, n_stages, "Visualization")
         results["visualizations"] = run_visualization.generate_visualizations(config)
 
-    print("Pipeline complete.")
+    complete()
     return results

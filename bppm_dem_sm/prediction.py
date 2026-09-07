@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from collections import deque
 import os
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from pathlib import Path
-from tqdm import tqdm
 
 from . import data_io
 from .config import ID_COL, PipelineConfig
+from .progress import track
 
 
 class _SavedModelWrapper:
@@ -146,14 +146,14 @@ def predict_frames(config: PipelineConfig, model=None) -> pd.DataFrame:
     base_r = base_df["r"].to_numpy()
 
     window: deque = deque(maxlen=seq_len)
-    for k in range(seq_len):
+    for k in track(range(seq_len), desc="Loading seed frames", unit="frame"):
         df = data_io.load_frame(frame_files[start + k], cols_needed)
         window.append(df[feature_cols].to_numpy(np.float32))
 
     steps = T - (start + seq_len) if pred.predict_until_end else pred.max_steps
 
     all_rows = []
-    for step in tqdm(range(steps), desc="Predicted & saved frames", unit="frame"):
+    for step in track(range(steps), desc="Predicting frames", unit="frame"):
         target_frame_idx = start + seq_len + step
         x_in = np.stack(window, axis=1)  # (N, seq_len, F)
 

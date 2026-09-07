@@ -11,6 +11,7 @@ import pandas as pd
 from . import data_io
 from .cell_grid import plot_particles_with_grid
 from .config import INTERIM_DIR, PipelineConfig
+from .progress import bar
 
 _PLANE_AXES = {"xy": ("x", "y"), "xz": ("x", "z"), "yz": ("y", "z")}
 VIZ_DIR = INTERIM_DIR / "figures"
@@ -89,7 +90,26 @@ def animate_frames(frames_dir, config: PipelineConfig, pattern="frame_*.parquet"
             save_path = save_path.with_suffix(".gif")
             print("ffmpeg not available; saving animation as GIF instead.")
         writer = "ffmpeg" if save_path.suffix.lower() == ".mp4" else "pillow"
-        anim.save(str(save_path), dpi=140, fps=viz.fps, writer=writer)
+        pbar = bar(total=len(files), desc="Saving animation", unit="frame")
+
+        def _on_progress(current_frame, total_frames):
+            if total_frames:
+                pbar.total = total_frames
+            pbar.n = current_frame + 1
+            pbar.refresh()
+
+        try:
+            anim.save(
+                str(save_path),
+                dpi=140,
+                fps=viz.fps,
+                writer=writer,
+                progress_callback=_on_progress,
+            )
+        except TypeError:
+            anim.save(str(save_path), dpi=140, fps=viz.fps, writer=writer)
+        finally:
+            pbar.close()
         print(f"Saved animation: {save_path}")
         if not viz.show_plots:
             plt.close(fig)
@@ -144,6 +164,7 @@ def generate_visualizations(config: PipelineConfig) -> dict:
         anim_save = VIZ_DIR / "pred_animation.mp4"
 
     if viz.show_plots or viz.save_figures:
+        print("Rendering cell-grid frame...")
         artifacts["grid_figure"] = plot_frame_grid(
             gt_files[0],
             config,
@@ -151,6 +172,7 @@ def generate_visualizations(config: PipelineConfig) -> dict:
             show=viz.show_plots,
         )
 
+    print("Building prediction animation...")
     anim, resolved_anim_path = animate_frames(
         config.prediction.pred_frames_dir, config, "pred_frame_*.parquet", anim_save
     )

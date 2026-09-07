@@ -14,4 +14,5 @@ that **Python library surface**—not an HTTP/REST service.
    :caption: Contents:
 
    getting_started
+   examples
    api

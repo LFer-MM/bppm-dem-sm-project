@@ -74,6 +74,12 @@ Use from Python
    # or: run_pipeline(do_train=True, do_predict=False, epochs=10)
    # or: PipelineConfig(do_train=True, training=TrainingOptions(epochs=10))
 
+More snippets
+-------------
+
+Stage-by-stage recipes (data prep, training, prediction, Lacey metrics,
+visualization, and YADE) are in :doc:`examples`.
+
 Build these docs locally
 ------------------------
 
