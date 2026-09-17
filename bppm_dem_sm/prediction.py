@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from . import data_io
+from . import data_io, stochastic_motion
 from .config import ID_COL, PipelineConfig
 from .progress import track
 
@@ -141,6 +141,13 @@ def predict_frames(config: PipelineConfig, model=None) -> pd.DataFrame:
         model = load_model(config.model_path)
     print("Model input_shape:", model.input_shape, "output_shape:", model.output_shape)
 
+    sr = config.stochastic
+    velocity_field = None
+    rng = None
+    if sr.enabled:
+        velocity_field = stochastic_motion.build_velocity_std_field_from_config(config)
+        rng = np.random.default_rng(sr.stochastic_seed)
+
     base_df = data_io.load_frame(frame_files[start], cols_needed)
     base_ids = base_df[ID_COL].to_numpy()
     base_r = base_df["r"].to_numpy()
@@ -159,6 +166,12 @@ def predict_frames(config: PipelineConfig, model=None) -> pd.DataFrame:
 
         yhat = model.predict(x_in, batch_size=pred.predict_batch_size, verbose=0)
         xyz = yhat[:, :3].astype(np.float32)
+
+        if sr.enabled:
+            current_pos = window[-1][:, :3]
+            xyz = xyz + stochastic_motion.sample_stochastic_displacement(
+                current_pos, velocity_field, pred.dt_step, rng
+            )
 
         pred_df = pd.DataFrame(
             {

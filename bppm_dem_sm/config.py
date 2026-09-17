@@ -124,6 +124,23 @@ class MetricsOptions:
 
 
 @dataclass
+class StochasticOptions:
+    """Stochastic random (SR) velocity perturbation settings.
+
+    Applied after the GRU's deterministic prediction, per the extended-RNNSR
+    method of Kishida et al. (2025), Powder Technology 455, 120811: a local
+    (Eulerian) velocity standard deviation sigma_v(x) is estimated once from
+    ``train_data_dir`` on a cubic grid, then sampled per axis and added to
+    each predicted position, scaled by ``prediction.dt_step`` (Delta t_RNN).
+    """
+
+    enabled: bool = False
+    velocity_cell_size: float = 0.4732
+    velocity_min_particles_per_cell: int = 15
+    stochastic_seed: int = 0
+
+
+@dataclass
 class VisualizationOptions:
     """Animation and figure display / save settings."""
 
@@ -164,6 +181,7 @@ class PipelineConfig:
     training: TrainingOptions = field(default_factory=TrainingOptions)
     prediction: PredictionOptions = field(default_factory=PredictionOptions)
     metrics: MetricsOptions = field(default_factory=MetricsOptions)
+    stochastic: StochasticOptions = field(default_factory=StochasticOptions)
     visualization: VisualizationOptions = field(default_factory=VisualizationOptions)
 
     def to_dict(self) -> dict[str, Any]:
@@ -274,6 +292,7 @@ def _option_group_types() -> dict[str, type]:
         "training": TrainingOptions,
         "prediction": PredictionOptions,
         "metrics": MetricsOptions,
+        "stochastic": StochasticOptions,
         "visualization": VisualizationOptions,
     }
 
