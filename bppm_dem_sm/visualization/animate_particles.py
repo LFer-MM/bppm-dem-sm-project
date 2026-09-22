@@ -1,7 +1,7 @@
 """Standalone 2D particle animation from a directory of parquet frames.
 
 For the pipeline-integrated variant see
-:func:`bppm_dem_sm.run_visualization.animate_frames`.
+:func:`bppm_dem_sm.visualization.run_visualization.animate_frames`.
 """
 
 from __future__ import annotations
@@ -42,7 +42,7 @@ def animate_particles(
     """Build a 2D scatter animation colored by particle radius.
 
     Standalone helper; for the pipeline-integrated variant see
-    :func:`bppm_dem_sm.run_visualization.animate_frames`.
+    :func:`bppm_dem_sm.visualization.run_visualization.animate_frames`.
 
     Args:
         frames_dir: Directory containing parquet frames.

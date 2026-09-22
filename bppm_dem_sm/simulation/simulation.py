@@ -2,7 +2,8 @@
 
 from yade import qt
 
-from . import config, sim_functions
+from .. import config
+from . import sim_functions
 
 
 def run():

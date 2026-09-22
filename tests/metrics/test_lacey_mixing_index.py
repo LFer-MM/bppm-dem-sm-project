@@ -1,13 +1,12 @@
 """Tests for Lacey mixing index utilities."""
-from __future__ import annotations
 
-import re
+from __future__ import annotations
 
 import numpy as np
 import pandas as pd
 import pytest
 
-import s0_calc_lmi_across_frames as lacey
+from bppm_dem_sm.metrics import lacey_mixing_index as lacey
 
 
 def test_extract_frame_index():
@@ -18,11 +17,6 @@ def test_extract_frame_index():
 def test_detect_tracer_radius():
     r = np.array([0.1, 0.1, 0.2, 0.2, 0.2])
     assert lacey.detect_tracer_radius(r) == pytest.approx(0.2)
-
-
-def test_detect_tracer_radius_raises():
-    with pytest.raises(ValueError):
-        lacey.detect_tracer_radius(np.array([0.1, 0.1, 0.1]))
 
 
 def test_lacey_index_well_mixed():

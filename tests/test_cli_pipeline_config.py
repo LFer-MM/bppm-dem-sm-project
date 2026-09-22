@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from bppm_dem_sm.cli import build_parser, config_from_args
+from bppm_dem_sm.cli import build_parser, config_from_args, main
 from bppm_dem_sm.config import REPO_ROOT, PipelineConfig, PredictionOptions, TrainingOptions
 from bppm_dem_sm.pipeline import run_pipeline
 
@@ -94,6 +94,7 @@ def test_cli_config_json_ignores_other_flags(tmp_path: Path):
     parser = build_parser()
     args = parser.parse_args(
         [
+            "ml-pipeline",
             "--config",
             str(path),
             "--do-train",
@@ -112,6 +113,7 @@ def test_cli_flags_override_defaults():
     parser = build_parser()
     args = parser.parse_args(
         [
+            "ml-pipeline",
             "--do-train",
             "--no-show-plots",
             "--start-frame",
@@ -165,10 +167,46 @@ def test_run_pipeline_prints_enabled_stage_banners(capsys, monkeypatch):
         PipelineConfig(do_train=False, do_predict=False, do_metrics=False, do_visualization=False)
     )
     out = capsys.readouterr().out
-    assert "bppm-pipeline" in out
+    assert "bppm-dem-sm ml-pipeline" in out
     assert "Stages: (none enabled)" in out
     assert "Pipeline complete." in out
     assert "STAGE" not in out
+
+
+def test_build_parser_dem_sim_defaults():
+    parser = build_parser()
+    args = parser.parse_args(["dem-sim"])
+    assert args.command == "dem-sim"
+    assert args.script is None
+    assert args.yade_executable == "yade"
+
+
+def test_build_parser_requires_a_subcommand():
+    parser = build_parser()
+    with pytest.raises(SystemExit):
+        parser.parse_args([])
+
+
+def test_main_dem_sim_missing_yade_returns_nonzero(monkeypatch, capsys):
+    def _raise(**kwargs):
+        raise FileNotFoundError("YADE executable 'yade' not found on PATH.")
+
+    monkeypatch.setattr("bppm_dem_sm.cli.launcher.launch_simulation", _raise)
+    exit_code = main(["dem-sim"])
+    assert exit_code == 1
+    assert "not found on PATH" in capsys.readouterr().out
+
+
+def test_main_ml_pipeline_dispatches_to_run_pipeline(monkeypatch):
+    monkeypatch.setattr("bppm_dem_sm.tf_quiet.silence_tensorflow", lambda: None)
+    captured = {}
+    monkeypatch.setattr(
+        "bppm_dem_sm.cli.run_pipeline",
+        lambda config: captured.setdefault("config", config),
+    )
+    exit_code = main(["ml-pipeline", "--do-train"])
+    assert exit_code == 0
+    assert captured["config"].do_train is True
 
 
 def test_progress_helpers_emit_banners_and_track(capsys):

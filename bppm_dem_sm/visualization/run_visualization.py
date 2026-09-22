@@ -8,10 +8,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from . import data_io
+from ..config import INTERIM_DIR, PipelineConfig
+from ..data_processing import frames as data_io
+from ..progress import bar
 from .cell_grid import plot_particles_with_grid
-from .config import INTERIM_DIR, PipelineConfig
-from .progress import bar
 
 _PLANE_AXES = {"xy": ("x", "y"), "xz": ("x", "z"), "yz": ("y", "z")}
 VIZ_DIR = INTERIM_DIR / "figures"

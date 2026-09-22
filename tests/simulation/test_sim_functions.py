@@ -1,16 +1,29 @@
-"""Tests for chord geometry helpers (requires YADE for Vector3)."""
+"""Light tests for YADE-only simulation helpers (skipped when YADE is not installed)."""
+
 from __future__ import annotations
+
+from types import SimpleNamespace
 
 import pytest
 
 pytest.importorskip("yade")
 
-import ingress_func_v1 as ing
+from bppm_dem_sm.simulation import sim_functions as sim
+
+
+def test_mat_label_empty_material():
+    b = SimpleNamespace(material=None)
+    assert sim._mat_label(b) == ""
+
+
+def test_mat_label_with_label():
+    b = SimpleNamespace(material=SimpleNamespace(label="rock"))
+    assert sim._mat_label(b) == "rock"
 
 
 def test_chord_box_3d_geometry_and_corners():
     d, y, h, depth = 10.0, 0.0, 2.0, 5.0
-    box = ing.chord_box_3d(d, y, h, depth)
+    box = sim.chord_box_3d(d, y, h, depth)
     r = d / 2.0
     assert box["x_min"] == pytest.approx(-r)
     assert box["x_max"] == pytest.approx(r)
@@ -27,5 +40,5 @@ def test_chord_box_3d_geometry_and_corners():
 
 
 def test_chord_box_3d_clamps_y_to_radius():
-    box = ing.chord_box_3d(4.0, 10.0, 1.0, 1.0)
+    box = sim.chord_box_3d(4.0, 10.0, 1.0, 1.0)
     assert abs(box["y_bottom"]) <= 2.0 + 1e-9

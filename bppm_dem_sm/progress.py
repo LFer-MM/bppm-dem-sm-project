@@ -14,7 +14,7 @@ def plan(titles: list[str]) -> None:
         titles: Display names of enabled stages, in execution order.
     """
     print(f"\n{_RULE}")
-    print("  bppm-pipeline")
+    print("  bppm-dem-sm ml-pipeline")
     if titles:
         print("  Stages: " + " -> ".join(titles))
     else:

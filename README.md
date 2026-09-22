@@ -10,12 +10,19 @@ Repository dedicated to the development of the project titled **Polyhedral-Based
 
 ## Contents
 
-- **0_simulation** — YADE helpers: chord-box ingress (`ingress_func_v1.py`), mill setup, particle I/O, and balance / rotation utilities (`s1_sim_functions.py`).
-- **1_data_processing** — CSV to Parquet conversion and particle-size consistency checks across Parquet frames.
-- **2_model / 1_RNNSR** — Sequence models and frame-wise prediction scripts (TensorFlow where used).
-- **3_metrics / 0_lacey_mixing_index** — Lacey mixing index over time from ground-truth or predicted frames.
-- **4_visualization** — Parquet frame animation and gridded particle views.
-- **tests** — Pytest suite for pure Python paths; YADE-backed tests are skipped when YADE is not installed.
+`bppm_dem_sm/` is organized by pipeline stage. Two runtimes coexist in one
+package: `simulation/` runs only inside YADE's embedded Python interpreter
+and only ever produces CSV frames on disk; everything else runs in a normal
+TensorFlow/pandas venv and only ever *consumes* those frames as files. The
+two sides never call each other in-process.
+
+- **`simulation/`** — YADE-only DEM simulation: mill/material/engine setup, chord-box ingress (random or segregated), balance/rotation utilities (`sim_functions.py`, `simulation.py`), and a subprocess launcher (`launcher.py`) that the CLI's `dem-sim` subcommand uses without ever importing `yade` itself.
+- **`data_processing/`** — Raw DEM CSV frame dumps to Parquet (`csv_to_parquet.py`), particle-size integrity checks (`integrity.py`), and frame loading / supervised-dataset construction for training (`frames.py`).
+- **`model/`** — The GRU surrogate: build/train (`training.py`), sliding-window prediction (`prediction.py`), and the stochastic-random (SR) velocity perturbation from the extended-RNNSR method (`stochastic_motion.py`).
+- **`metrics/`** — Post-hoc computation over ground-truth/predicted frames: Lacey's mixing index, radial/axial segregation profile, velocity distribution and granular temperature, and dimensionless computing speed (`run_metrics.py`). Computation only — no plotting.
+- **`visualization/`** — All plotting and animation: frame snapshots with a cell-grid overlay (`cell_grid.py`), 2D particle animation (`animate_particles.py`, `run_visualization.py`), training loss curves (`training_curves.py`), and the ground-truth-vs-surrogate comparison plots for every `metrics` computation (`metrics_plots.py`).
+- **`config.py` / `pipeline.py` / `cli.py` / `progress.py` / `tf_quiet.py`** — Top-level configuration, end-to-end orchestration, the `bppm-dem-sm` CLI (`dem-sim` / `ml-pipeline` subcommands), progress banners, and TensorFlow startup-noise suppression.
+- **`tests/`** — Mirrors the package layout above. YADE-backed tests are skipped when YADE is not installed.
 
 ## Development
 

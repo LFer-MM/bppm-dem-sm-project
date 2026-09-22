@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bppm_dem_sm import prediction
-from bppm_dem_sm import stochastic_motion as sm
+from bppm_dem_sm.model import prediction
+from bppm_dem_sm.model import stochastic_motion as sm
 from bppm_dem_sm.config import PipelineConfig, PredictionOptions, StochasticOptions
 
 

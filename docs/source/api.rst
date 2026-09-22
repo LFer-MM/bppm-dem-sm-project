@@ -29,65 +29,89 @@ Pipeline orchestration
    :members:
    :show-inheritance:
 
-Data I/O and processing
------------------------
+Data processing
+---------------
 
-.. automodule:: bppm_dem_sm.data_io
+.. automodule:: bppm_dem_sm.data_processing.frames
    :members:
    :show-inheritance:
 
-.. automodule:: bppm_dem_sm.csv_to_parquet
+.. automodule:: bppm_dem_sm.data_processing.csv_to_parquet
    :members:
    :show-inheritance:
 
-.. automodule:: bppm_dem_sm.verify_particle_integrity
+.. automodule:: bppm_dem_sm.data_processing.integrity
    :members:
    :show-inheritance:
 
 Model training and prediction
 -----------------------------
 
-.. automodule:: bppm_dem_sm.training
+.. automodule:: bppm_dem_sm.model.training
    :members:
    :show-inheritance:
 
-.. automodule:: bppm_dem_sm.prediction
+.. automodule:: bppm_dem_sm.model.prediction
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.model.stochastic_motion
    :members:
    :show-inheritance:
 
 Metrics
 -------
 
-.. automodule:: bppm_dem_sm.lacey_mixing_index
+.. automodule:: bppm_dem_sm.metrics.lacey_mixing_index
    :members:
    :show-inheritance:
 
-.. automodule:: bppm_dem_sm.run_metrics
+.. automodule:: bppm_dem_sm.metrics.segregation_profile
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.metrics.velocity_metrics
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.metrics.run_metrics
    :members:
    :show-inheritance:
 
 Visualization
 -------------
 
-.. automodule:: bppm_dem_sm.animate_particles
+.. automodule:: bppm_dem_sm.visualization.animate_particles
    :members:
    :show-inheritance:
 
-.. automodule:: bppm_dem_sm.cell_grid
+.. automodule:: bppm_dem_sm.visualization.cell_grid
    :members:
    :show-inheritance:
 
-.. automodule:: bppm_dem_sm.run_visualization
+.. automodule:: bppm_dem_sm.visualization.run_visualization
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.visualization.training_curves
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.visualization.metrics_plots
    :members:
    :show-inheritance:
 
 DEM simulation (YADE)
 ---------------------
 
-.. automodule:: bppm_dem_sm.simulation
+.. automodule:: bppm_dem_sm.simulation.simulation
    :members:
    :show-inheritance:
 
-.. automodule:: bppm_dem_sm.sim_functions
+.. automodule:: bppm_dem_sm.simulation.sim_functions
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.simulation.launcher
    :members:
    :show-inheritance:

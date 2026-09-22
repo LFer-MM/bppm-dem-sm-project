@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from . import data_io
-from .config import PipelineConfig
+from ..config import PipelineConfig
+from ..data_processing import frames as data_io
+from ..visualization.training_curves import plot_training_history
 
 
 def build_model(frames_in, n_features=4, gru_units=20, dense_units=15, learning_rate=0.01):
@@ -24,7 +25,7 @@ def build_model(frames_in, n_features=4, gru_units=20, dense_units=15, learning_
     Returns:
         keras.Model: Compiled sequential GRU surrogate model.
     """
-    from .tf_quiet import silence_tensorflow
+    from ..tf_quiet import silence_tensorflow
 
     silence_tensorflow()
     import tensorflow as tf
@@ -88,29 +89,3 @@ def train_and_save(config: PipelineConfig, plot_history=True):
     if plot_history:
         plot_training_history(history, show=config.visualization.show_plots)
     return model, history
-
-
-def plot_training_history(history, show=True):
-    """Plot train/validation loss curves from a keras History.
-
-    Args:
-        history: Keras ``History`` from ``model.fit`` (expects ``loss`` and
-            ``val_loss`` keys).
-        show: If ``True``, call ``plt.show()``.
-
-    Returns:
-        matplotlib.figure.Figure: The loss-curve figure.
-    """
-    import matplotlib.pyplot as plt
-
-    fig = plt.figure()
-    plt.plot(history.history["loss"], label="train_loss")
-    plt.plot(history.history["val_loss"], label="val_loss")
-    plt.xlabel("Epoch")
-    plt.ylabel("MSE Loss")
-    plt.title("Training History")
-    plt.legend()
-    plt.grid(True, alpha=0.3)
-    if show:
-        plt.show()
-    return fig

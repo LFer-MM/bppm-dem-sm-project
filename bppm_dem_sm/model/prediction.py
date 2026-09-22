@@ -9,9 +9,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from . import data_io, stochastic_motion
-from .config import ID_COL, PipelineConfig
-from .progress import track
+from ..config import ID_COL, PipelineConfig
+from ..data_processing import frames as data_io
+from ..progress import track
+from . import stochastic_motion
 
 
 class _SavedModelWrapper:
@@ -28,7 +29,7 @@ class _SavedModelWrapper:
         Args:
             path: Directory containing ``saved_model.pb`` (and assets/variables).
         """
-        from .tf_quiet import silence_tensorflow
+        from ..tf_quiet import silence_tensorflow
 
         silence_tensorflow()
         import tensorflow as tf
@@ -102,7 +103,7 @@ def load_model(path):
     Returns:
         keras.Model or _SavedModelWrapper: Loaded model with a ``predict`` method.
     """
-    from .tf_quiet import silence_tensorflow
+    from ..tf_quiet import silence_tensorflow
 
     silence_tensorflow()
     import keras

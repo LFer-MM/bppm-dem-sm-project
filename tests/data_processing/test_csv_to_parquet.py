@@ -1,11 +1,15 @@
-"""Tests for CSV→Parquet conversion helpers."""
+"""Tests for CSV to Parquet conversion helpers."""
+
 from __future__ import annotations
 
 import os
 
 import pandas as pd
 
-from s0_csv_to_parquet import convert_csv_file_to_parquet, convert_folder_csv_to_parquet
+from bppm_dem_sm.data_processing.csv_to_parquet import (
+    convert_csv_file_to_parquet,
+    convert_folder_csv_to_parquet,
+)
 
 
 def test_convert_csv_file_to_parquet(tmp_path):

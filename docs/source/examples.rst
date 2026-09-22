@@ -106,7 +106,7 @@ Convert DEM CSV dumps to Parquet
 
 .. code-block:: python
 
-   from bppm_dem_sm.csv_to_parquet import convert_folder_csv_to_parquet
+   from bppm_dem_sm.data_processing.csv_to_parquet import convert_folder_csv_to_parquet
 
    convert_folder_csv_to_parquet(
        "data/raw/sic_csv_frames",
@@ -121,7 +121,7 @@ counts per radius class (same inventory every frame):
 
 .. code-block:: python
 
-   from bppm_dem_sm.verify_particle_integrity import report_particle_integrity
+   from bppm_dem_sm.data_processing.integrity import report_particle_integrity
 
    report_particle_integrity("data/processed/sic_dataset_20s_dt0p0001_parquet")
 
@@ -130,7 +130,7 @@ Load frames for the surrogate
 
 .. code-block:: python
 
-   from bppm_dem_sm import data_io
+   from bppm_dem_sm.data_processing import frames as data_io
    from bppm_dem_sm.config import FEATURE_COLS
 
    pos, rad, ids = data_io.load_frames_stacked(
@@ -152,7 +152,7 @@ Writes a ``.keras`` artifact to ``config.model_path``:
 .. code-block:: python
 
    from bppm_dem_sm import PipelineConfig, TrainingOptions, run_pipeline
-   from bppm_dem_sm.training import train_and_save
+   from bppm_dem_sm.model.training import train_and_save
 
    cfg = PipelineConfig(
        do_train=True,
@@ -174,7 +174,7 @@ combined table at ``prediction.pred_combined_parquet``.
 .. code-block:: python
 
    from bppm_dem_sm import PipelineConfig, PredictionOptions
-   from bppm_dem_sm.prediction import predict_frames
+   from bppm_dem_sm.model.prediction import predict_frames
 
    cfg = PipelineConfig(
        do_train=False,
@@ -208,14 +208,15 @@ Metrics (Lacey mixing index)
 Pipeline comparison of DEM vs predicted frames
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:func:`~bppm_dem_sm.run_metrics.compute_metrics` writes a
+:func:`~bppm_dem_sm.metrics.run_metrics.compute_metrics` writes a
 ``lacey_over_time.parquet`` next to the ground-truth frames and, when
 predictions exist, next to the predicted frames.
 
 .. code-block:: python
 
    from bppm_dem_sm import PipelineConfig, MetricsOptions
-   from bppm_dem_sm.run_metrics import compute_metrics, plot_lacey_comparison
+   from bppm_dem_sm.metrics.run_metrics import compute_metrics
+   from bppm_dem_sm.visualization.metrics_plots import plot_lacey_comparison
 
    cfg = PipelineConfig(
        do_metrics=True,
@@ -232,7 +233,7 @@ The index ``M`` is 0 (fully segregated) to 1 (randomly mixed):
 .. code-block:: python
 
    import pandas as pd
-   from bppm_dem_sm.lacey_mixing_index import detect_tracer_radius, lacey_index_for_frame
+   from bppm_dem_sm.metrics.lacey_mixing_index import detect_tracer_radius, lacey_index_for_frame
 
    df = pd.read_parquet("data/processed/sic_dataset_20s_dt0p0001_parquet/frame_00000.parquet")
    tracer_r = detect_tracer_radius(df["r"].to_numpy())
@@ -250,7 +251,7 @@ Pipeline cell-grid and prediction animation
 .. code-block:: python
 
    from bppm_dem_sm import PipelineConfig, VisualizationOptions
-   from bppm_dem_sm.run_visualization import generate_visualizations
+   from bppm_dem_sm.visualization.run_visualization import generate_visualizations
 
    cfg = PipelineConfig(
        visualization=VisualizationOptions(
@@ -268,7 +269,7 @@ Standalone animation of any frame directory
 
 .. code-block:: python
 
-   from bppm_dem_sm.animate_particles import animate_particles
+   from bppm_dem_sm.visualization.animate_particles import animate_particles
 
    animate_particles(
        "data/processed/sic_dataset_20s_dt0p0001_parquet",
@@ -284,7 +285,7 @@ Cell-grid overlay on one frame
 
 .. code-block:: python
 
-   from bppm_dem_sm.cell_grid import plot_particles_with_grid
+   from bppm_dem_sm.visualization.cell_grid import plot_particles_with_grid
 
    plot_particles_with_grid(
        "data/processed/sic_dataset_20s_dt0p0001_parquet/frame_00000.parquet",
@@ -296,13 +297,13 @@ Cell-grid overlay on one frame
 DEM simulation (YADE)
 ---------------------
 
-The mill-slice ingress lives in :func:`bppm_dem_sm.simulation.run` and
-requires a YADE interpreter (not the usual ``python`` / ``bppm-pipeline``
+The mill-slice ingress lives in :func:`bppm_dem_sm.simulation.simulation.run`
+and requires a YADE interpreter (not the usual ``python`` / ``bppm-pipeline``
 entry point). From a YADE session at the repo root:
 
 .. code-block:: python
 
-   from bppm_dem_sm.simulation import run
+   from bppm_dem_sm.simulation.simulation import run
 
    run()
 

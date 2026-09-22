@@ -17,8 +17,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from . import data_io
-from .config import ID_COL, TARGET_COLS, PipelineConfig
+from ..config import ID_COL, TARGET_COLS, PipelineConfig
+from ..data_processing import frames as data_io
 
 _HASH_COEFFS = (73856093, 19349663, 83492791)
 

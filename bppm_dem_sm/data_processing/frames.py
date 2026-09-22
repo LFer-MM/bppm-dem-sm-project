@@ -8,8 +8,8 @@ import os
 import numpy as np
 import pandas as pd
 
-from .config import FEATURE_COLS, ID_COL, TARGET_COLS
-from .progress import track
+from ..config import FEATURE_COLS, ID_COL, TARGET_COLS
+from ..progress import track
 
 
 def sorted_frame_files(frames_dir, pattern="frame_*.parquet"):

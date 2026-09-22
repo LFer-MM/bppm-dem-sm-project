@@ -1,15 +1,19 @@
 """Tests for cell-grid visualization (no display)."""
+
 from __future__ import annotations
 
-from unittest.mock import patch
+import matplotlib
 
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-import u1_visualize_cell_grid as vis
+from bppm_dem_sm.visualization import cell_grid as vis
 
 
-def test_plot_particles_with_grid_runs(tmp_path, monkeypatch):
+def test_plot_particles_with_grid_runs(tmp_path):
     p = tmp_path / "f.parquet"
     n = 20
     rng = np.random.default_rng(1)
@@ -21,5 +25,6 @@ def test_plot_particles_with_grid_runs(tmp_path, monkeypatch):
         }
     ).to_parquet(p, index=False)
 
-    with patch("matplotlib.pyplot.show"):
-        vis.plot_particles_with_grid(str(p), cell_size=0.5, use_equal_aspect=True)
+    fig = vis.plot_particles_with_grid(str(p), cell_size=0.5, use_equal_aspect=True, show=False)
+    assert fig is not None
+    plt.close(fig)
