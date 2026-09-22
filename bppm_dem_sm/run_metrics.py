@@ -1,4 +1,6 @@
-"""Lacey mixing-index over directories of ground-truth and predicted frames."""
+"""Lacey mixing-index, segregation-profile, velocity, granular-temperature, and
+computing-speed metrics over directories of ground-truth and predicted frames.
+"""
 
 from __future__ import annotations
 
@@ -8,6 +10,8 @@ import pandas as pd
 
 from . import data_io
 from . import lacey_mixing_index as lacey
+from . import segregation_profile as segprofile
+from . import velocity_metrics as velmet
 from .config import FIGURES_DIR, PipelineConfig
 from .lacey_mixing_index import GT_FRAME_RE, PRED_FRAME_RE
 from .progress import track
@@ -56,41 +60,172 @@ def compute_lacey_over_dir(frames_dir, pattern, frame_re, tracer_r, config, out_
     return out
 
 
-def compute_metrics(config: PipelineConfig) -> dict[str, pd.DataFrame]:
-    """Compute the Lacey index for ground-truth and predicted frames.
-
-    Detects the tracer radius from the first ground-truth frame, then runs
-    :func:`compute_lacey_over_dir` on DEM frames and, when present, on
-    predicted frames under ``config.prediction.pred_frames_dir``.
+def compute_profile_over_dir(
+    frames_dir, pattern, frame_re, tracer_r, config, radial_edges, axial_edges, out_prefix, label
+):
+    """Compute radial/axial large-particle fraction profiles per frame; save parquets.
 
     Args:
-        config: Pipeline settings for data paths and Lacey cell parameters.
+        frames_dir: Directory of parquet frames.
+        pattern: Glob for frame files.
+        frame_re: Regex used by :func:`extract_frame_index`.
+        tracer_r: Tracer (large) particle radius.
+        config: Supplies ``metrics.center_x/center_y/center_z`` and ``metrics_dt``.
+        radial_edges: Shared radial bin edges (same for every frame/directory
+            being compared), from :func:`segregation_profile.radial_bin_edges`.
+        axial_edges: Shared axial bin edges, from
+            :func:`segregation_profile.axial_bin_edges`.
+        out_prefix: Filename prefix for the two summary parquets written into
+            ``frames_dir`` (``{prefix}_radial.parquet`` / ``{prefix}_axial.parquet``).
+        label: Short label for log messages (e.g. ``"GT"``, ``"PRED"``).
 
     Returns:
-        dict[str, pd.DataFrame]: ``"gt"`` summary always; ``"pred"`` when
-        predicted frames exist.
+        tuple[pd.DataFrame, pd.DataFrame]: Long-format ``(radial, axial)``
+        profiles with columns ``frame``, ``time``, ``bin``, ``bin_center``,
+        ``fraction_large``, ``n_particles``.
     """
+    m = config.metrics
+    radial_rows, axial_rows = [], []
+    paths = data_io.sorted_frame_files(frames_dir, pattern)
+    for pth in track(paths, desc=f"Segregation profile [{label}]", unit="frame"):
+        frame_idx = lacey.extract_frame_index(pth, frame_re)
+        time = frame_idx * m.metrics_dt
+        df = pd.read_parquet(pth)
+
+        radial = segprofile.radial_fraction_profile(
+            df, tracer_r, radial_edges, m.center_x, m.center_y
+        )
+        radial.insert(0, "time", time)
+        radial.insert(0, "frame", frame_idx)
+        radial_rows.append(radial)
+
+        axial = segprofile.axial_fraction_profile(df, tracer_r, axial_edges, m.center_z)
+        axial.insert(0, "time", time)
+        axial.insert(0, "frame", frame_idx)
+        axial_rows.append(axial)
+
+    radial_out = pd.concat(radial_rows, ignore_index=True).sort_values(["frame", "bin"]).reset_index(drop=True)
+    axial_out = pd.concat(axial_rows, ignore_index=True).sort_values(["frame", "bin"]).reset_index(drop=True)
+    radial_out.to_parquet(os.path.join(str(frames_dir), f"{out_prefix}_radial.parquet"), index=False)
+    axial_out.to_parquet(os.path.join(str(frames_dir), f"{out_prefix}_axial.parquet"), index=False)
+    print(f"[{label}] Saved segregation profile ({len(paths)} frames)")
+    return radial_out, axial_out
+
+
+def compute_velocity_and_granular_temperature(frames_dir, pattern, frame_re, tracer_r, config, label):
+    """Compute velocity distribution and granular temperature at the last available frame pair.
+
+    Mirrors the paper's evaluation style (Fig. 9): a single, most-evolved-state
+    snapshot rather than a time series, using the last two consecutive frames
+    present in ``frames_dir``.
+
+    Args:
+        frames_dir: Directory of parquet frames.
+        pattern: Glob for frame files.
+        frame_re: Regex used by :func:`extract_frame_index`.
+        tracer_r: Tracer (large) particle radius.
+        config: Supplies ``metrics.cell_size``, ``metrics.min_particles_per_cell``,
+            and ``metrics.metrics_dt``.
+        label: Short label for log messages (e.g. ``"GT"``, ``"PRED"``).
+
+    Returns:
+        dict or None: ``{"time", "frame_t", "frame_t1", "speed", "granular_temperature"}``,
+        or ``None`` if fewer than 2 frames are available.
+    """
+    m = config.metrics
+    paths = data_io.sorted_frame_files(frames_dir, pattern)
+    if len(paths) < 2:
+        print(f"[{label}] Skipping velocity/granular-temperature: need >= 2 frames, found {len(paths)}")
+        return None
+
+    idx_t = lacey.extract_frame_index(paths[-2], frame_re)
+    idx_t1 = lacey.extract_frame_index(paths[-1], frame_re)
+    df_t = pd.read_parquet(paths[-2])
+    df_t1 = pd.read_parquet(paths[-1])
+    dt = m.metrics_dt * (idx_t1 - idx_t)
+
+    speed = velmet.velocity_speed_by_species(df_t, df_t1, dt, tracer_r)
+    granular_temperature = velmet.granular_temperature_by_cell(
+        df_t, df_t1, dt, m.cell_size, m.min_particles_per_cell
+    )
+    print(
+        f"[{label}] Velocity/granular temperature at t={idx_t1 * m.metrics_dt:.3f}s "
+        f"(frames {idx_t}->{idx_t1}, {len(granular_temperature)} cells)"
+    )
+    return {
+        "time": idx_t1 * m.metrics_dt,
+        "frame_t": idx_t,
+        "frame_t1": idx_t1,
+        "speed": speed,
+        "granular_temperature": granular_temperature,
+    }
+
+
+def compute_metrics(config: PipelineConfig) -> dict:
+    """Compute Lacey index, segregation profile, velocity, and granular temperature.
+
+    Detects the tracer radius from the first ground-truth frame, then runs
+    each metric on DEM frames and, when present, on predicted frames under
+    ``config.prediction.pred_frames_dir``. Radial/axial bin edges are derived
+    once from the first ground-truth frame so GT and predicted profiles share
+    the same bins.
+
+    Args:
+        config: Pipeline settings for data paths and metric parameters.
+
+    Returns:
+        dict: ``"gt"`` / optional ``"pred"`` Lacey summaries (``pd.DataFrame``);
+        ``"radial_gt"`` / ``"axial_gt"`` / optional ``"radial_pred"`` /
+        ``"axial_pred"`` profile summaries (``pd.DataFrame``); ``"velocity_gt"``
+        / optional ``"velocity_pred"`` (``dict`` from
+        :func:`compute_velocity_and_granular_temperature`, or absent if fewer
+        than 2 frames were available).
+    """
+    m = config.metrics
     gt_paths = data_io.sorted_frame_files(config.data_dir, config.frame_glob)
-    tracer_r = lacey.detect_tracer_radius(pd.read_parquet(gt_paths[0])["r"].to_numpy())
+    first_gt = pd.read_parquet(gt_paths[0])
+    tracer_r = lacey.detect_tracer_radius(first_gt["r"].to_numpy())
     print(f"Detected tracer (large) radius r = {tracer_r}")
 
-    results = {
+    results: dict = {
         "gt": compute_lacey_over_dir(
             config.data_dir, config.frame_glob, GT_FRAME_RE, tracer_r, config,
             "lacey_over_time.parquet", "GT",
         )
     }
 
+    radial_edges = segprofile.radial_bin_edges(first_gt, m.center_x, m.center_y, m.n_radial_bins)
+    axial_edges = segprofile.axial_bin_edges(first_gt, m.center_z, m.n_axial_bins)
+    results["radial_gt"], results["axial_gt"] = compute_profile_over_dir(
+        config.data_dir, config.frame_glob, GT_FRAME_RE, tracer_r, config,
+        radial_edges, axial_edges, "segregation_profile", "GT",
+    )
+
+    velocity_gt = compute_velocity_and_granular_temperature(
+        config.data_dir, config.frame_glob, GT_FRAME_RE, tracer_r, config, "GT"
+    )
+    if velocity_gt is not None:
+        results["velocity_gt"] = velocity_gt
+
     if data_io.sorted_frame_files(config.prediction.pred_frames_dir, "pred_frame_*.parquet"):
         results["pred"] = compute_lacey_over_dir(
             config.prediction.pred_frames_dir, "pred_frame_*.parquet", PRED_FRAME_RE, tracer_r, config,
             "lacey_over_time_pred.parquet", "PRED",
         )
+        results["radial_pred"], results["axial_pred"] = compute_profile_over_dir(
+            config.prediction.pred_frames_dir, "pred_frame_*.parquet", PRED_FRAME_RE, tracer_r, config,
+            radial_edges, axial_edges, "segregation_profile", "PRED",
+        )
+        velocity_pred = compute_velocity_and_granular_temperature(
+            config.prediction.pred_frames_dir, "pred_frame_*.parquet", PRED_FRAME_RE, tracer_r, config, "PRED"
+        )
+        if velocity_pred is not None:
+            results["velocity_pred"] = velocity_pred
 
     return results
 
 
-def plot_lacey_comparison(metrics: dict[str, pd.DataFrame], config: PipelineConfig, show=True):
+def plot_lacey_comparison(metrics: dict, config: PipelineConfig, show=True):
     """Plot ground-truth vs surrogate Lacey index over time.
 
     Args:
@@ -119,6 +254,263 @@ def plot_lacey_comparison(metrics: dict[str, pd.DataFrame], config: PipelineConf
     if config.visualization.save_figures:
         FIGURES_DIR.mkdir(parents=True, exist_ok=True)
         fig.savefig(FIGURES_DIR / "lacey_comparison.png", dpi=140)
+    if show:
+        plt.show()
+    return fig
+
+
+def _latest_time_slice(profile_df: pd.DataFrame) -> pd.DataFrame:
+    """Rows for the last (largest) ``frame`` present in a profile summary."""
+    return profile_df[profile_df["frame"] == profile_df["frame"].max()].sort_values("bin")
+
+
+def plot_segregation_profile(metrics: dict, config: PipelineConfig, show=True):
+    """Plot radial and axial large-particle fraction profiles at the final frame.
+
+    Args:
+        metrics: Mapping from :func:`compute_metrics`; requires ``radial_gt``
+            and ``axial_gt``, with optional ``radial_pred`` / ``axial_pred``.
+        config: If ``visualization.save_figures``, writes
+            ``segregation_profile_comparison.png`` under ``FIGURES_DIR``.
+        show: If ``True``, display the figure interactively.
+
+    Returns:
+        matplotlib.figure.Figure: Side-by-side radial/axial profile figure.
+    """
+    import matplotlib.pyplot as plt
+
+    fig, (ax_radial, ax_axial) = plt.subplots(1, 2, figsize=(10, 4))
+
+    gt_radial = _latest_time_slice(metrics["radial_gt"])
+    ax_radial.plot(gt_radial["bin_center"], gt_radial["fraction_large"], "ks", label="DEM (ground truth)")
+    if "radial_pred" in metrics:
+        pred_radial = _latest_time_slice(metrics["radial_pred"])
+        ax_radial.plot(
+            pred_radial["bin_center"], pred_radial["fraction_large"],
+            "rs", markerfacecolor="none", label="Surrogate model (RNN)",
+        )
+    ax_radial.set_xlabel("Radial distance from center [m]")
+    ax_radial.set_ylabel("Fraction of large particle [-]")
+    ax_radial.set_ylim(0.0, 1.0)
+    ax_radial.grid(True, alpha=0.3)
+    ax_radial.legend()
+
+    gt_axial = _latest_time_slice(metrics["axial_gt"])
+    ax_axial.plot(gt_axial["bin_center"], gt_axial["fraction_large"], "ks", label="DEM (ground truth)")
+    if "axial_pred" in metrics:
+        pred_axial = _latest_time_slice(metrics["axial_pred"])
+        ax_axial.plot(
+            pred_axial["bin_center"], pred_axial["fraction_large"],
+            "rs", markerfacecolor="none", label="Surrogate model (RNN)",
+        )
+    ax_axial.set_xlabel("Axial distance from center [m]")
+    ax_axial.set_ylabel("Fraction of large particle [-]")
+    ax_axial.set_ylim(0.0, 1.0)
+    ax_axial.grid(True, alpha=0.3)
+    ax_axial.legend()
+
+    fig.suptitle("Large-particle fraction profile (final frame)")
+    plt.tight_layout()
+
+    if config.visualization.save_figures:
+        FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+        fig.savefig(FIGURES_DIR / "segregation_profile_comparison.png", dpi=140)
+    if show:
+        plt.show()
+    return fig
+
+
+def plot_velocity_distribution(metrics: dict, config: PipelineConfig, show=True):
+    """Plot small/large particle absolute-velocity distributions, DEM vs. surrogate.
+
+    Args:
+        metrics: Mapping from :func:`compute_metrics`; requires ``velocity_gt``,
+            with optional ``velocity_pred``.
+        config: If ``visualization.save_figures``, writes
+            ``velocity_distribution_comparison.png`` under ``FIGURES_DIR``.
+        show: If ``True``, display the figure interactively.
+
+    Returns:
+        matplotlib.figure.Figure or None: Side-by-side histogram figure, or
+        ``None`` if ``velocity_gt`` is unavailable.
+    """
+    if "velocity_gt" not in metrics:
+        print("Skipping velocity distribution plot: no velocity_gt in metrics.")
+        return None
+
+    import matplotlib.pyplot as plt
+
+    gt_speed = metrics["velocity_gt"]["speed"]
+    pred_speed = metrics.get("velocity_pred", {}).get("speed") if "velocity_pred" in metrics else None
+
+    fig, (ax_small, ax_large) = plt.subplots(1, 2, figsize=(10, 4))
+    for ax, species, title in ((ax_small, "small", "Small particles"), (ax_large, "large", "Large particles")):
+        ax.hist(gt_speed[species], bins=30, density=True, histtype="step", color="black", label="DEM (ground truth)")
+        if pred_speed is not None:
+            ax.hist(
+                pred_speed[species], bins=30, density=True, histtype="step", color="blue",
+                label="Surrogate model (RNN)",
+            )
+        ax.set_title(title)
+        ax.set_xlabel("Absolute velocity [m/s]")
+        ax.set_ylabel("Density")
+        ax.grid(True, alpha=0.3)
+        ax.legend()
+
+    fig.suptitle("Particle velocity distribution (final frame pair)")
+    plt.tight_layout()
+
+    if config.visualization.save_figures:
+        FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+        fig.savefig(FIGURES_DIR / "velocity_distribution_comparison.png", dpi=140)
+    if show:
+        plt.show()
+    return fig
+
+
+def plot_granular_temperature(metrics: dict, config: PipelineConfig, show=True):
+    """Plot boxplots of per-cell granular temperature, DEM vs. surrogate.
+
+    Args:
+        metrics: Mapping from :func:`compute_metrics`; requires
+            ``velocity_gt``, with optional ``velocity_pred``.
+        config: If ``visualization.save_figures``, writes
+            ``granular_temperature_comparison.png`` under ``FIGURES_DIR``.
+        show: If ``True``, display the figure interactively.
+
+    Returns:
+        matplotlib.figure.Figure or None: Boxplot figure, or ``None`` if
+        ``velocity_gt`` is unavailable.
+    """
+    if "velocity_gt" not in metrics:
+        print("Skipping granular temperature plot: no velocity_gt in metrics.")
+        return None
+
+    import matplotlib.pyplot as plt
+
+    data = [metrics["velocity_gt"]["granular_temperature"]]
+    labels = ["DEM\n(ground truth)"]
+    if "velocity_pred" in metrics:
+        data.append(metrics["velocity_pred"]["granular_temperature"])
+        labels.append("Surrogate model\n(RNN)")
+
+    fig = plt.figure()
+    plt.boxplot(data, showmeans=True)
+    plt.xticks(range(1, len(labels) + 1), labels)
+    plt.yscale("log")
+    plt.ylabel("Granular temperature [m^2/s^2]")
+    plt.title("Granular temperature (final frame pair)")
+    plt.grid(True, alpha=0.3, axis="y")
+    plt.tight_layout()
+
+    if config.visualization.save_figures:
+        FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+        fig.savefig(FIGURES_DIR / "granular_temperature_comparison.png", dpi=140)
+    if show:
+        plt.show()
+    return fig
+
+
+def compute_computing_speed(timing: dict, config: PipelineConfig) -> dict:
+    """Dimensionless computing speed vs. a user-supplied DEM reference (paper Fig. 15).
+
+    Compares this run's own wall-clock training/prediction time (plus, if
+    supplied, the short reference-DEM run used to build the GRU's training
+    data) against ``config.computing_speed.dem_reference_seconds`` -- the
+    wall-clock time of a full DEM run reproducing the same target simulated
+    duration. Neither DEM time is measured by this pipeline; both are plain
+    user-supplied values (there is no DEM stage in this pipeline to time
+    automatically; see :class:`~bppm_dem_sm.config.ComputingSpeedOptions`).
+
+    Mirrors the paper's two figures: prediction-only speedup (their ~240x) and
+    all-RNNSR-steps speedup (their ~2.5x: reference-DEM data acquisition +
+    training + prediction). The latter equals just train+predict when
+    ``dem_data_acquisition_seconds`` is left at its 0.0 default.
+
+    Args:
+        timing: Wall-clock seconds recorded by
+            :func:`bppm_dem_sm.pipeline.run_pipeline`, with optional
+            ``train_seconds`` / ``predict_seconds`` keys (present only for
+            stages that actually ran).
+        config: Supplies ``computing_speed.dem_reference_seconds`` and
+            ``computing_speed.dem_data_acquisition_seconds``.
+
+    Returns:
+        dict: ``dem_reference_seconds``, ``dem_data_acquisition_seconds``,
+        ``train_seconds``, ``predict_seconds`` (as given, possibly ``None``),
+        ``all_steps_seconds``, and the dimensionless
+        ``prediction_only_speedup`` / ``all_steps_speedup`` (each ``None``
+        where the underlying timing is unavailable).
+    """
+    dem_seconds = config.computing_speed.dem_reference_seconds
+    dem_data_acquisition_s = config.computing_speed.dem_data_acquisition_seconds
+    train_s = timing.get("train_seconds")
+    predict_s = timing.get("predict_seconds")
+    all_steps = (
+        dem_data_acquisition_s + train_s + predict_s
+        if train_s is not None and predict_s is not None
+        else None
+    )
+
+    result = {
+        "dem_reference_seconds": dem_seconds,
+        "dem_data_acquisition_seconds": dem_data_acquisition_s,
+        "train_seconds": train_s,
+        "predict_seconds": predict_s,
+        "all_steps_seconds": all_steps,
+        "prediction_only_speedup": dem_seconds / predict_s if predict_s else None,
+        "all_steps_speedup": dem_seconds / all_steps if all_steps else None,
+    }
+    print("[Computing speed] " + ", ".join(f"{k}={v}" for k, v in result.items()))
+    return result
+
+
+def plot_computing_speed(metrics: dict, config: PipelineConfig, show=True):
+    """Plot dimensionless computing speed vs. the DEM reference (paper Fig. 15).
+
+    Args:
+        metrics: Mapping with an optional ``"computing_speed"`` entry from
+            :func:`compute_computing_speed` (set by
+            :func:`bppm_dem_sm.pipeline.run_pipeline`; absent if
+            :func:`compute_metrics` was called standalone without timing).
+        config: If ``visualization.save_figures``, writes
+            ``computing_speed_comparison.png`` under ``FIGURES_DIR``.
+        show: If ``True``, display the figure interactively.
+
+    Returns:
+        matplotlib.figure.Figure or None: Bar-chart figure, or ``None`` if no
+        speedup could be computed (no timing recorded this run).
+    """
+    cs = metrics.get("computing_speed")
+    if not cs:
+        print("Skipping computing speed plot: no computing_speed in metrics.")
+        return None
+
+    bars = []
+    if cs.get("all_steps_speedup") is not None:
+        bars.append(("All RNNSR\nsteps", cs["all_steps_speedup"]))
+    if cs.get("prediction_only_speedup") is not None:
+        bars.append(("Prediction\nonly", cs["prediction_only_speedup"]))
+    if not bars:
+        print("Skipping computing speed plot: no timed stage available.")
+        return None
+
+    import matplotlib.pyplot as plt
+
+    labels, values = zip(*bars)
+    fig = plt.figure()
+    plt.bar(labels, values, color=["orange", "royalblue"][: len(bars)])
+    plt.axhline(1.0, color="black", linewidth=0.8, linestyle="--", label="DEM (reference)")
+    plt.yscale("log")
+    plt.ylabel("Dimensionless computing speed [-]")
+    plt.title(f"Computing speed vs. DEM reference ({cs['dem_reference_seconds'] / 3600:.2f} h)")
+    plt.grid(True, alpha=0.3, axis="y")
+    plt.legend()
+    plt.tight_layout()
+
+    if config.visualization.save_figures:
+        FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+        fig.savefig(FIGURES_DIR / "computing_speed_comparison.png", dpi=140)
     if show:
         plt.show()
     return fig

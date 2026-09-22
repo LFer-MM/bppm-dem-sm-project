@@ -1,0 +1,291 @@
+bppm-dem-sm-project/
+│
+├── bppm_dem_sm/                                  # main Python package (flat, no subpackages)
+│   │
+│   ├── __init__.py                                # package re-exports
+│   │   └── exports: MetricsOptions, PipelineConfig, PredictionOptions,
+│   │                TrainingOptions, VisualizationOptions, run_pipeline
+│   │
+│   ├── __main__.py                                # `python -m bppm_dem_sm` entry point
+│   │   └── silences TensorFlow, then calls cli.main()
+│   │
+│   ├── config.py                                  # config + path resolution (+ YADE/SAG-mill constants)
+│   │   ├── build_material_interactions()              -- YADE restitution MatchMaker (needs YADE)
+│   │   ├── class TrainingOptions                      -- GRU hyperparameters
+│   │   ├── class PredictionOptions                    -- sliding-window prediction settings
+│   │   │   ├── pred_frames_dir (property)
+│   │   │   └── pred_combined_parquet (property)
+│   │   ├── class MetricsOptions                       -- cell grid + time-axis + spatial-profile settings
+│   │   ├── class ComputingSpeedOptions                -- dem_reference_seconds, dem_data_acquisition_seconds
+│   │   ├── class StochasticOptions                    -- SR velocity-perturbation settings
+│   │   ├── class VisualizationOptions                 -- plotting/animation display settings
+│   │   ├── class PipelineConfig                       -- top-level config aggregating all of the above
+│   │   │   ├── to_dict()
+│   │   │   ├── with_overrides(**overrides)
+│   │   │   ├── from_dict(data)          [classmethod]
+│   │   │   └── from_json(path)          [classmethod]
+│   │   ├── _option_group_types()                      -- group name -> options dataclass
+│   │   ├── _leaf_to_group()                           -- leaf field name -> owning group name
+│   │   ├── _to_plain_dict(obj)                        -- dataclass -> dict (Paths -> str)
+│   │   ├── _from_plain_dict(cls, data)                -- dict -> dataclass
+│   │   └── _coerce_bool(value, key)                   -- "true"/"0"/... -> bool
+│   │
+│   ├── pipeline.py                                # end-to-end orchestration
+│   │   └── run_pipeline(config=None, **overrides)     -- Train -> Predict -> Metrics -> Visualization;
+│   │                                                     records timing; injects computing-speed metric
+│   │
+│   ├── training.py                                # GRU model definition + training
+│   │   ├── build_model(frames_in, n_features=4, gru_units=20, dense_units=15, learning_rate=0.01)
+│   │   ├── train_and_save(config, plot_history=True)  -- returns (model, history)
+│   │   └── plot_training_history(history, show=True)
+│   │
+│   ├── prediction.py                              # sliding-window autoregressive prediction
+│   │   ├── class _SavedModelWrapper                   -- Keras-like adapter for legacy SavedModel exports
+│   │   │   └── predict(x, batch_size=32, verbose=0)
+│   │   ├── _resolve_model_path(path)                  -- find .keras/.h5/SavedModel artifact
+│   │   ├── load_model(path)
+│   │   └── predict_frames(config, model=None)         -- GRU predict + SR term if enabled; saves parquet
+│   │
+│   ├── stochastic_motion.py                       # SR (stochastic random) motion, Kishida et al. 2025
+│   │   ├── class VelocityStdField                     -- per-cell sigma_v(x) lookup table
+│   │   │   └── sigma_at(positions)
+│   │   ├── build_velocity_std_field(frames_dir, frame_glob, dt, cell_size, min_particles_per_cell=15)
+│   │   ├── build_velocity_std_field_from_config(config)
+│   │   └── sample_stochastic_displacement(positions, field, dt_rnn, rng)
+│   │
+│   ├── data_io.py                                 # frame loading + supervised-dataset construction
+│   │   ├── sorted_frame_files(frames_dir, pattern="frame_*.parquet")
+│   │   ├── load_frame(path, cols=None)
+│   │   ├── load_frames_stacked(frames_dir, pattern="frame_*.parquet", feature_cols=None)
+│   │   ├── build_supervised_dataset(pos, rad, frames_in)
+│   │   └── train_test_split(X, y, val_fraction=0.1, seed=0)
+│   │
+│   ├── csv_to_parquet.py                          # DEM CSV frame dumps -> parquet
+│   │   ├── convert_csv_file_to_parquet(csv_path, parquet_path)
+│   │   └── convert_folder_csv_to_parquet(input_folder, output_folder)
+│   │
+│   ├── verify_particle_integrity.py               # sanity-checks converted frame data
+│   │   ├── particle_radius_counts_per_file(folder_path, size_column="r")
+│   │   └── report_particle_integrity(folder_path, size_column="r")
+│   │
+│   ├── lacey_mixing_index.py                      # Lacey's mixing index
+│   │   ├── extract_frame_index(path, frame_re=GT_FRAME_RE)
+│   │   ├── detect_tracer_radius(r_values)
+│   │   └── lacey_index_for_frame(df, cell_size, tracer_radius, min_particles_per_cell=5)
+│   │   (module constants: GT_FRAME_RE, PRED_FRAME_RE)
+│   │
+│   ├── segregation_profile.py                     # radial/axial large-particle fraction profile
+│   │   ├── radial_bin_edges(df, center_x=0.0, center_y=0.0, n_bins=12)
+│   │   ├── axial_bin_edges(df, center_z=0.0, n_bins=12)
+│   │   ├── _fraction_by_bin(distance, is_tracer, bin_edges)
+│   │   ├── radial_fraction_profile(df, tracer_radius, bin_edges, center_x=0.0, center_y=0.0)
+│   │   └── axial_fraction_profile(df, tracer_radius, bin_edges, center_z=0.0)
+│   │
+│   ├── velocity_metrics.py                        # velocity distribution + granular temperature
+│   │   ├── _matched_velocity(df_t, df_t1, dt)
+│   │   ├── velocity_speed_by_species(df_t, df_t1, dt, tracer_radius)
+│   │   └── granular_temperature_by_cell(df_t, df_t1, dt, cell_size, min_particles_per_cell=15)
+│   │
+│   ├── run_metrics.py                             # ties all metrics together over GT/pred frame dirs
+│   │   ├── compute_lacey_over_dir(frames_dir, pattern, frame_re, tracer_r, config, out_name, label)
+│   │   ├── compute_profile_over_dir(frames_dir, pattern, frame_re, tracer_r, config,
+│   │   │                            radial_edges, axial_edges, out_prefix, label)
+│   │   ├── compute_velocity_and_granular_temperature(frames_dir, pattern, frame_re, tracer_r, config, label)
+│   │   ├── compute_metrics(config)                    -- orchestrates all frame-based metrics
+│   │   ├── compute_computing_speed(timing, config)    -- dimensionless speedup vs. DEM reference
+│   │   ├── plot_lacey_comparison(metrics, config, show=True)
+│   │   ├── _latest_time_slice(profile_df)
+│   │   ├── plot_segregation_profile(metrics, config, show=True)
+│   │   ├── plot_velocity_distribution(metrics, config, show=True)
+│   │   ├── plot_granular_temperature(metrics, config, show=True)
+│   │   └── plot_computing_speed(metrics, config, show=True)
+│   │
+│   ├── cell_grid.py                               # single-frame scatter + grid overlay
+│   │   └── plot_particles_with_grid(frame_path, cell_size, use_equal_aspect=True,
+│   │                                 save_path=None, show=True)
+│   │
+│   ├── animate_particles.py                       # standalone 2D particle animation
+│   │   ├── radius_colors(r)
+│   │   └── animate_particles(frames_dir, glob_pattern="frame_*.parquet", plane="xy",
+│   │                          every_nth_frame=1, fps=30, marker_size=4.0, save_path=None)
+│   │
+│   ├── run_visualization.py                       # pipeline-integrated plots (Visualization stage)
+│   │   ├── _radius_colors(r)
+│   │   ├── animate_frames(frames_dir, config, pattern="frame_*.parquet", save_path=None)
+│   │   ├── plot_frame_grid(frame_path, config, save_path=None, show=True)
+│   │   └── generate_visualizations(config)
+│   │
+│   ├── cli.py                                     # `bppm-pipeline` CLI
+│   │   ├── _bool_fields(cls)
+│   │   ├── _path_fields(cls)
+│   │   ├── _add_config_flag(container, f, owning_cls)
+│   │   ├── build_parser()
+│   │   ├── _leaf_override_names()
+│   │   ├── config_from_args(args)
+│   │   └── main(argv=None)
+│   │
+│   ├── progress.py                                # tqdm bars + stage banners
+│   │   ├── plan(titles)
+│   │   ├── stage(index, total, title)
+│   │   ├── complete(message="Pipeline complete.")
+│   │   ├── track(iterable, desc, unit="it", **kwargs)
+│   │   └── bar(total=None, desc="", unit="it", **kwargs)
+│   │
+│   ├── tf_quiet.py                                # silences TF logging before import
+│   │   └── silence_tensorflow()
+│   │
+│   │   ── below this line: YADE-only runtime, separate from everything above ──
+│   │
+│   ├── simulation.py                              # `yade simulation.py` entry point
+│   │   └── run()                                      -- sets up mill, ingresses bidisperse charge
+│   │
+│   └── sim_functions.py                           # YADE DEM helpers
+│       ├── initialize_simulation_materials(materials)
+│       ├── initialize_sag_mill_slice(sagmill_stl_path)
+│       ├── initialize_engines(contact_model, contact_model_params, rotation_engine=False)
+│       ├── load_rock_particles(rock_diam_m, rock_count)
+│       ├── load_ball_particles(ball_diam_m, ball_count)
+│       ├── load_all_particles(particle_diam_m, particle_count)
+│       ├── set_dt(new_dt=None, factor=0.3)
+│       ├── set_gravity_damping(new_gravity_damping)
+│       ├── save_particle_positions(csv_path, include_velocity=True, include_ang_vel=True)
+│       ├── load_particle_positions(csv_path, *, set_vel_zero=True, set_ang_vel_zero=True)
+│       ├── run_until_forces_balanced(threshold=0.001, interval=1000, motion_start_steps=20,
+│       │                             wait_chunk=1000, max_chunks=5000)
+│       ├── settle_balance_save(gravity_damping, csv_path)
+│       ├── rotate_mill_indefinitely(speed_rpm=9)
+│       ├── rotate_mill_by_degrees(degrees, speed_rpm=9)
+│       ├── rotate_mill_by_time(virtual_time_seconds, speed_rpm=9)
+│       ├── start_frame_capture(folder_name, interval, runner_label="frameCapture", iter_period=50)
+│       ├── createBox(x, y, z)
+│       ├── createFunnel(x, y, z, fx, fy, dy)
+│       ├── check_overlaps()
+│       ├── chord_box_3d(diameter, y, box_height, depth)
+│       ├── get_surface_y(padding=0.1)
+│       ├── ingress_random(diameter, depth, r_small, r_large, n_small, n_large, box_height,
+│       │                  material_small, material_large, color_small, color_large,
+│       │                  settle_steps=10000, padding=0.1, verbose=True)
+│       ├── ingress_segregated(... same signature as ingress_random ...)   -- pours species sequentially
+│       ├── get_particle_inventory(r_small, r_large, tol=1e-6, verbose=True)
+│       ├── _obtain_sag_mill_slice_measurements(sag_mill_body_group)
+│       ├── _add_sag_mill_slice_caps(sag_mill_slice_body_group, sag_mill_slice_radius_m, z_min, z_max)
+│       ├── _balance_check()
+│       ├── _get_rotation_engine(label="rotation_engine")
+│       ├── _mat_label(b)
+│       └── _save_sphere_frame()
+│
+├── tests/
+│   ├── conftest.py                                # sys.path shim for the OLD (pre-refactor) layout
+│   │
+│   │   ── current style: `from bppm_dem_sm.x import y` ──
+│   ├── test_cli_pipeline_config.py
+│   │   ├── test_from_dict_coerces_paths_and_bools
+│   │   ├── test_from_dict_nested_groups
+│   │   ├── test_from_dict_rejects_unknown_keys
+│   │   ├── test_from_dict_rejects_flat_nested_keys
+│   │   ├── test_from_dict_rejects_unknown_nested_keys
+│   │   ├── test_from_json_roundtrip
+│   │   ├── test_cli_config_json_ignores_other_flags
+│   │   ├── test_cli_flags_override_defaults
+│   │   ├── test_with_overrides_flat_leaves_and_groups
+│   │   ├── test_example_pipeline_json_loads
+│   │   ├── test_run_pipeline_accepts_flat_overrides
+│   │   ├── test_run_pipeline_prints_enabled_stage_banners
+│   │   └── test_progress_helpers_emit_banners_and_track
+│   │
+│   ├── test_stochastic_motion.py
+│   │   ├── test_build_velocity_std_field_zero_for_uniform_motion
+│   │   ├── test_build_velocity_std_field_matches_known_variance
+│   │   ├── test_sigma_at_returns_zero_outside_known_cells
+│   │   ├── test_cell_below_min_particles_excluded
+│   │   ├── test_build_velocity_std_field_requires_two_frames
+│   │   ├── test_sample_stochastic_displacement_zero_sigma_gives_zero_displacement
+│   │   ├── test_sample_stochastic_displacement_reproducible_with_seed
+│   │   ├── test_stochastic_options_default_disabled
+│   │   ├── test_pipeline_config_roundtrip_with_stochastic
+│   │   ├── test_predict_frames_leaves_positions_unchanged_when_disabled
+│   │   ├── test_predict_frames_perturbs_positions_after_gru_when_enabled
+│   │   └── test_predict_frames_stochastic_reproducible_with_same_seed
+│   │
+│   ├── test_segregation_profile.py
+│   │   ├── test_radial_bin_edges_span_zero_to_max
+│   │   ├── test_radial_fraction_profile_matches_expected_bins
+│   │   ├── test_axial_fraction_profile_uses_signed_distance
+│   │   └── test_radial_fraction_profile_respects_custom_center
+│   │
+│   ├── test_velocity_metrics.py
+│   │   ├── test_velocity_speed_by_species_splits_correctly
+│   │   ├── test_velocity_speed_by_species_handles_out_of_order_ids
+│   │   ├── test_mismatched_ids_raise
+│   │   ├── test_granular_temperature_matches_known_variance
+│   │   ├── test_granular_temperature_excludes_sparse_cells
+│   │   └── test_granular_temperature_zero_for_uniform_motion
+│   │
+│   ├── test_run_metrics.py
+│   │   ├── test_compute_metrics_gt_only
+│   │   ├── test_compute_metrics_with_pred
+│   │   ├── test_compute_metrics_skips_velocity_with_single_frame
+│   │   ├── test_plot_functions_run_without_error
+│   │   └── test_plot_velocity_and_granular_temperature_none_without_velocity
+│   │
+│   ├── test_computing_speed.py
+│   │   ├── test_computing_speed_options_defaults
+│   │   ├── test_computing_speed_options_roundtrip
+│   │   ├── test_compute_computing_speed_both_timings_present_no_dem_acquisition
+│   │   ├── test_compute_computing_speed_includes_dem_data_acquisition
+│   │   ├── test_compute_computing_speed_dem_data_acquisition_ignored_without_full_timing
+│   │   ├── test_compute_computing_speed_predict_only
+│   │   ├── test_compute_computing_speed_no_timing
+│   │   ├── test_plot_computing_speed_none_when_missing
+│   │   ├── test_plot_computing_speed_none_when_no_speedup_available
+│   │   ├── test_plot_computing_speed_renders_available_bars
+│   │   ├── test_run_pipeline_records_timing_and_computing_speed
+│   │   └── test_run_pipeline_no_timing_key_when_stages_skipped
+│   │
+│   │   ── pre-refactor style: imports old flat module names via conftest.py's stale
+│   │      sys.path shim (data_gen_sim/, model/RNNSR/, ... no longer exist) -- BROKEN,
+│   │      predates this session, not touched here ──
+│   ├── test_s0_calc_lmi_across_frames.py          -- ModuleNotFoundError at collection
+│   ├── test_s0_csv_to_parquet.py                  -- ModuleNotFoundError at collection
+│   ├── test_s1_rnn_predictions.py                 -- ModuleNotFoundError at collection
+│   ├── test_s1_verify_particle_integrity.py       -- FileNotFoundError at collection
+│   ├── test_u0_animate_particles.py               -- ModuleNotFoundError at collection
+│   ├── test_u1_visualize_cell_grid.py             -- ModuleNotFoundError at collection
+│   ├── test_ingress_func_v1.py                    -- YADE-dependent
+│   └── test_s1_sim_functions.py                   -- YADE-dependent
+│
+├── configs/
+│   └── pipeline_example.json                      # full PipelineConfig example, every option group
+│
+├── notebooks/
+│   └── global_pipeline.ipynb                      # notebook-driven pipeline run
+│
+├── models/
+│   └── rnn_gru_sic_model/                         # saved Keras/TF SavedModel artifact
+│       ├── fingerprint.pb
+│       ├── keras_metadata.pb
+│       ├── saved_model.pb
+│       └── variables/
+│
+├── reports/
+│   └── figures/
+│       └── lacey_comparison.png                   # saved plot output (so far)
+│
+├── docs/                                          # Sphinx documentation
+│   ├── Makefile, make.bat
+│   ├── _autogen_api.rst
+│   └── source/
+│       ├── conf.py
+│       ├── index.rst, api.rst, getting_started.rst, examples.rst
+│       └── _static/
+│
+├── data/                                          # NOT PRESENT LOCALLY
+│   └── (expected per config.py: raw/, interim/, processed/)
+│
+├── PROJECT_STRUCTURE.md                           # prose version of this map (descriptions per file)
+├── PROJECT_TREE.txt                               # this file
+├── requirements.txt
+├── pyproject.toml
+├── Makefile
+├── README.md
+└── CLAUDE.local.md                                # local/private notes (not checked in)

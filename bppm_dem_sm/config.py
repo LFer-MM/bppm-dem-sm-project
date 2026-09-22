@@ -116,11 +116,51 @@ class PredictionOptions:
 
 @dataclass
 class MetricsOptions:
-    """Lacey mixing-index cell grid and time-axis settings."""
+    """Cell grid, time-axis, and spatial-profile settings for the metrics stage.
+
+    ``cell_size`` and ``min_particles_per_cell`` are shared by Lacey's mixing
+    index and granular temperature (the paper uses the same grid for both).
+    ``center_x``/``center_y``/``center_z`` and the bin counts configure the
+    radial/axial large-particle fraction profile; the mill's circular cross
+    section is assumed to lie in the XY plane (see
+    :mod:`bppm_dem_sm.segregation_profile`).
+    """
 
     cell_size: float = 0.4732
     min_particles_per_cell: int = 15
     metrics_dt: float = 0.05
+    center_x: float = 0.0
+    center_y: float = 0.0
+    center_z: float = 0.0
+    n_radial_bins: int = 12
+    n_axial_bins: int = 12
+
+
+@dataclass
+class ComputingSpeedOptions:
+    """Reference DEM wall-clock times for the dimensionless computing-speed metric.
+
+    ``bppm_dem_sm.pipeline.run_pipeline`` times its own training/prediction
+    stages, but the DEM side of the comparison (Kishida et al. 2025, Powder
+    Technology 455, 120811, Fig. 15) has no equivalent in this codebase: DEM
+    simulations run separately under YADE, outside this pipeline. There is no
+    way to derive their wall-clock time automatically, so both fields here are
+    plain user-supplied measurements, in seconds for consistency with every
+    other time-valued field in this config (e.g. ``metrics_dt``, ``dt_step``):
+
+    - ``dem_reference_seconds``: wall-clock time of a full DEM run reproducing
+      the same target simulated duration as your training/prediction run, on
+      the same hardware. The default (24 h) is a placeholder, not a
+      measurement.
+    - ``dem_data_acquisition_seconds``: wall-clock time of the short reference
+      DEM run used to generate this GRU's training data (paper Steps 1-2).
+      Defaults to 0.0 (excluded), matching the paper's "all RNNSR steps"
+      figure once set; leave at 0.0 to report only the Python-side
+      train+predict time.
+    """
+
+    dem_reference_seconds: float = 86400.0
+    dem_data_acquisition_seconds: float = 0.0
 
 
 @dataclass
@@ -182,6 +222,7 @@ class PipelineConfig:
     prediction: PredictionOptions = field(default_factory=PredictionOptions)
     metrics: MetricsOptions = field(default_factory=MetricsOptions)
     stochastic: StochasticOptions = field(default_factory=StochasticOptions)
+    computing_speed: ComputingSpeedOptions = field(default_factory=ComputingSpeedOptions)
     visualization: VisualizationOptions = field(default_factory=VisualizationOptions)
 
     def to_dict(self) -> dict[str, Any]:
@@ -293,6 +334,7 @@ def _option_group_types() -> dict[str, type]:
         "prediction": PredictionOptions,
         "metrics": MetricsOptions,
         "stochastic": StochasticOptions,
+        "computing_speed": ComputingSpeedOptions,
         "visualization": VisualizationOptions,
     }
 

@@ -31,13 +31,22 @@
   "metrics": {
     "cell_size": 0.4732,
     "min_particles_per_cell": 15,
-    "metrics_dt": 0.05
+    "metrics_dt": 0.05,
+    "center_x": 0.0,
+    "center_y": 0.0,
+    "center_z": 0.0,
+    "n_radial_bins": 12,
+    "n_axial_bins": 12
   },
   "stochastic": {
     "enabled": false,
     "velocity_cell_size": 0.4732,
     "velocity_min_particles_per_cell": 15,
     "stochastic_seed": 0
+  },
+  "computing_speed": {
+    "dem_reference_seconds": 86400.0,
+    "dem_data_acquisition_seconds": 0.0
   },
   "visualization": {
     "plane": "xy",
