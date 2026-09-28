@@ -16,8 +16,11 @@ already use — see [§4](#4-running-everything-end-to-end) for why that
 consistency now matters. `materials`/`stl`/`engines` absorb
 `sim_functions.py`'s setup-side functions, and four more concern modules
 absorb everything `sim_functions.py` does *after* setup (loading a charge,
-running it, saving it, and inspecting it). I also moved DEM-only constants
-out of the generic `config.py` into the module that now owns that concern.
+running it, saving it, and inspecting it). Per your call to keep every
+knob in one place, DEM constants (`MATERIALS`, `SAGMILL_STL_PATH`,
+`ROCK_COUNT`, etc.) **stay in `config.py`** rather than moving into these
+modules — see [§5](#5-config-stays-centralized) for the full picture of
+what `config.py` covers.
 
 ```
 simulation/
@@ -34,10 +37,10 @@ simulation/
 
 | New module | Functions it absorbs (from `sim_functions.py` unless noted) |
 |---|---|
-| `materials.py` | `initialize_simulation_materials`, `_mat_label`; **+** `config.MATERIALS` and `config.build_material_interactions` (currently generic-config, but this data is DEM-only) |
-| `stl.py` | `initialize_sag_mill_slice`, `_obtain_sag_mill_slice_measurements`, `_add_sag_mill_slice_caps`, `createBox`, `createFunnel`, `chord_box_3d`, `get_surface_y`; **+** `config.SAGMILL_STL_PATH` |
+| `materials.py` | `initialize_simulation_materials`, `_mat_label`; reads `config.MATERIALS` and calls `config.build_material_interactions()` |
+| `stl.py` | `initialize_sag_mill_slice`, `_obtain_sag_mill_slice_measurements`, `_add_sag_mill_slice_caps`, `createBox`, `createFunnel`, `chord_box_3d`, `get_surface_y`; reads `config.SAGMILL_STL_PATH` |
 | `engines.py` | `initialize_engines`, `set_dt`, `set_gravity_damping`, `rotate_mill_indefinitely`, `rotate_mill_by_degrees`, `rotate_mill_by_time`, `_get_rotation_engine`, `run_until_forces_balanced`, `_balance_check` |
-| `particles.py` | `load_rock_particles`, `load_ball_particles`, `load_all_particles`, `ingress_random`, `ingress_segregated`; **+** `config.ROCK_COUNT`, `ROCK_DIAM_M`, `BALL_COUNT`, `BALL_DIAM_M` |
+| `particles.py` | `load_rock_particles`, `load_ball_particles`, `load_all_particles`, `ingress_random`, `ingress_segregated`; reads `config.ROCK_COUNT`, `config.ROCK_DIAM_M`, `config.BALL_COUNT`, `config.BALL_DIAM_M` |
 | `state.py` | `save_particle_positions`, `load_particle_positions`, `settle_balance_save` |
 | `capture.py` | `start_frame_capture`, `_save_sphere_frame` |
 | `diagnostics.py` | `check_overlaps`, `get_particle_inventory` |
@@ -92,7 +95,7 @@ subpackages, and keeps `model/` importable as "the surrogate," with `rnn`
 as one clearly-named part of it (`from bppm_dem_sm.model.rnn import
 training`, `from bppm_dem_sm.model import sr`). `stochastic_motion.py` is
 renamed to `sr.py` to match: it's the SR half of "RNNSR" the same way `rnn/`
-is the RNN half, and the paper itself, `PipelineConfig`
+is the RNN half, and the paper itself, `ExperimentConfig`
 (`StochasticOptions`), and the metrics/plots all already call it "SR" /
 "stochastic," never "stochastic motion" — the module name was the odd one
 out.
@@ -150,15 +153,14 @@ visualization/
 ### Top level (`cli.py`, `config.py`, `pipeline.py`, `progress.py`, `tf_quiet.py`)
 These are cross-cutting (CLI parsing, orchestration, config, progress bars,
 TF log suppression) rather than pipeline stages, so they don't get a
-concern-per-file split the same way — they stay flat at package root. The
-one change that follows from the moves above: `config.py` sheds every
-DEM-only constant (`MATERIALS`, `build_material_interactions`, `ROCK_COUNT`,
-`ROCK_DIAM_M`, `BALL_COUNT`, `BALL_DIAM_M`, `SAGMILL_STL_PATH`) to
-`simulation/materials.py`, `simulation/particles.py`, and
-`simulation/stl.py`. What's left in `config.py` matches what its own
-docstring already claims: "Configuration and path resolution for the RNN
-surrogate pipeline" — paths, `PipelineConfig` and its option dataclasses,
-nothing DEM-specific. `pipeline.py` itself changes more substantially — see
+concern-per-file split the same way — they stay flat at package root.
+`config.py` stays exactly what it is today: **one file, everything you can
+configure, in one place** — see [§5](#5-config-stays-centralized). Its
+docstring should be widened accordingly (currently claims "Configuration
+and path resolution for the RNN surrogate pipeline," which is already
+inaccurate today since it also holds DEM constants — the fix is to update
+the docstring to match reality, not move the code to match the docstring).
+`pipeline.py` changes more substantially — see
 [§4](#4-running-everything-end-to-end).
 
 ## 3. Stage inputs / outputs
@@ -232,7 +234,7 @@ processing sit outside it entirely — `cli.py`'s `dem-sim` subcommand
 launches `run_simulation.py` on its own, and nothing calls
 `data_processing` as a stage at all. Every module above now has a matching
 `run_<subpackage>.py`, so the natural next step is closing that gap: add
-`do_simulate` and `do_process` to `PipelineConfig`, both `False` by default
+`do_simulate` and `do_process` to `ExperimentConfig`, both `False` by default
 (matching `do_train`), so a single `run_pipeline(...)` call can go all the
 way from an empty DEM charge to comparison plots, or run any subset exactly
 as today.
@@ -266,3 +268,66 @@ subprocess involved — it only needs to exist as a *toggle* because you
 often already have parquet frames on disk and don't want to reconvert them
 on every run, same reasoning as why `do_train` defaults `False` (you don't
 retrain on every predict/metrics/visualize run either).
+
+## 5. Config stays centralized
+
+You asked to keep every knob in `config.py` rather than splitting it up by
+subpackage, to avoid having to hunt across the repo to change a setting.
+That reverses the one part of the earlier revision that moved DEM
+constants out — `MATERIALS`, `build_material_interactions()`,
+`SAGMILL_STL_PATH`, `ROCK_COUNT`/`ROCK_DIAM_M`/`BALL_COUNT`/`BALL_DIAM_M`
+all **stay module-level constants in `config.py`**, exactly where they are
+today. What changes is only that `simulation/materials.py`, `stl.py`, and
+`particles.py` *read* them from there (`from .. import config`) instead of
+defining or receiving them locally — same as `model/rnn/training.py`
+already imports `PipelineConfig` from `config.py` today. One file, every
+setting; the subpackages are consumers, not owners, of configuration.
+
+Two tiers stay distinct *within* that one file, because they're genuinely
+different kinds of setting, not because they live in different places:
+
+- **Plain module constants** (paths, `MATERIALS`, particle counts/diameters,
+  `SAGMILL_STL_PATH`) — hardcoded values, no CLI flag, no JSON key, edited
+  directly in `config.py`. This is how the DEM side is configured today,
+  and this proposal doesn't change that behavior, only that the code
+  reading them moves.
+- **`ExperimentConfig`** (renamed from `PipelineConfig` — see below) — the
+  dataclass tree with `to_dict`/`from_dict`/`from_json`/`with_overrides`,
+  drivable from Python, JSON (`configs/pipeline_example.json`), or `cli.py`
+  flags, gaining `do_simulate`, `do_process`, and `raw_data_dir` per §4.
+
+If you later want DEM parameters overridable the same way (a CLI flag for
+`--rock-count`, a JSON key for mill geometry), that means promoting them
+into `ExperimentConfig` as a new options group (e.g. `DemOptions`) — a
+bigger, separate change you can revisit once the six-stage pipeline above
+is in place and you know which DEM knobs you actually vary run-to-run.
+
+### Renaming `PipelineConfig`
+
+"Pipeline" described the class well when it only gated
+train/predict/metrics/visualization — four sequential ML steps. Once it
+also gates `do_simulate` (a physics simulation with material properties and
+mill geometry, not a data transform) and `do_process`, "pipeline" starts
+undershooting what the object actually represents: the full configuration
+of one reproducible run of the study, spanning both the DEM and ML halves
+of the project. It isn't wrong — the six stages genuinely do run as a
+pipeline — but it reads as if it only configures the ML side, the same
+mismatch `config.py`'s own docstring has today.
+
+**Recommendation: rename `PipelineConfig` → `ExperimentConfig`.** This
+project is a reproduction of one published method (Kishida et al. 2025's
+RNNSR surrogate) end to end — DEM ground truth through surrogate
+validation — and "experiment config" is the standard term in research-code
+repos for exactly that: everything needed to reproduce one run of a study,
+not just one algorithm's hyperparameters. It also reads naturally at every
+stage, DEM included ("this experiment's mill geometry," not "this
+pipeline's mill geometry").
+
+Alternative considered: `RunConfig` (used by tools like W&B/MLflow) — more
+neutral, slightly less specific than `ExperimentConfig` about *why* you're
+configuring a run. Either is a real improvement over `PipelineConfig`;
+`ExperimentConfig` was chosen for this proposal because it matches the
+project's own framing as a paper reproduction. `pipeline.py` and
+`run_pipeline()` keep their names — they still accurately describe *running
+a sequence of stages*; only the config object's name undersold what it
+configures.
