@@ -173,6 +173,16 @@ added later) → `model.sr`; and the internal names it exposes (`VelocityStdFiel
 `sample_stochastic_displacement`) are unaffected — only the file/module
 path changes, not the API.
 
+`rnn/training.py` also changes behavior, not just location: `train_and_save`
+currently plots the loss curve itself, inline, from the `History` object
+`model.fit()` returns — an object that only exists in memory for that one
+process. It stops doing that. Instead it persists `history.history` (the
+plain `{"loss": [...], "val_loss": [...]}` dict) to
+`models/<model_name>.history.json`, right next to the `.keras` file it
+already saves, and returns the same `(model, history)` as before. See
+[§6](#6-persist-everywhere-render-only-in-visualization) for why, and what
+this implies for `metrics/` too.
+
 ### `metrics/`
 Already one-file-per-metric; `compute_computing_speed` is presently bolted
 onto the `run_metrics.py` orchestrator even though it's an unrelated
@@ -187,6 +197,18 @@ metrics/
 └── run_metrics.py          # orchestrator: compute_metrics + per-directory compute_* helpers
 ```
 
+`run_metrics.py` also gains a persistence step it's currently missing for
+two of its four results. `compute_lacey_over_dir` and
+`compute_profile_over_dir` already write their summaries to parquet inside
+`frames_dir` (`lacey_over_time[_pred].parquet`,
+`segregation_profile_{radial,axial}[_pred].parquet`); this proposal adds
+the matching writes for the other two, which today only return a plain
+dict that dies with the process: `compute_velocity_and_granular_temperature`
+gains a write to `velocity_speed.json` + `granular_temperature.parquet`
+(also inside `frames_dir`), and `compute_computing_speed` gains a write to
+`reports/computing_speed.json`. Same reasoning as the `history.json` fix
+above — see [§6](#6-persist-everywhere-render-only-in-visualization).
+
 ### `visualization/`
 Already one-file-per-plot-type. The one thing worth flagging (not a rename,
 a dedup): `animate_particles.py` is a **standalone** particle animator whose
@@ -198,11 +220,27 @@ animation. Worth folding `animate_particles.py`'s logic into
 ```
 visualization/
 ├── cell_grid.py            # single-frame scatter + Lacey grid overlay
-├── training_curves.py        # GRU loss curves
+├── training_curves.py        # GRU loss curves — now reads history.json, doesn't take a live History
 ├── metrics_plots.py            # GT vs. surrogate comparison plots
-├── run_visualization.py          # pipeline entry point: animate_frames, plot_frame_grid, generate_visualizations
+├── run_visualization.py          # pipeline entry point: animate_frames, plot_frame_grid, generate_visualizations, plot_training_history
 └── animate_particles.py            # ⚠ near-duplicate of animate_frames — candidate to merge
 ```
+
+`training_curves.py` **stays here** — last revision I suggested moving it
+into `model/rnn/`, on the reasoning that it's the one plot tied to a
+single stage. On reflection that's the wrong axis: every file in this
+directory is "tied to a single stage" in the sense that it renders an
+artifact some other stage produced (`cell_grid.py` needs a GT frame from
+Data Processing, `animate_particles`/`run_visualization.animate_frames`
+needs a PRED dir from Model, `metrics_plots.py` needs the parquet/JSON
+`metrics/` now writes) — that's not disqualifying, it's the whole point of
+`visualization/`. What actually made `training_curves.py` different wasn't
+its *location*, it was that its input wasn't a file at all — fixed above.
+Once `plot_training_history` reads `models/<model_name>.history.json`
+instead of taking a live `History` object, it fits the same shape as every
+other file here and has no reason to move. `run_visualization.py` picks it
+up alongside its other plotting calls; see
+[§6](#6-persist-everywhere-render-only-in-visualization).
 
 ### Top level (`cli.py`, `config.py`, `experiment_pipeline.py`, `progress.py`, `tf_quiet.py`)
 These are cross-cutting (CLI parsing, orchestration, config, progress bars,
@@ -228,10 +266,10 @@ defaults (`config.py`).
 |---|---|---|---|
 | **Simulation** (`yade_dem/run_simulation.py`, selected via `dem_backend="yade"`; `blaze_dem/` planned) | `sag_mill_40ft_m.stl`; material params (steel ρ=7850, rock ρ=2650, Young's/Poisson/friction); charge spec (19 888 rock @ ⌀0.06985 m, 4 696 steel @ ⌀0.1397 m) | Per-timestep particle-state CSVs (`state.save_particle_positions`); optional settled-state snapshot (e.g. `rmic_nopf_settled.csv`) | `data/raw/<run>/frame_*.csv` |
 | **Data Processing** (`run_data_processing.py`) | Raw CSV frames | Parquet frames (`convert.py`); integrity report (`integrity.py`); in-memory `[T,N,3]` position / `[T,N,1]` radius tensors → sliding-window `X:[n,15,4]`, `y:[n,3]` arrays (built later, not persisted) | `data/processed/sic_dataset_20s_dt0p0001_parquet/frame_*.parquet` (+ separate `sic_training_dataset_3s_4s_parquet` for training) |
-| **Model — Training** (`model/rnn/training.py`) | Parquet frames from `train_data_dir` | Saved GRU model; Keras `History`; loss-curve figure | `models/rnn_gru_sic_model.keras` |
+| **Model — Training** (`model/rnn/training.py`) | Parquet frames from `train_data_dir` | Saved GRU model; loss-curve history — no plot rendered here anymore | `models/rnn_gru_sic_model.keras` + `models/rnn_gru_sic_model.history.json` |
 | **Model — Prediction** (`model/rnn/prediction.py`) | Parquet frames from `data_dir`; trained model; optional SR `sigma_v(x)` field from `model/sr.py` (estimated from `train_data_dir`) | One `pred_frame_XXXXX.parquet` per predicted step; combined table | `data/interim/rnn_predictions/pred_frames/pred_frame_*.parquet` + `data/interim/rnn_predictions/predictions_all.parquet` |
-| **Metrics** | GT parquet frames (`data_dir`) + PRED parquet frames (`pred_frames_dir`) | Lacey mixing-index summary; radial/axial segregation profile; velocity/granular-temperature dict; dimensionless computing-speed dict | `lacey_over_time[_pred].parquet` and `segregation_profile*.parquet` written back into each frames directory |
-| **Visualization** | Metrics dict + GT/PRED parquet frames | 5 GT-vs-surrogate comparison PNGs; cell-grid frame PNG; prediction animation (MP4, falls back to GIF without ffmpeg) | `reports/figures/*_comparison.png`; `data/interim/figures/cell_grid_frame.png` + `pred_animation.mp4` |
+| **Metrics** | GT parquet frames (`data_dir`) + PRED parquet frames (`pred_frames_dir`) | Lacey mixing-index summary; radial/axial segregation profile; velocity distribution; granular temperature; dimensionless computing-speed — all persisted now, no plot rendered here | `lacey_over_time[_pred].parquet`, `segregation_profile_{radial,axial}[_pred].parquet`, `velocity_speed.json` + `granular_temperature.parquet` (all written into each frames directory); `reports/computing_speed.json` |
+| **Visualization** | `history.json`; the metrics files above; GT/PRED parquet frames — every render call lives here now, see [§6](#6-persist-everywhere-render-only-in-visualization) | Loss-curve figure; 5 GT-vs-surrogate comparison PNGs; cell-grid frame PNG; prediction animation (MP4, falls back to GIF without ffmpeg) | `reports/figures/*.png`; `data/interim/figures/cell_grid_frame.png` + `pred_animation.mp4` |
 
 ### Diagram
 
@@ -256,8 +294,8 @@ flowchart LR
 
     ARR --> TRAIN["model/rnn/training.py<br/>train_and_save"]
     TRAIN --> MODEL[("models/rnn_gru_sic_model.keras")]
-    TRAIN --> HIST[["Keras History"]]
-    HIST --> TC["training_curves.py"] --> FIGS
+    TRAIN --> HISTFILE[("models/rnn_gru_sic_model<br/>.history.json")]
+    HISTFILE --> VIZ
 
     PROC -->|"model/rnn/prediction.py<br/>predict_frames"| PRED[("data/interim/rnn_predictions/<br/>pred_frame_*.parquet + predictions_all.parquet")]
     MODEL --> PRED
@@ -266,14 +304,14 @@ flowchart LR
     PROC --> METRICS["metrics/run_metrics.py"]
     PRED --> METRICS
     METRICS -->|"lacey_mixing_index.py"| LACEY[("lacey_over_time[_pred].parquet")]
-    METRICS -->|"segregation_profile.py"| SEG[("segregation_profile*.parquet")]
-    METRICS -->|"velocity_metrics.py"| VEL[["velocity + granular<br/>temperature dict"]]
-    METRICS -->|"computing_speed.py"| SPEED[["dimensionless<br/>speedup dict"]]
+    METRICS -->|"segregation_profile.py"| SEG[("segregation_profile_radial/axial[_pred].parquet")]
+    METRICS -->|"velocity_metrics.py"| VEL[("velocity_speed.json +<br/>granular_temperature.parquet")]
+    METRICS -->|"computing_speed.py"| SPEED[("reports/computing_speed.json")]
 
     LACEY --> VIZ
     SEG --> VIZ
     VEL --> VIZ
-    SPEED --> VIZ["metrics_plots.py +<br/>run_visualization.py"]
+    SPEED --> VIZ["metrics_plots.py +<br/>run_visualization.py<br/>(all rendering happens here — §6)"]
     PROC --> VIZ
     PRED --> VIZ
 
@@ -506,3 +544,73 @@ every other place `pipeline.py` was named above). `__main__.py` and
 Nothing internal to the module changes — same stages, same
 `ExperimentConfig` argument, same returned artifacts dict — only the name
 you'd `import` or see in a directory listing.
+
+## 6. Persist everywhere, render only in Visualization
+
+You asked whether every stage should render its own output as it goes, or
+whether output should be persisted per stage and rendered centrally at the
+end. **Persist at every stage; render only in the Visualization stage.**
+Not a coin flip between two equally reasonable styles — it's already the
+dominant pattern in this codebase, and the two places that don't follow it
+are bugs in waiting, not stylistic choices:
+
+- **Training curves are entirely unrecoverable today.** `train_and_save`
+  builds a Keras `History` object, plots it *inline, in the same function
+  call*, and returns it — nothing about it reaches disk. Run
+  `do_train=True, do_visualization=False` today, and the loss curve is
+  gone the moment the process exits; there's no way to look at it later
+  without retraining. That's the gap you asked about, and it's fixed by
+  [§2's `model/` change](#model) above: `history.json` persisted next to
+  the `.keras` file, `training_curves.py`'s `plot_training_history` reads
+  that file instead of a live object.
+- **The five metrics-comparison plots are gated by the wrong flag.** I
+  checked `pipeline.py` directly: `metrics_plots.plot_lacey_comparison`
+  and its four siblings are called from *inside* the `do_metrics` block —
+  gated on `viz.show_plots or viz.save_figures`, not on `do_visualization`
+  at all. `do_metrics=True, do_visualization=False` still renders plots
+  today; `do_metrics=True, do_visualization=True` with metrics loaded from
+  a *previous* run (no `do_metrics` this time) renders nothing, because
+  the plot calls need the live `metrics` dict `compute_metrics` just
+  returned, not a file. This proposal moves those five calls into the
+  `do_visualization` block, where `run_visualization.generate_visualizations`
+  already lives, and has them read the parquet/JSON `metrics/` now
+  writes — the same fix as training curves, just for five call sites
+  instead of one. `velocity_gt`/`velocity_pred` and `computing_speed`
+  needed a persistence step added first (per [§2's `metrics/`
+  change](#metrics)) because, unlike Lacey and the segregation profile,
+  they were never written to disk at all — only ever passed as an
+  in-memory dict from `compute_metrics` to the plot calls sitting right
+  next to it in the same function.
+
+The rule this leaves you with: **`do_train`, `do_process`, `do_predict`,
+and `do_metrics` only ever compute and persist — none of them call
+`plt.show()`, `fig.savefig()`, or anything in `visualization/`.
+`do_visualization` is the only stage that renders, and everything it
+renders it reads from disk** (or from an in-memory result *also* just
+computed in the same call, when that's cheaper — but it must be able to
+read the file too, so a later `do_visualization`-only run works without
+re-running the stage that produced the data). Benefits, beyond fixing the
+two gaps above:
+
+- Every stage keeps the property the rest of this proposal already gives
+  `run_simulation.py`, `run_data_processing.py`, `run_metrics.py`: fully
+  re-runnable on its own, because its output is a file, not a Python
+  object that dies with the process.
+- Replotting with different `VisualizationOptions` (a different `plane`,
+  `marker_size`, `fps`, or just re-running with `save_figures=True` after
+  an interactive `show_plots=True` session) never requires re-simulating,
+  re-training, re-predicting, or re-computing metrics — only re-reading
+  the files those stages already left behind.
+- Compute-heavy stages stop needing to know anything about rendering.
+  `train_and_save` currently takes a `plot_history` argument and reads
+  `config.visualization.show_plots` — a training function that knows about
+  plot display settings. After this change it takes neither; rendering
+  config only matters to `run_visualization.py`.
+
+One deliberate exception, **not** covered by this rule: the YADE Qt viewer
+(`qt.Controller()`/`qt.View()`) that `yade_dem/run_simulation.py` opens
+mid-run. That's not a plot of a persisted artifact — it's a live view of
+the simulation *as it's running*, inside YADE's own process. There's
+nothing to defer to `do_visualization`: by the time a frame exists on
+disk, the view showing it live has already moved on. It stays exactly
+where it is.
