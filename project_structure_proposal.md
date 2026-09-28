@@ -219,10 +219,10 @@ animation. Worth folding `animate_particles.py`'s logic into
 
 ```
 visualization/
-├── cell_grid.py            # single-frame scatter + Lacey grid overlay
+├── cell_grid.py            # single-frame scatter + grid overlay (one function, two cell sizes — see §5)
 ├── training_curves.py        # GRU loss curves — now reads history.json, doesn't take a live History
 ├── metrics_plots.py            # GT vs. surrogate comparison plots
-├── run_visualization.py          # pipeline entry point: animate_frames, plot_frame_grid, generate_visualizations, plot_training_history
+├── run_visualization.py          # pipeline entry point: animate_frames, plot_frame_grid (x2 — Lacey + SR), generate_visualizations, plot_training_history
 └── animate_particles.py            # ⚠ near-duplicate of animate_frames — candidate to merge
 ```
 
@@ -269,7 +269,7 @@ defaults (`config.py`).
 | **Model — Training** (`model/rnn/training.py`) | Parquet frames from `train_data_dir` | Saved GRU model; loss-curve history — no plot rendered here anymore | `models/rnn_gru_sic_model.keras` + `models/rnn_gru_sic_model.history.json` |
 | **Model — Prediction** (`model/rnn/prediction.py`) | Parquet frames from `data_dir`; trained model; optional SR `sigma_v(x)` field from `model/sr.py` (estimated from `train_data_dir`) | One `pred_frame_XXXXX.parquet` per predicted step; combined table | `data/interim/rnn_predictions/pred_frames/pred_frame_*.parquet` + `data/interim/rnn_predictions/predictions_all.parquet` |
 | **Metrics** | GT parquet frames (`data_dir`) + PRED parquet frames (`pred_frames_dir`) | Lacey mixing-index summary; radial/axial segregation profile; velocity distribution; granular temperature; dimensionless computing-speed — all persisted now, no plot rendered here | `lacey_over_time[_pred].parquet`, `segregation_profile_{radial,axial}[_pred].parquet`, `velocity_speed.json` + `granular_temperature.parquet` (all written into each frames directory); `reports/computing_speed.json` |
-| **Visualization** | `history.json`; the metrics files above; GT/PRED parquet frames — every render call lives here now, see [§6](#6-persist-everywhere-render-only-in-visualization) | Loss-curve figure; 5 GT-vs-surrogate comparison PNGs; cell-grid frame PNG; prediction animation (MP4, falls back to GIF without ffmpeg) | `reports/figures/*.png`; `data/interim/figures/cell_grid_frame.png` + `pred_animation.mp4` |
+| **Visualization** | `history.json`; the metrics files above; GT/PRED parquet frames — every render call lives here now, see [§6](#6-persist-everywhere-render-only-in-visualization) | Loss-curve figure; 5 GT-vs-surrogate comparison PNGs; two cell-grid frame PNGs (Lacey's 0.44 m grid, SR's 0.5588 m grid — see [§5](#5-config-stays-centralized)); prediction animation (MP4, falls back to GIF without ffmpeg) | `reports/figures/*.png`; `data/interim/figures/cell_grid_frame_{lacey,sr}.png` + `pred_animation.mp4` |
 
 ### Diagram
 
@@ -317,6 +317,8 @@ flowchart LR
 
     VIZ --> FIGS[("reports/figures/*.png")]
     VIZ --> ANIM[("data/interim/figures/<br/>pred_animation.mp4")]
+    VIZ --> GRIDLACEY[("cell_grid_frame_lacey.png<br/>0.04 x MILL_DIAMETER_M = 0.44 m")]
+    VIZ --> GRIDSR[("cell_grid_frame_sr.png<br/>4 x BALL_DIAM_M = 0.5588 m")]
 ```
 
 ### Backend dispatch (feeds into the `SIM` box above)
@@ -425,6 +427,9 @@ glue code that turns that data into *that backend's* objects. Concretely
 DEM_BACKENDS = ("yade", "blaze")
 
 SAGMILL_STL_PATH = "sag_mill_40ft_m.stl"
+MILL_DIAMETER_M = 11.0   # new -- pulled out of the diameter=11.0 literal
+                         # currently inline in yade_dem/run_simulation.py's
+                         # ingress_random(...) call
 ROCK_COUNT = 19888
 ROCK_DIAM_M = 0.06985
 BALL_COUNT = 4696
@@ -495,6 +500,68 @@ still means promoting them into `ExperimentConfig` as a new options group
 (e.g. `DemOptions`) — a bigger, separate change, deferred exactly as
 before. `dem_backend` is the one exception because "which backend" isn't
 optional to expose once two exist.
+
+### Two cell grids, two formulas — not the same value
+
+You asked whether `MetricsOptions.cell_size` (Lacey's mixing index +
+granular temperature) and `StochasticOptions.velocity_cell_size` (SR's
+σᵥ(x) field) use the same cell size in Kishida et al. (2025). I read the
+paper directly (`Zotero/storage/U6NKB3KZ/`) — they don't. It defines two
+different formulas, over two different reference lengths, and they
+produce two different numbers even in the paper's own reference DEM:
+
+| | Formula | Paper's citation | Paper's value (120 mm drum, 0.5 mm large particle) |
+|---|---|---|---|
+| Lacey's mixing index & granular temperature | `0.04 × D` (D = drum diameter) | §4.1, p.7: *"the length of the cubic cell was set to 0.04D, where D denotes the drum diameter"*; reused for granular temperature, p.8: *"the same size used to calculate Lacey's mixing index"* | `0.04 × 120 mm = 4.8 mm` |
+| SR's σᵥ(x) Eulerian velocity-std field | `4 × d_large` (d_large = large-particle diameter) | §2.2.3, p.4 and §3, p.6: *"fixed at four times the diameter of the large particle. The cell size was optimized in a previous study [36]"* | `4 × 0.5 mm = 2 mm` |
+
+Applied to this project's own geometry (`MILL_DIAMETER_M = 11.0`,
+`BALL_DIAM_M = 0.1397` as the large/tracer species — `material_large="steel"`
+in `ingress_random`), the same two formulas give:
+
+```python
+# --- Metrics: Lacey's mixing index & granular temperature (0.04 x D) ---
+MetricsOptions.cell_size = 0.04 * MILL_DIAMETER_M   # = 0.44  (was 0.4732)
+
+# --- Stochastic: SR's sigma_v(x) field (4 x large-particle diameter) ---
+StochasticOptions.velocity_cell_size = 4 * BALL_DIAM_M   # = 0.5588  (was 0.4732)
+```
+
+Both dataclasses keep their own field (per your call to keep them
+separate) — the change is that each default is now *derived from the
+formula the paper actually specifies for that grid*, computed against
+this project's `MILL_DIAMETER_M`/`BALL_DIAM_M`, rather than both pointing
+at the same hand-set `0.4732`. `min_particles_per_cell` (Metrics, default
+15) and `velocity_min_particles_per_cell` (Stochastic, default 15) stay as
+they are — the paper doesn't give a comparable closed-form for that one,
+both were presumably tuned empirically, and nothing above changes that.
+
+**Two grids means two grid plots.** `visualization/cell_grid.py`'s
+`plot_particles_with_grid(frame_path, cell_size, ...)` already draws
+exactly one grid overlay — today it's only ever called with
+`config.metrics.cell_size` (Lacey's grid), via `run_visualization.plot_frame_grid`.
+`run_visualization.generate_visualizations` gains a second call to the
+same function, this time with `config.stochastic.velocity_cell_size`, so
+the two grids that were just shown to differ are also visibly different in
+the output — no new plotting code, just a second call with the other cell
+size, saved under a distinguishing name:
+
+```
+data/interim/figures/
+├── cell_grid_frame_lacey.png   # was cell_grid_frame.png — grid at MetricsOptions.cell_size (0.44 m)
+└── cell_grid_frame_sr.png        # new — grid at StochasticOptions.velocity_cell_size (0.5588 m)
+```
+
+Both render from `generate_visualizations`, gated by `do_visualization`
+like everything else per [§6](#6-persist-everywhere-render-only-in-visualization)
+— `cell_grid_frame_sr.png` needs nothing `cell_grid_frame_lacey.png`
+doesn't already have (same GT frame, same `plot_particles_with_grid`, just
+a different `cell_size` argument), so it costs one extra function call,
+not a new module. A richer version — coloring each SR cell by its actual
+estimated σᵥ(x) rather than just drawing the grid lines, closer to the
+paper's Fig. 4 contour maps — is a natural follow-up once
+`VelocityStdField.sigma_by_cell` is being computed anyway, but is a bigger
+change than what was asked here, so it's not part of this proposal.
 
 ### Renaming `PipelineConfig`
 
