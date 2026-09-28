@@ -8,24 +8,28 @@ all exist today); nothing here is invented.
 ## 1. Simulation
 
 Your requested shape, mapped onto what `sim_functions.py` (995 lines, ~30
-functions) currently does. `launcher.py` and `simulation.py` don't change —
-`materials`/`stl`/`engines` absorb `sim_functions.py`'s setup-side functions,
-and four more concern modules absorb everything `sim_functions.py` does
-*after* setup (loading a charge, running it, saving it, and inspecting it).
-I also moved DEM-only constants out of the generic `config.py` into the
-module that now owns that concern.
+functions) currently does. `launcher.py` doesn't change. `simulation.py` is
+**renamed to `run_simulation.py`**, same content (the `run()` scenario
+entry-point), just matching the `run_<subpackage>.py` orchestrator
+convention that `metrics/run_metrics.py` and `visualization/run_visualization.py`
+already use — see [§4](#4-running-everything-end-to-end) for why that
+consistency now matters. `materials`/`stl`/`engines` absorb
+`sim_functions.py`'s setup-side functions, and four more concern modules
+absorb everything `sim_functions.py` does *after* setup (loading a charge,
+running it, saving it, and inspecting it). I also moved DEM-only constants
+out of the generic `config.py` into the module that now owns that concern.
 
 ```
 simulation/
-├── launcher.py         # unchanged — subprocess bridge to the yade executable
-├── simulation.py        # unchanged — scenario entry-point (run())
-├── materials.py          # steel/rock definitions + contact interactions
-├── stl.py                 # mill geometry: STL loading + slice measurements
-├── engines.py               # contact model, dt, damping, rotation, force-balance settling
-├── particles.py              # particle loading + ingress (charge generation)
-├── state.py                    # save/load particle positions (CSV snapshots)
-├── capture.py                   # frame recording during a run
-└── diagnostics.py                # overlap checks, particle inventory
+├── launcher.py            # unchanged — subprocess bridge to the yade executable
+├── run_simulation.py       # renamed from simulation.py — scenario orchestrator (run())
+├── materials.py             # steel/rock definitions + contact interactions
+├── stl.py                    # mill geometry: STL loading + slice measurements
+├── engines.py                  # contact model, dt, damping, rotation, force-balance settling
+├── particles.py                  # particle loading + ingress (charge generation)
+├── state.py                        # save/load particle positions (CSV snapshots)
+├── capture.py                        # frame recording during a run
+└── diagnostics.py                      # overlap checks, particle inventory
 ```
 
 | New module | Functions it absorbs (from `sim_functions.py` unless noted) |
@@ -38,7 +42,7 @@ simulation/
 | `capture.py` | `start_frame_capture`, `_save_sphere_frame` |
 | `diagnostics.py` | `check_overlaps`, `get_particle_inventory` |
 
-Net effect: `sim_functions.py` — a 995-line grab-bag — disappears into eight
+Net effect: `sim_functions.py` — a 995-line grab-bag — disappears into seven
 focused modules, none over ~200 lines, each independently testable (the
 existing `tests/simulation/test_sim_functions.py` splits along exactly these
 lines: `_mat_label` → `materials`, `chord_box_3d` → `stl`).
@@ -48,30 +52,31 @@ lines: `_mat_label` → `materials`, `chord_box_3d` → `stl`).
 ### `data_processing/`
 Already close to one-concern-per-file; the one seam worth cutting is inside
 `frames.py`, which currently mixes *loading* frames off disk with
-*constructing* the supervised-learning arrays from them. No `run_*.py`
-orchestrator here, unlike `metrics/` and `visualization/` — see the
-[note](#why-no-run_data_processingpy) below on why that asymmetry is
-intentional, not an oversight.
+*constructing* the supervised-learning arrays from them. It also gains the
+`run_*.py` orchestrator it was missing, so it matches `metrics/` and
+`visualization/` and can be gated as its own pipeline stage — see
+[§4](#4-running-everything-end-to-end).
 
 ```
 data_processing/
-├── convert.py     # was csv_to_parquet.py — convert_csv_file_to_parquet, convert_folder_csv_to_parquet
-├── frames.py        # sorted_frame_files, load_frame, load_frames_stacked
-├── dataset.py         # build_supervised_dataset, train_test_split
-└── integrity.py         # particle_radius_counts_per_file, report_particle_integrity
+├── convert.py           # was csv_to_parquet.py — convert_csv_file_to_parquet, convert_folder_csv_to_parquet
+├── frames.py              # sorted_frame_files, load_frame, load_frames_stacked
+├── dataset.py               # build_supervised_dataset, train_test_split
+├── integrity.py                # particle_radius_counts_per_file, report_particle_integrity
+└── run_data_processing.py        # new — orchestrator: raw CSVs -> parquet + integrity check
 ```
 
-#### Why no `run_data_processing.py`?
-`run_metrics.py` and `run_visualization.py` exist because `PipelineConfig`
-gates those two as toggleable stages (`do_metrics`, `do_visualization`), and
-each needs one call that returns "everything for this stage" —
-`compute_metrics(config)`, `generate_visualizations(config)`. There is no
-`do_process` toggle: `data_processing` isn't a pipeline stage, it's shared
-library code that `training.py`, `prediction.py`, and `run_metrics.py` each
-import piecemeal (`frames.sorted_frame_files`, `frames.load_frame`, ...),
-and `convert.py`/`integrity.py` are standalone tools run by hand on raw CSVs
-before the pipeline ever starts — neither `cli.py` nor `pipeline.py`
-currently calls either one. Nothing to orchestrate, so no orchestrator.
+`run_data_processing.py` is new code, not a rename: a `process_frames(config)`
+function that calls `convert.convert_folder_csv_to_parquet` on
+`config.raw_data_dir` (new field) → `config.data_dir`, then runs
+`integrity.report_particle_integrity` on the result as a sanity gate before
+training/prediction ever touch the data — the same "one call returns
+everything for this stage" shape as `compute_metrics(config)` and
+`generate_visualizations(config)`. `frames.py`/`dataset.py` keep being
+imported piecemeal by `model/rnn/training.py`, `model/rnn/prediction.py`,
+and `metrics/run_metrics.py` for in-memory array building — that part of
+`data_processing` stays library code, only the CSV→parquet conversion step
+becomes an explicit, gated stage.
 
 ### `model/`
 This package holds the two components of the paper's RNNSR method: the GRU
@@ -85,7 +90,12 @@ subpackage rather than prefixing filenames (`rnn_architecture.py`, etc.) —
 matches how `simulation/`, `metrics/`, and `visualization/` are already
 subpackages, and keeps `model/` importable as "the surrogate," with `rnn`
 as one clearly-named part of it (`from bppm_dem_sm.model.rnn import
-training`, `from bppm_dem_sm.model import stochastic_motion`):
+training`, `from bppm_dem_sm.model import sr`). `stochastic_motion.py` is
+renamed to `sr.py` to match: it's the SR half of "RNNSR" the same way `rnn/`
+is the RNN half, and the paper itself, `PipelineConfig`
+(`StochasticOptions`), and the metrics/plots all already call it "SR" /
+"stochastic," never "stochastic motion" — the module name was the odd one
+out.
 
 ```
 model/
@@ -95,8 +105,16 @@ model/
 │   ├── training.py           # train_and_save
 │   ├── loading.py              # was part of prediction.py — load_model, _resolve_model_path, _SavedModelWrapper
 │   └── prediction.py             # predict_frames (sliding window)
-└── stochastic_motion.py            # unchanged — SR velocity perturbation, applied after rnn.prediction (Kishida et al. 2025)
+└── sr.py                           # renamed from stochastic_motion.py — SR velocity perturbation, applied after rnn.prediction (Kishida et al. 2025)
 ```
+
+Everything that names the old module follows: `model/rnn/prediction.py`'s
+`from . import stochastic_motion` → `from .. import sr`; `pipeline.py`'s
+import of `model.stochastic_motion` (if any is added later) →
+`model.sr`; and the internal names it exposes (`VelocityStdField`,
+`build_velocity_std_field`, `build_velocity_std_field_from_config`,
+`sample_stochastic_displacement`) are unaffected — only the file/module
+path changes, not the API.
 
 ### `metrics/`
 Already one-file-per-metric; `compute_computing_speed` is presently bolted
@@ -140,7 +158,8 @@ DEM-only constant (`MATERIALS`, `build_material_interactions`, `ROCK_COUNT`,
 `simulation/stl.py`. What's left in `config.py` matches what its own
 docstring already claims: "Configuration and path resolution for the RNN
 surrogate pipeline" — paths, `PipelineConfig` and its option dataclasses,
-nothing DEM-specific.
+nothing DEM-specific. `pipeline.py` itself changes more substantially — see
+[§4](#4-running-everything-end-to-end).
 
 ## 3. Stage inputs / outputs
 
@@ -150,10 +169,10 @@ defaults (`config.py`).
 
 | Stage | Reads | Produces | Location |
 |---|---|---|---|
-| **Simulation** (YADE) | `sag_mill_40ft_m.stl`; material params (steel ρ=7850, rock ρ=2650, Young's/Poisson/friction); charge spec (19 888 rock @ ⌀0.06985 m, 4 696 steel @ ⌀0.1397 m) | Per-timestep particle-state CSVs (`state.save_particle_positions`); optional settled-state snapshot (e.g. `rmic_nopf_settled.csv`) | `data/raw/<run>/frame_*.csv` |
-| **Data Processing** | Raw CSV frames | Parquet frames (`convert.py`); in-memory `[T,N,3]` position / `[T,N,1]` radius tensors → sliding-window `X:[n,15,4]`, `y:[n,3]` arrays (not persisted); console integrity report | `data/processed/sic_dataset_20s_dt0p0001_parquet/frame_*.parquet` (+ separate `sic_training_dataset_3s_4s_parquet` for training) |
-| **Model — Training** | Parquet frames from `train_data_dir` | Saved GRU model; Keras `History`; loss-curve figure | `models/rnn_gru_sic_model.keras` |
-| **Model — Prediction** | Parquet frames from `data_dir`; trained model; optional SR `sigma_v(x)` field (estimated from `train_data_dir`) | One `pred_frame_XXXXX.parquet` per predicted step; combined table | `data/interim/rnn_predictions/pred_frames/pred_frame_*.parquet` + `data/interim/rnn_predictions/predictions_all.parquet` |
+| **Simulation** (`run_simulation.py`, via YADE) | `sag_mill_40ft_m.stl`; material params (steel ρ=7850, rock ρ=2650, Young's/Poisson/friction); charge spec (19 888 rock @ ⌀0.06985 m, 4 696 steel @ ⌀0.1397 m) | Per-timestep particle-state CSVs (`state.save_particle_positions`); optional settled-state snapshot (e.g. `rmic_nopf_settled.csv`) | `data/raw/<run>/frame_*.csv` |
+| **Data Processing** (`run_data_processing.py`) | Raw CSV frames | Parquet frames (`convert.py`); integrity report (`integrity.py`); in-memory `[T,N,3]` position / `[T,N,1]` radius tensors → sliding-window `X:[n,15,4]`, `y:[n,3]` arrays (built later, not persisted) | `data/processed/sic_dataset_20s_dt0p0001_parquet/frame_*.parquet` (+ separate `sic_training_dataset_3s_4s_parquet` for training) |
+| **Model — Training** (`model/rnn/training.py`) | Parquet frames from `train_data_dir` | Saved GRU model; Keras `History`; loss-curve figure | `models/rnn_gru_sic_model.keras` |
+| **Model — Prediction** (`model/rnn/prediction.py`) | Parquet frames from `data_dir`; trained model; optional SR `sigma_v(x)` field from `model/sr.py` (estimated from `train_data_dir`) | One `pred_frame_XXXXX.parquet` per predicted step; combined table | `data/interim/rnn_predictions/pred_frames/pred_frame_*.parquet` + `data/interim/rnn_predictions/predictions_all.parquet` |
 | **Metrics** | GT parquet frames (`data_dir`) + PRED parquet frames (`pred_frames_dir`) | Lacey mixing-index summary; radial/axial segregation profile; velocity/granular-temperature dict; dimensionless computing-speed dict | `lacey_over_time[_pred].parquet` and `segregation_profile*.parquet` written back into each frames directory |
 | **Visualization** | Metrics dict + GT/PRED parquet frames | 5 GT-vs-surrogate comparison PNGs; cell-grid frame PNG; prediction animation (MP4, falls back to GIF without ffmpeg) | `reports/figures/*_comparison.png`; `data/interim/figures/cell_grid_frame.png` + `pred_animation.mp4` |
 
@@ -161,7 +180,7 @@ defaults (`config.py`).
 
 ```mermaid
 flowchart LR
-    subgraph SIM["Simulation (YADE)"]
+    subgraph SIM["simulation/run_simulation.py<br/>(needs yade)"]
         direction TB
         MAT["materials.py"]
         STLM["stl.py"]
@@ -170,9 +189,11 @@ flowchart LR
     end
 
     RAW[("data/raw/*.csv<br/>per-timestep frames")]
-    SIM -->|"state.save_particle_positions()"| RAW
+    SIM -->|"state.save_particle_positions()<br/>via launcher.launch_simulation()"| RAW
 
-    RAW -->|"data_processing/convert.py"| PROC[("data/processed/&lt;dataset&gt;/<br/>frame_*.parquet")]
+    RAW --> DPROC["data_processing/<br/>run_data_processing.py"]
+    DPROC -->|"convert.py"| PROC[("data/processed/&lt;dataset&gt;/<br/>frame_*.parquet")]
+    DPROC -.->|"integrity.py"| INTEG[["integrity report"]]
 
     PROC -->|"frames.py + dataset.py<br/>build_supervised_dataset"| ARR[["X: [n,15,4], y: [n,3]<br/>in-memory arrays"]]
 
@@ -183,7 +204,7 @@ flowchart LR
 
     PROC -->|"model/rnn/prediction.py<br/>predict_frames"| PRED[("data/interim/rnn_predictions/<br/>pred_frame_*.parquet + predictions_all.parquet")]
     MODEL --> PRED
-    STOCH["model/stochastic_motion.py<br/>sigma_v(x) from train_data_dir"] -.optional SR term.-> PRED
+    STOCH["model/sr.py<br/>sigma_v(x) from train_data_dir"] -.optional SR term.-> PRED
 
     PROC --> METRICS["metrics/run_metrics.py"]
     PRED --> METRICS
@@ -202,3 +223,46 @@ flowchart LR
     VIZ --> FIGS[("reports/figures/*.png")]
     VIZ --> ANIM[("data/interim/figures/<br/>pred_animation.mp4")]
 ```
+
+## 4. Running everything end-to-end
+
+Today, `pipeline.py` only spans four of the six stages: `do_train`,
+`do_predict`, `do_metrics`, `do_visualization`. Simulation and data
+processing sit outside it entirely — `cli.py`'s `dem-sim` subcommand
+launches `run_simulation.py` on its own, and nothing calls
+`data_processing` as a stage at all. Every module above now has a matching
+`run_<subpackage>.py`, so the natural next step is closing that gap: add
+`do_simulate` and `do_process` to `PipelineConfig`, both `False` by default
+(matching `do_train`), so a single `run_pipeline(...)` call can go all the
+way from an empty DEM charge to comparison plots, or run any subset exactly
+as today.
+
+```
+do_simulate → do_process → do_train → do_predict → do_metrics → do_visualization
+```
+
+Two things make `do_simulate` different from the other five gates:
+
+- **Different interpreter.** `run_simulation.py` runs under YADE's
+  patched Python, not this package's own venv — `pipeline.py` can't `import`
+  it the way it imports `model.rnn.training` or `metrics.run_metrics`. The
+  `do_simulate` stage has to go through `simulation.launcher.launch_simulation()`,
+  which subprocesses out to the `yade` executable, same as `cli.py`'s
+  `dem-sim` subcommand does today.
+- **Optional dependency.** YADE isn't a pip package; it's a separate
+  install. `pipeline.py` should check
+  `simulation.launcher.find_yade_executable()` before attempting
+  `do_simulate` and raise the same clear `FileNotFoundError` that
+  `launch_simulation()` already raises when `yade` isn't on `PATH` — so
+  "run everything" fails fast and legibly on a machine without YADE,
+  instead of partway through with an import error. Every other stage
+  (`do_process` through `do_visualization`) has no such external
+  dependency and runs on the plain TensorFlow/pandas venv exactly as it
+  does today.
+
+`do_process` is a normal in-venv stage like the rest: `pipeline.py` calls
+`data_processing.run_data_processing.process_frames(config)` directly, no
+subprocess involved — it only needs to exist as a *toggle* because you
+often already have parquet frames on disk and don't want to reconvert them
+on every run, same reasoning as why `do_train` defaults `False` (you don't
+retrain on every predict/metrics/visualize run either).
