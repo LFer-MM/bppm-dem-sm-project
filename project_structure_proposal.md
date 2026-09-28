@@ -48,7 +48,10 @@ lines: `_mat_label` → `materials`, `chord_box_3d` → `stl`).
 ### `data_processing/`
 Already close to one-concern-per-file; the one seam worth cutting is inside
 `frames.py`, which currently mixes *loading* frames off disk with
-*constructing* the supervised-learning arrays from them.
+*constructing* the supervised-learning arrays from them. No `run_*.py`
+orchestrator here, unlike `metrics/` and `visualization/` — see the
+[note](#why-no-run_data_processingpy) below on why that asymmetry is
+intentional, not an oversight.
 
 ```
 data_processing/
@@ -58,18 +61,41 @@ data_processing/
 └── integrity.py         # particle_radius_counts_per_file, report_particle_integrity
 ```
 
+#### Why no `run_data_processing.py`?
+`run_metrics.py` and `run_visualization.py` exist because `PipelineConfig`
+gates those two as toggleable stages (`do_metrics`, `do_visualization`), and
+each needs one call that returns "everything for this stage" —
+`compute_metrics(config)`, `generate_visualizations(config)`. There is no
+`do_process` toggle: `data_processing` isn't a pipeline stage, it's shared
+library code that `training.py`, `prediction.py`, and `run_metrics.py` each
+import piecemeal (`frames.sorted_frame_files`, `frames.load_frame`, ...),
+and `convert.py`/`integrity.py` are standalone tools run by hand on raw CSVs
+before the pipeline ever starts — neither `cli.py` nor `pipeline.py`
+currently calls either one. Nothing to orchestrate, so no orchestrator.
+
 ### `model/`
-`training.py` currently mixes model *architecture* with the *training loop*,
-and `prediction.py` mixes model *loading* with the *sliding-window
-prediction loop*. Split each along that seam:
+This package holds the two components of the paper's RNNSR method: the GRU
+**RNN** surrogate (deterministic prediction) and the **SR** stochastic term
+applied after it. `training.py` currently mixes model *architecture* with
+the *training loop*, and `prediction.py` mixes model *loading* with the
+*sliding-window prediction loop* — split each along that seam. Since all
+four RNN modules are tightly related but SR is a distinct component applied
+*on top of* the RNN's output, group the RNN files under their own
+subpackage rather than prefixing filenames (`rnn_architecture.py`, etc.) —
+matches how `simulation/`, `metrics/`, and `visualization/` are already
+subpackages, and keeps `model/` importable as "the surrogate," with `rnn`
+as one clearly-named part of it (`from bppm_dem_sm.model.rnn import
+training`, `from bppm_dem_sm.model import stochastic_motion`):
 
 ```
 model/
-├── architecture.py     # was part of training.py — build_model (GRU → Dense)
-├── training.py           # train_and_save
-├── loading.py              # was part of prediction.py — load_model, _resolve_model_path, _SavedModelWrapper
-├── prediction.py             # predict_frames (sliding window)
-└── stochastic_motion.py        # unchanged — SR velocity perturbation (Kishida et al. 2025)
+├── rnn/
+│   ├── __init__.py
+│   ├── architecture.py     # was part of training.py — build_model (GRU → Dense)
+│   ├── training.py           # train_and_save
+│   ├── loading.py              # was part of prediction.py — load_model, _resolve_model_path, _SavedModelWrapper
+│   └── prediction.py             # predict_frames (sliding window)
+└── stochastic_motion.py            # unchanged — SR velocity perturbation, applied after rnn.prediction (Kishida et al. 2025)
 ```
 
 ### `metrics/`
@@ -150,14 +176,14 @@ flowchart LR
 
     PROC -->|"frames.py + dataset.py<br/>build_supervised_dataset"| ARR[["X: [n,15,4], y: [n,3]<br/>in-memory arrays"]]
 
-    ARR --> TRAIN["model/training.py<br/>train_and_save"]
+    ARR --> TRAIN["model/rnn/training.py<br/>train_and_save"]
     TRAIN --> MODEL[("models/rnn_gru_sic_model.keras")]
     TRAIN --> HIST[["Keras History"]]
     HIST --> TC["training_curves.py"] --> FIGS
 
-    PROC -->|"model/prediction.py<br/>predict_frames"| PRED[("data/interim/rnn_predictions/<br/>pred_frame_*.parquet + predictions_all.parquet")]
+    PROC -->|"model/rnn/prediction.py<br/>predict_frames"| PRED[("data/interim/rnn_predictions/<br/>pred_frame_*.parquet + predictions_all.parquet")]
     MODEL --> PRED
-    STOCH["stochastic_motion.py<br/>sigma_v(x) from train_data_dir"] -.optional SR term.-> PRED
+    STOCH["model/stochastic_motion.py<br/>sigma_v(x) from train_data_dir"] -.optional SR term.-> PRED
 
     PROC --> METRICS["metrics/run_metrics.py"]
     PRED --> METRICS
