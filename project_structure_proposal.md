@@ -112,9 +112,9 @@ model/
 ```
 
 Everything that names the old module follows: `model/rnn/prediction.py`'s
-`from . import stochastic_motion` → `from .. import sr`; `pipeline.py`'s
-import of `model.stochastic_motion` (if any is added later) →
-`model.sr`; and the internal names it exposes (`VelocityStdField`,
+`from . import stochastic_motion` → `from .. import sr`;
+`experiment_pipeline.py`'s import of `model.stochastic_motion` (if any is
+added later) → `model.sr`; and the internal names it exposes (`VelocityStdField`,
 `build_velocity_std_field`, `build_velocity_std_field_from_config`,
 `sample_stochastic_displacement`) are unaffected — only the file/module
 path changes, not the API.
@@ -150,7 +150,7 @@ visualization/
 └── animate_particles.py            # ⚠ near-duplicate of animate_frames — candidate to merge
 ```
 
-### Top level (`cli.py`, `config.py`, `pipeline.py`, `progress.py`, `tf_quiet.py`)
+### Top level (`cli.py`, `config.py`, `experiment_pipeline.py`, `progress.py`, `tf_quiet.py`)
 These are cross-cutting (CLI parsing, orchestration, config, progress bars,
 TF log suppression) rather than pipeline stages, so they don't get a
 concern-per-file split the same way — they stay flat at package root.
@@ -160,8 +160,9 @@ docstring should be widened accordingly (currently claims "Configuration
 and path resolution for the RNN surrogate pipeline," which is already
 inaccurate today since it also holds DEM constants — the fix is to update
 the docstring to match reality, not move the code to match the docstring).
-`pipeline.py` changes more substantially — see
-[§4](#4-running-everything-end-to-end).
+`pipeline.py` is renamed to `experiment_pipeline.py` and changes more
+substantially — see [§4](#4-running-everything-end-to-end) and
+[§5](#5-config-stays-centralized).
 
 ## 3. Stage inputs / outputs
 
@@ -228,14 +229,16 @@ flowchart LR
 
 ## 4. Running everything end-to-end
 
-Today, `pipeline.py` only spans four of the six stages: `do_train`,
+Today, `pipeline.py` (renamed `experiment_pipeline.py` under this
+proposal — see [§5](#5-config-stays-centralized)) only spans four of the
+six stages: `do_train`,
 `do_predict`, `do_metrics`, `do_visualization`. Simulation and data
 processing sit outside it entirely — `cli.py`'s `dem-sim` subcommand
 launches `run_simulation.py` on its own, and nothing calls
 `data_processing` as a stage at all. Every module above now has a matching
 `run_<subpackage>.py`, so the natural next step is closing that gap: add
 `do_simulate` and `do_process` to `ExperimentConfig`, both `False` by default
-(matching `do_train`), so a single `run_pipeline(...)` call can go all the
+(matching `do_train`), so a single `run_experiment_pipeline(...)` call can go all the
 way from an empty DEM charge to comparison plots, or run any subset exactly
 as today.
 
@@ -246,13 +249,13 @@ do_simulate → do_process → do_train → do_predict → do_metrics → do_vis
 Two things make `do_simulate` different from the other five gates:
 
 - **Different interpreter.** `run_simulation.py` runs under YADE's
-  patched Python, not this package's own venv — `pipeline.py` can't `import`
+  patched Python, not this package's own venv — `experiment_pipeline.py` can't `import`
   it the way it imports `model.rnn.training` or `metrics.run_metrics`. The
   `do_simulate` stage has to go through `simulation.launcher.launch_simulation()`,
   which subprocesses out to the `yade` executable, same as `cli.py`'s
   `dem-sim` subcommand does today.
 - **Optional dependency.** YADE isn't a pip package; it's a separate
-  install. `pipeline.py` should check
+  install. `experiment_pipeline.py` should check
   `simulation.launcher.find_yade_executable()` before attempting
   `do_simulate` and raise the same clear `FileNotFoundError` that
   `launch_simulation()` already raises when `yade` isn't on `PATH` — so
@@ -262,7 +265,7 @@ Two things make `do_simulate` different from the other five gates:
   dependency and runs on the plain TensorFlow/pandas venv exactly as it
   does today.
 
-`do_process` is a normal in-venv stage like the rest: `pipeline.py` calls
+`do_process` is a normal in-venv stage like the rest: `experiment_pipeline.py` calls
 `data_processing.run_data_processing.process_frames(config)` directly, no
 subprocess involved — it only needs to exist as a *toggle* because you
 often already have parquet frames on disk and don't want to reconvert them
@@ -327,7 +330,26 @@ Alternative considered: `RunConfig` (used by tools like W&B/MLflow) — more
 neutral, slightly less specific than `ExperimentConfig` about *why* you're
 configuring a run. Either is a real improvement over `PipelineConfig`;
 `ExperimentConfig` was chosen for this proposal because it matches the
-project's own framing as a paper reproduction. `pipeline.py` and
-`run_pipeline()` keep their names — they still accurately describe *running
-a sequence of stages*; only the config object's name undersold what it
-configures.
+project's own framing as a paper reproduction.
+
+### Renaming `pipeline.py` / `run_pipeline()`
+
+Per your ask to keep this glanceable — the module and file names should
+say what they are without opening the file — `pipeline.py` and
+`run_pipeline()` follow `ExperimentConfig` rather than being left as the
+one place still saying "pipeline" on its own:
+
+| Was | Becomes |
+|---|---|
+| `bppm_dem_sm/pipeline.py` | `bppm_dem_sm/experiment_pipeline.py` |
+| `run_pipeline(config, **overrides)` | `run_experiment_pipeline(config, **overrides)` |
+
+Applied throughout this doc (the six-stage orchestrator in
+[§4](#4-running-everything-end-to-end), the top-level file listing, and
+every other place `pipeline.py` was named above). `__main__.py` and
+`cli.py`'s `ml-pipeline` subcommand update their
+`from .pipeline import run_pipeline` to
+`from .experiment_pipeline import run_experiment_pipeline` accordingly.
+Nothing internal to the module changes — same stages, same
+`ExperimentConfig` argument, same returned artifacts dict — only the name
+you'd `import` or see in a directory listing.
