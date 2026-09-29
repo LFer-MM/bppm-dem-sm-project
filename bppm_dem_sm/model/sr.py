@@ -17,7 +17,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from ..config import ID_COL, TARGET_COLS, PipelineConfig
+from ..config import ID_COL, TARGET_COLS, ExperimentConfig
 from ..data_processing import frames as data_io
 
 _HASH_COEFFS = (73856093, 19349663, 83492791)
@@ -129,7 +129,7 @@ def build_velocity_std_field(
     return VelocityStdField(cell_size=cell_size, origin=origin, sigma_by_cell=sigma_by_cell)
 
 
-def build_velocity_std_field_from_config(config: PipelineConfig) -> VelocityStdField:
+def build_velocity_std_field_from_config(config: ExperimentConfig) -> VelocityStdField:
     """Build the sigma_v(x) field from ``config.train_data_dir``.
 
     Args:

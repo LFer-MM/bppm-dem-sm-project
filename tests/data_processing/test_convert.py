@@ -6,7 +6,7 @@ import os
 
 import pandas as pd
 
-from bppm_dem_sm.data_processing.csv_to_parquet import (
+from bppm_dem_sm.data_processing.convert import (
     convert_csv_file_to_parquet,
     convert_folder_csv_to_parquet,
 )

@@ -11,7 +11,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bppm_dem_sm.config import ComputingSpeedOptions, MetricsOptions, PipelineConfig, PredictionOptions
+from bppm_dem_sm.config import ComputingSpeedOptions, ExperimentConfig, MetricsOptions, PredictionOptions
+from bppm_dem_sm.metrics import computing_speed as cs_module
 from bppm_dem_sm.metrics import run_metrics
 from bppm_dem_sm.visualization import metrics_plots
 
@@ -55,7 +56,7 @@ def _base_config(tmp_path, with_pred):
     if with_pred:
         _write_pred_frames(out_dir / "pred_frames", start_idx=10)
 
-    return PipelineConfig(
+    return ExperimentConfig(
         data_dir=data_dir,
         prediction=PredictionOptions(pred_out_dir=out_dir),
         metrics=MetricsOptions(
@@ -84,26 +85,28 @@ def test_plot_functions_run_without_error(tmp_path):
 
 def test_plot_velocity_and_granular_temperature_none_without_velocity(tmp_path):
     metrics = {"gt": pd.DataFrame({"time": [0.0], "lacey": [0.5]})}
-    config = PipelineConfig()
+    config = ExperimentConfig()
     assert metrics_plots.plot_velocity_distribution(metrics, config, show=False) is None
     assert metrics_plots.plot_granular_temperature(metrics, config, show=False) is None
 
 
 def test_plot_computing_speed_none_when_missing():
-    config = PipelineConfig()
+    config = ExperimentConfig()
     assert metrics_plots.plot_computing_speed({}, config, show=False) is None
     assert metrics_plots.plot_computing_speed({"computing_speed": {}}, config, show=False) is None
 
 
-def test_plot_computing_speed_none_when_no_speedup_available():
-    config = PipelineConfig()
-    cs = run_metrics.compute_computing_speed({}, config)
+def test_plot_computing_speed_none_when_no_speedup_available(tmp_path, monkeypatch):
+    monkeypatch.setattr(cs_module, "REPORTS_DIR", tmp_path)
+    config = ExperimentConfig()
+    cs = cs_module.compute_computing_speed({}, config)
     assert metrics_plots.plot_computing_speed({"computing_speed": cs}, config, show=False) is None
 
 
-def test_plot_computing_speed_renders_available_bars():
-    config = PipelineConfig(computing_speed=ComputingSpeedOptions(dem_reference_seconds=1000.0))
-    cs = run_metrics.compute_computing_speed({"train_seconds": 80.0, "predict_seconds": 20.0}, config)
+def test_plot_computing_speed_renders_available_bars(tmp_path, monkeypatch):
+    monkeypatch.setattr(cs_module, "REPORTS_DIR", tmp_path)
+    config = ExperimentConfig(computing_speed=ComputingSpeedOptions(dem_reference_seconds=1000.0))
+    cs = cs_module.compute_computing_speed({"train_seconds": 80.0, "predict_seconds": 20.0}, config)
 
     fig = metrics_plots.plot_computing_speed({"computing_speed": cs}, config, show=False)
     assert fig is not None

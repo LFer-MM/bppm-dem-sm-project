@@ -1,23 +1,31 @@
-"""Lacey mixing-index, segregation-profile, velocity, granular-temperature, and
-computing-speed metrics over directories of ground-truth and predicted frames.
+"""Lacey mixing-index, segregation-profile, velocity, and granular-temperature
+metrics over directories of ground-truth and predicted frames.
 
 Computation only; the matching plots live in
-:mod:`bppm_dem_sm.visualization.metrics_plots`.
+:mod:`bppm_dem_sm.visualization.metrics_plots`. The computing-speed metric
+lives in :mod:`bppm_dem_sm.metrics.computing_speed` -- an unrelated concern
+(wall-clock comparison, not a particle-frame metric).
 """
 
 from __future__ import annotations
 
+import json
 import os
 
+import numpy as np
 import pandas as pd
 
-from ..config import PipelineConfig
+from ..config import ExperimentConfig
 from ..data_processing import frames as data_io
 from ..progress import track
+from . import computing_speed as _computing_speed
 from . import lacey_mixing_index as lacey
 from . import segregation_profile as segprofile
 from . import velocity_metrics as velmet
 from .lacey_mixing_index import GT_FRAME_RE, PRED_FRAME_RE
+
+_VELOCITY_SPEED_FILENAME = "velocity_speed.json"
+_GRANULAR_TEMPERATURE_FILENAME = "granular_temperature.parquet"
 
 
 def compute_lacey_over_dir(frames_dir, pattern, frame_re, tracer_r, config, out_name, label):
@@ -131,6 +139,12 @@ def compute_velocity_and_granular_temperature(frames_dir, pattern, frame_re, tra
             and ``metrics.metrics_dt``.
         label: Short label for log messages (e.g. ``"GT"``, ``"PRED"``).
 
+    Persists ``velocity_speed.json`` and ``granular_temperature.parquet``
+    into ``frames_dir`` -- unlike the Lacey/segregation-profile summaries,
+    these were only ever an in-memory dict before, so a later
+    ``do_visualization``-only run had nothing to read; see
+    :func:`load_velocity_and_granular_temperature`.
+
     Returns:
         dict or None: ``{"time", "frame_t", "frame_t1", "speed", "granular_temperature"}``,
         or ``None`` if fewer than 2 frames are available.
@@ -155,16 +169,69 @@ def compute_velocity_and_granular_temperature(frames_dir, pattern, frame_re, tra
         f"[{label}] Velocity/granular temperature at t={idx_t1 * m.metrics_dt:.3f}s "
         f"(frames {idx_t}->{idx_t1}, {len(granular_temperature)} cells)"
     )
-    return {
+
+    result = {
         "time": idx_t1 * m.metrics_dt,
         "frame_t": idx_t,
         "frame_t1": idx_t1,
         "speed": speed,
         "granular_temperature": granular_temperature,
     }
+    _save_velocity_and_granular_temperature(frames_dir, result)
+    return result
 
 
-def compute_metrics(config: PipelineConfig) -> dict:
+def _save_velocity_and_granular_temperature(frames_dir, result: dict) -> None:
+    """Persist one :func:`compute_velocity_and_granular_temperature` result."""
+    speed_path = os.path.join(str(frames_dir), _VELOCITY_SPEED_FILENAME)
+    with open(speed_path, "w", encoding="utf-8") as fh:
+        json.dump(
+            {
+                "time": result["time"],
+                "frame_t": int(result["frame_t"]),
+                "frame_t1": int(result["frame_t1"]),
+                "speed": {k: np.asarray(v).tolist() for k, v in result["speed"].items()},
+            },
+            fh,
+        )
+
+    temp_path = os.path.join(str(frames_dir), _GRANULAR_TEMPERATURE_FILENAME)
+    pd.DataFrame({"granular_temperature": result["granular_temperature"]}).to_parquet(
+        temp_path, index=False
+    )
+
+
+def load_velocity_and_granular_temperature(frames_dir) -> dict | None:
+    """Read a persisted :func:`compute_velocity_and_granular_temperature` result back.
+
+    Args:
+        frames_dir: Directory that previously received
+            ``velocity_speed.json`` + ``granular_temperature.parquet``
+            (``config.data_dir`` for GT, ``config.prediction.pred_frames_dir``
+            for PRED).
+
+    Returns:
+        dict or None: Same shape as :func:`compute_velocity_and_granular_temperature`,
+        or ``None`` if either file is missing.
+    """
+    speed_path = os.path.join(str(frames_dir), _VELOCITY_SPEED_FILENAME)
+    temp_path = os.path.join(str(frames_dir), _GRANULAR_TEMPERATURE_FILENAME)
+    if not (os.path.exists(speed_path) and os.path.exists(temp_path)):
+        return None
+
+    with open(speed_path, encoding="utf-8") as fh:
+        data = json.load(fh)
+    granular_temperature = pd.read_parquet(temp_path)["granular_temperature"].to_numpy()
+    return {
+        "time": data["time"],
+        "frame_t": data["frame_t"],
+        "frame_t1": data["frame_t1"],
+        "speed": {k: np.asarray(v) for k, v in data["speed"].items()},
+        "granular_temperature": granular_temperature,
+    }
+
+
+def compute_metrics(config: ExperimentConfig) -> dict:
     """Compute Lacey index, segregation profile, velocity, and granular temperature.
 
     Detects the tracer radius from the first ground-truth frame, then runs
@@ -228,55 +295,50 @@ def compute_metrics(config: PipelineConfig) -> dict:
     return results
 
 
-def compute_computing_speed(timing: dict, config: PipelineConfig) -> dict:
-    """Dimensionless computing speed vs. a user-supplied DEM reference (paper Fig. 15).
+def load_metrics(config: ExperimentConfig) -> dict:
+    """Reconstruct the :func:`compute_metrics` dict shape from persisted files.
 
-    Compares this run's own wall-clock training/prediction time (plus, if
-    supplied, the short reference-DEM run used to build the GRU's training
-    data) against ``config.computing_speed.dem_reference_seconds`` -- the
-    wall-clock time of a full DEM run reproducing the same target simulated
-    duration. Neither DEM time is measured by this pipeline; both are plain
-    user-supplied values (there is no DEM stage in this pipeline to time
-    automatically; see :class:`~bppm_dem_sm.config.ComputingSpeedOptions`).
-
-    Mirrors the paper's two figures: prediction-only speedup (their ~240x) and
-    all-RNNSR-steps speedup (their ~2.5x: reference-DEM data acquisition +
-    training + prediction). The latter equals just train+predict when
-    ``dem_data_acquisition_seconds`` is left at its 0.0 default.
+    Lets :func:`bppm_dem_sm.visualization.run_visualization.generate_visualizations`
+    render metrics comparison plots in a ``do_visualization``-only run,
+    without re-running ``do_metrics`` in the same process -- every value
+    :func:`compute_metrics` returns is written to disk by the time it
+    returns, so this reads exactly those files back
+    (see project_structure_proposal.md section 6).
 
     Args:
-        timing: Wall-clock seconds recorded by
-            :func:`bppm_dem_sm.pipeline.run_pipeline`, with optional
-            ``train_seconds`` / ``predict_seconds`` keys (present only for
-            stages that actually ran).
-        config: Supplies ``computing_speed.dem_reference_seconds`` and
-            ``computing_speed.dem_data_acquisition_seconds``.
+        config: Pipeline settings for data paths.
 
     Returns:
-        dict: ``dem_reference_seconds``, ``dem_data_acquisition_seconds``,
-        ``train_seconds``, ``predict_seconds`` (as given, possibly ``None``),
-        ``all_steps_seconds``, and the dimensionless
-        ``prediction_only_speedup`` / ``all_steps_speedup`` (each ``None``
-        where the underlying timing is unavailable).
+        dict: Same keys as :func:`compute_metrics`, for whichever persisted
+        files are present (missing files are simply omitted, same as
+        :func:`compute_metrics` omits ``pred``-side keys when there are no
+        predicted frames).
     """
-    dem_seconds = config.computing_speed.dem_reference_seconds
-    dem_data_acquisition_s = config.computing_speed.dem_data_acquisition_seconds
-    train_s = timing.get("train_seconds")
-    predict_s = timing.get("predict_seconds")
-    all_steps = (
-        dem_data_acquisition_s + train_s + predict_s
-        if train_s is not None and predict_s is not None
-        else None
-    )
+    results: dict = {}
 
-    result = {
-        "dem_reference_seconds": dem_seconds,
-        "dem_data_acquisition_seconds": dem_data_acquisition_s,
-        "train_seconds": train_s,
-        "predict_seconds": predict_s,
-        "all_steps_seconds": all_steps,
-        "prediction_only_speedup": dem_seconds / predict_s if predict_s else None,
-        "all_steps_speedup": dem_seconds / all_steps if all_steps else None,
-    }
-    print("[Computing speed] " + ", ".join(f"{k}={v}" for k, v in result.items()))
-    return result
+    gt_lacey = os.path.join(str(config.data_dir), "lacey_over_time.parquet")
+    if os.path.exists(gt_lacey):
+        results["gt"] = pd.read_parquet(gt_lacey)
+
+    pred_frames_dir = str(config.prediction.pred_frames_dir)
+    pred_lacey = os.path.join(pred_frames_dir, "lacey_over_time_pred.parquet")
+    if os.path.exists(pred_lacey):
+        results["pred"] = pd.read_parquet(pred_lacey)
+
+    for key_suffix, frames_dir in (("gt", str(config.data_dir)), ("pred", pred_frames_dir)):
+        radial_path = os.path.join(frames_dir, "segregation_profile_radial.parquet")
+        axial_path = os.path.join(frames_dir, "segregation_profile_axial.parquet")
+        if os.path.exists(radial_path):
+            results[f"radial_{key_suffix}"] = pd.read_parquet(radial_path)
+        if os.path.exists(axial_path):
+            results[f"axial_{key_suffix}"] = pd.read_parquet(axial_path)
+
+        velocity = load_velocity_and_granular_temperature(frames_dir)
+        if velocity is not None:
+            results[f"velocity_{key_suffix}"] = velocity
+
+    cs = _computing_speed.load_computing_speed()
+    if cs is not None:
+        results["computing_speed"] = cs
+
+    return results

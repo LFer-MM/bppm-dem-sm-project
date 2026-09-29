@@ -1,4 +1,19 @@
-"""Configuration and path resolution for the RNN surrogate pipeline."""
+"""Configuration for the whole bppm-dem-sm project.
+
+Two tiers, both in this one file:
+
+- Plain module constants for DEM simulation setup -- paths, particle counts
+  and diameters, material properties, mill geometry. Shared/backend-agnostic
+  data comes first; a ``YADE DEM specific`` section and a ``BlazeDEM
+  specific`` section follow, each holding only the glue code that turns the
+  shared data into that backend's own objects (e.g. a YADE ``MatchMaker``).
+  These are hardcoded values with no CLI flag or JSON key -- edit them here
+  directly.
+- :class:`ExperimentConfig`, a dataclass tree (with nested per-stage option
+  groups) that drives the RNN surrogate pipeline and DEM-backend selection.
+  Drivable from Python, JSON (``configs/pipeline_example.json``), or
+  :mod:`bppm_dem_sm.cli` flags.
+"""
 
 from __future__ import annotations
 
@@ -25,33 +40,59 @@ ID_COL = "id"
 FEATURE_COLS = ["x", "y", "z", "r"]
 TARGET_COLS = ["x", "y", "z"]
 
-# --- DEM simulation (YADE) ---
+# --- DEM simulation: shared / backend-agnostic -----------------------------
+
+DEM_BACKENDS = ("yade", "blaze")
+
+SAGMILL_STL_PATH = "sag_mill_40ft_m.stl"
+MILL_DIAMETER_M = 11.0  # mill diameter used for ingress chord geometry;
+                        # also D in the Lacey/granular-temperature cell
+                        # formula below (0.04 x D, Kishida et al. 2025 Sec 4.1)
+
 ROCK_COUNT = 19888  # 9%
 ROCK_DIAM_M = 0.06985  # 2.75 inches
 BALL_COUNT = 4696  # 17%
-BALL_DIAM_M = 0.1397  # 5.5 inches
-SAGMILL_STL_PATH = "sag_mill_40ft_m.stl"
+BALL_DIAM_M = 0.1397  # 5.5 inches -- the large/tracer species (material_large="steel")
 
 MATERIALS = {
     "steel": {
         "density": 7850,
         "young": 155709722558.42664,
         "poisson": 0.292,
-        "frictionAngle": math.atan(0.5),
+        "friction_angle": math.atan(0.5),
         "label": "steel",
     },
     "rock": {
         "density": 2650,
         "young": 13468135026.041664,
         "poisson": 0.25,
-        "frictionAngle": math.atan(0.5),
+        "friction_angle": math.atan(0.5),
         "label": "rock",
     },
 }
 
+RESTITUTION_COEFFICIENTS = {
+    ("steel", "steel"): 0.8,
+    ("steel", "rock"): 0.5,
+    ("rock", "rock"): 0.3,
+}
 
-def build_material_interactions():
+
+def _restitution(a: str, b: str) -> float:
+    """Look up a pairwise restitution coefficient regardless of pair order."""
+    if (a, b) in RESTITUTION_COEFFICIENTS:
+        return RESTITUTION_COEFFICIENTS[(a, b)]
+    return RESTITUTION_COEFFICIENTS[(b, a)]
+
+
+# --- YADE DEM specific ------------------------------------------------------
+
+
+def build_yade_material_interactions():
     """Restitution MatchMaker for steel/rock contacts (idx 0 steel, 1 rock; needs YADE).
+
+    Builds the YADE-specific ``MatchMaker`` from the backend-agnostic
+    :data:`RESTITUTION_COEFFICIENTS` table.
 
     Returns:
         dict: Mapping with a ``"restitution"`` key whose value is a YADE
@@ -61,12 +102,27 @@ def build_material_interactions():
 
     return {
         "restitution": MatchMaker(matches=[
-        (0, 0, 0.8),   # steel-steel
-        (0, 1, 0.5),   # steel-rock
-        (1, 0, 0.5),   # rock-steel
-        (1, 1, 0.3)    # rock-rock
-    ])
+            (0, 0, _restitution("steel", "steel")),  # steel-steel
+            (0, 1, _restitution("steel", "rock")),   # steel-rock
+            (1, 0, _restitution("rock", "steel")),   # rock-steel
+            (1, 1, _restitution("rock", "rock")),    # rock-rock
+        ])
     }
+
+
+# --- BlazeDEM specific ------------------------------------------------------
+# Placeholder -- no BlazeDEM fields yet. Reserved for backend-specific
+# settings (GPU device index, solver tolerances, contact model variant,
+# etc.) once BlazeDEM support lands.
+
+
+def build_blaze_material_interactions():
+    """Placeholder for BlazeDEM's material-interaction builder.
+
+    Raises:
+        NotImplementedError: Always -- BlazeDEM backend not yet implemented.
+    """
+    raise NotImplementedError("BlazeDEM backend not yet implemented")
 
 
 @dataclass
@@ -119,14 +175,17 @@ class MetricsOptions:
     """Cell grid, time-axis, and spatial-profile settings for the metrics stage.
 
     ``cell_size`` and ``min_particles_per_cell`` are shared by Lacey's mixing
-    index and granular temperature (the paper uses the same grid for both).
+    index and granular temperature (the paper uses the same grid for both:
+    ``0.04 x drum_diameter``, Kishida et al. 2025 Sec 4.1 -- distinct from
+    ``StochasticOptions.velocity_cell_size``, which follows a different
+    formula for a different purpose; see that class's docstring).
     ``center_x``/``center_y``/``center_z`` and the bin counts configure the
     radial/axial large-particle fraction profile; the mill's circular cross
     section is assumed to lie in the XY plane (see
     :mod:`bppm_dem_sm.metrics.segregation_profile`).
     """
 
-    cell_size: float = 0.4732
+    cell_size: float = 0.04 * MILL_DIAMETER_M  # 0.44 m
     min_particles_per_cell: int = 15
     metrics_dt: float = 0.05
     center_x: float = 0.0
@@ -140,11 +199,12 @@ class MetricsOptions:
 class ComputingSpeedOptions:
     """Reference DEM wall-clock times for the dimensionless computing-speed metric.
 
-    ``bppm_dem_sm.pipeline.run_pipeline`` times its own training/prediction
-    stages, but the DEM side of the comparison (Kishida et al. 2025, Powder
-    Technology 455, 120811, Fig. 15) has no equivalent in this codebase: DEM
-    simulations run separately under YADE, outside this pipeline. There is no
-    way to derive their wall-clock time automatically, so both fields here are
+    ``bppm_dem_sm.experiment_pipeline.run_experiment_pipeline`` times its own
+    training/prediction stages, but the DEM side of the comparison (Kishida
+    et al. 2025, Powder Technology 455, 120811, Fig. 15) has no equivalent
+    unless ``do_simulate`` is timed too: DEM simulations may run separately
+    under YADE, outside this pipeline. There is no way to derive their
+    wall-clock time automatically in that case, so both fields here are
     plain user-supplied measurements, in seconds for consistency with every
     other time-valued field in this config (e.g. ``metrics_dt``, ``dt_step``):
 
@@ -172,10 +232,18 @@ class StochasticOptions:
     (Eulerian) velocity standard deviation sigma_v(x) is estimated once from
     ``train_data_dir`` on a cubic grid, then sampled per axis and added to
     each predicted position, scaled by ``prediction.dt_step`` (Delta t_RNN).
+
+    ``velocity_cell_size`` follows the paper's SR-specific formula --
+    ``4 x large-particle diameter`` (Sec 2.2.3, Sec 3) -- which is *not* the
+    same cell as ``MetricsOptions.cell_size`` (Lacey/granular temperature,
+    ``0.04 x drum diameter``); the two default to different numbers on
+    purpose (0.5588 m vs. 0.44 m here) because they answer different
+    questions over different reference lengths, even though the paper's own
+    reference DEM happens to use a small cell for both.
     """
 
     enabled: bool = False
-    velocity_cell_size: float = 0.4732
+    velocity_cell_size: float = 4 * BALL_DIAM_M  # 0.5588 m
     velocity_min_particles_per_cell: int = 15
     stochastic_seed: int = 0
 
@@ -193,18 +261,26 @@ class VisualizationOptions:
 
 
 @dataclass
-class PipelineConfig:
-    """Knobs for the end-to-end surrogate pipeline.
+class ExperimentConfig:
+    """Knobs for one reproducible run of the study: DEM simulation through surrogate validation.
 
-    Core fields are data paths, model identity, and stage toggles. Training,
-    prediction, metrics, and visualization knobs live on nested option
-    dataclasses (defaults apply when a group is omitted). Used by
-    :func:`bppm_dem_sm.pipeline.run_pipeline`.
+    Core fields are data paths, model identity, DEM-backend selection, and
+    stage toggles. Simulation, training, prediction, metrics, and
+    visualization knobs live on nested option dataclasses (defaults apply
+    when a group is omitted). Used by
+    :func:`bppm_dem_sm.experiment_pipeline.run_experiment_pipeline`.
+
+    Renamed from ``PipelineConfig``: once ``do_simulate`` gates a physics
+    simulation (not just an ML data transform), "pipeline" undersold what
+    this class configures -- the full setup for reproducing one run of the
+    study, DEM and ML halves both. "Experiment config" is the standard term
+    for that in research-code paper reproductions.
     """
 
     # data
     data_dir: Path = PROCESSED_DIR / DEFAULT_DATASET
     train_data_dir: Path = PROCESSED_DIR / DEFAULT_TRAIN_DATASET
+    raw_data_dir: Path = RAW_DIR
     frame_glob: str = "frame_*.parquet"
     feature_cols: list[str] = field(default_factory=lambda: list(FEATURE_COLS))
 
@@ -212,7 +288,12 @@ class PipelineConfig:
     model_path: Path = MODELS_DIR / f"{DEFAULT_MODEL_NAME}.keras"
     frames_in: int = 15
 
-    # stages
+    # DEM backend selection (do_simulate only)
+    dem_backend: str = "yade"
+
+    # stages, in the order they'd run end to end
+    do_simulate: bool = False
+    do_process: bool = False
     do_train: bool = False
     do_predict: bool = True
     do_metrics: bool = True
@@ -236,7 +317,7 @@ class PipelineConfig:
         """
         return _to_plain_dict(self)
 
-    def with_overrides(self, **overrides: Any) -> PipelineConfig:
+    def with_overrides(self, **overrides: Any) -> ExperimentConfig:
         """Return a copy with top-level or nested leaf fields replaced.
 
         Nested group objects may be passed by name (``training=TrainingOptions(...)``)
@@ -244,11 +325,11 @@ class PipelineConfig:
         flags. Leaf overrides apply after whole-group replacements.
 
         Args:
-            **overrides: ``PipelineConfig`` field names, option-group names, or
+            **overrides: ``ExperimentConfig`` field names, option-group names, or
                 leaf names from a nested options dataclass.
 
         Returns:
-            PipelineConfig: New instance with overrides applied.
+            ExperimentConfig: New instance with overrides applied.
 
         Raises:
             ValueError: If an override name is not a known field.
@@ -274,7 +355,7 @@ class PipelineConfig:
             elif key in leaf_to_group:
                 nested_updates.setdefault(leaf_to_group[key], {})[key] = value
             else:
-                raise ValueError(f"Unknown PipelineConfig override: {key!r}")
+                raise ValueError(f"Unknown ExperimentConfig override: {key!r}")
 
         updated = replace(self, **top) if top else self
         for group, leafs in nested_updates.items():
@@ -283,7 +364,7 @@ class PipelineConfig:
         return updated
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> PipelineConfig:
+    def from_dict(cls, data: dict[str, Any]) -> ExperimentConfig:
         """Build a config from a mapping (e.g. parsed JSON). Unknown keys raise.
 
         Nested groups are objects keyed ``training``, ``prediction``,
@@ -291,10 +372,10 @@ class PipelineConfig:
         common string forms.
 
         Args:
-            data: Mapping of ``PipelineConfig`` field names to values.
+            data: Mapping of ``ExperimentConfig`` field names to values.
 
         Returns:
-            PipelineConfig: Coerced configuration instance.
+            ExperimentConfig: Coerced configuration instance.
 
         Raises:
             ValueError: If ``data`` contains keys not defined on this class or
@@ -305,15 +386,15 @@ class PipelineConfig:
         return _from_plain_dict(cls, data)
 
     @classmethod
-    def from_json(cls, path: Path | str) -> PipelineConfig:
+    def from_json(cls, path: Path | str) -> ExperimentConfig:
         """Load config from a JSON file.
 
         Args:
-            path: Path to a JSON object whose keys are ``PipelineConfig``
+            path: Path to a JSON object whose keys are ``ExperimentConfig``
                 fields (nested option groups as objects).
 
         Returns:
-            PipelineConfig: Configuration built via :meth:`from_dict`.
+            ExperimentConfig: Configuration built via :meth:`from_dict`.
 
         Raises:
             ValueError: If the JSON root is not an object.
@@ -328,7 +409,7 @@ class PipelineConfig:
 
 
 def _option_group_types() -> dict[str, type]:
-    """Map ``PipelineConfig`` field name to nested options dataclass."""
+    """Map ``ExperimentConfig`` field name to nested options dataclass."""
     return {
         "training": TrainingOptions,
         "prediction": PredictionOptions,
@@ -340,7 +421,7 @@ def _option_group_types() -> dict[str, type]:
 
 
 def _leaf_to_group() -> dict[str, str]:
-    """Map nested options field name to its group name on ``PipelineConfig``."""
+    """Map nested options field name to its group name on ``ExperimentConfig``."""
     mapping: dict[str, str] = {}
     for group, cls in _option_group_types().items():
         for f in fields(cls):

@@ -3,9 +3,9 @@ Python API reference
 
 Autodoc for the ``bppm_dem_sm`` package. This is the **callable Python
 interface** (importable modules, classes, and functions). The CLI
-``bppm-pipeline`` is a thin wrapper around the same code—especially
-:class:`~bppm_dem_sm.config.PipelineConfig` and
-:func:`~bppm_dem_sm.pipeline.run_pipeline`.
+``bppm-dem-sm ml-pipeline`` is a thin wrapper around the same code—especially
+:class:`~bppm_dem_sm.config.ExperimentConfig` and
+:func:`~bppm_dem_sm.experiment_pipeline.run_experiment_pipeline`.
 
 Configuration and CLI
 ---------------------
@@ -21,7 +21,7 @@ Configuration and CLI
 Pipeline orchestration
 ----------------------
 
-.. automodule:: bppm_dem_sm.pipeline
+.. automodule:: bppm_dem_sm.experiment_pipeline
    :members:
    :show-inheritance:
 
@@ -36,7 +36,11 @@ Data processing
    :members:
    :show-inheritance:
 
-.. automodule:: bppm_dem_sm.data_processing.csv_to_parquet
+.. automodule:: bppm_dem_sm.data_processing.dataset
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.data_processing.convert
    :members:
    :show-inheritance:
 
@@ -44,18 +48,30 @@ Data processing
    :members:
    :show-inheritance:
 
+.. automodule:: bppm_dem_sm.data_processing.run_data_processing
+   :members:
+   :show-inheritance:
+
 Model training and prediction
 -----------------------------
 
-.. automodule:: bppm_dem_sm.model.training
+.. automodule:: bppm_dem_sm.model.rnn.architecture
    :members:
    :show-inheritance:
 
-.. automodule:: bppm_dem_sm.model.prediction
+.. automodule:: bppm_dem_sm.model.rnn.training
    :members:
    :show-inheritance:
 
-.. automodule:: bppm_dem_sm.model.stochastic_motion
+.. automodule:: bppm_dem_sm.model.rnn.loading
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.model.rnn.prediction
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.model.sr
    :members:
    :show-inheritance:
 
@@ -71,6 +87,10 @@ Metrics
    :show-inheritance:
 
 .. automodule:: bppm_dem_sm.metrics.velocity_metrics
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.metrics.computing_speed
    :members:
    :show-inheritance:
 
@@ -101,17 +121,50 @@ Visualization
    :members:
    :show-inheritance:
 
-DEM simulation (YADE)
----------------------
-
-.. automodule:: bppm_dem_sm.simulation.simulation
-   :members:
-   :show-inheritance:
-
-.. automodule:: bppm_dem_sm.simulation.sim_functions
-   :members:
-   :show-inheritance:
+DEM simulation
+--------------
 
 .. automodule:: bppm_dem_sm.simulation.launcher
    :members:
    :show-inheritance:
+
+YADE backend
+~~~~~~~~~~~~
+
+.. automodule:: bppm_dem_sm.simulation.yade_dem.run_simulation
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.simulation.yade_dem.materials
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.simulation.yade_dem.stl
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.simulation.yade_dem.engines
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.simulation.yade_dem.particles
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.simulation.yade_dem.state
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.simulation.yade_dem.capture
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.simulation.yade_dem.diagnostics
+   :members:
+   :show-inheritance:
+
+BlazeDEM backend (placeholder)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Not implemented yet -- every function raises ``NotImplementedError``. See
+:mod:`bppm_dem_sm.simulation.blaze_dem`.

@@ -10,8 +10,17 @@ from bppm_dem_sm.simulation import launcher as dem_launcher
 
 
 def test_default_simulation_script_points_at_packaged_file():
-    assert dem_launcher.DEFAULT_SIMULATION_SCRIPT.name == "simulation.py"
+    assert dem_launcher.DEFAULT_SIMULATION_SCRIPT.name == "run_simulation.py"
+    assert dem_launcher.DEFAULT_SIMULATION_SCRIPT.parent.name == "yade_dem"
     assert dem_launcher.DEFAULT_SIMULATION_SCRIPT.exists()
+
+
+def test_default_simulation_scripts_cover_both_backends():
+    assert set(dem_launcher.DEFAULT_SIMULATION_SCRIPTS) == {"yade", "blaze"}
+    for backend, path in dem_launcher.DEFAULT_SIMULATION_SCRIPTS.items():
+        assert path.name == "run_simulation.py"
+        assert path.parent.name == f"{backend}_dem"
+        assert path.exists()
 
 
 def test_find_yade_executable_returns_none_when_missing():
@@ -72,3 +81,8 @@ def test_launch_simulation_propagates_nonzero_returncode(monkeypatch):
 
     result = dem_launcher.launch_simulation()
     assert result.returncode == 3
+
+
+def test_launch_simulation_blaze_backend_not_implemented():
+    with pytest.raises(NotImplementedError, match="not yet implemented"):
+        dem_launcher.launch_simulation(backend="blaze")

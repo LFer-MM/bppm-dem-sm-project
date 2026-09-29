@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from bppm_dem_sm.model.prediction import _resolve_model_path
+from bppm_dem_sm.model.rnn.loading import _resolve_model_path
 
 
 def test_resolve_model_path_finds_keras_file(tmp_path):

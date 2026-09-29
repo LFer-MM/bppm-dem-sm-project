@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bppm_dem_sm.model import prediction
-from bppm_dem_sm.model import stochastic_motion as sm
-from bppm_dem_sm.config import PipelineConfig, PredictionOptions, StochasticOptions
+from bppm_dem_sm.model.rnn import prediction
+from bppm_dem_sm.model import sr as sm
+from bppm_dem_sm.config import ExperimentConfig, PredictionOptions, StochasticOptions
 
 
 def _write_frame(path, ids, xyz):
@@ -120,18 +120,18 @@ def test_sample_stochastic_displacement_reproducible_with_seed():
 
 
 def test_stochastic_options_default_disabled():
-    config = PipelineConfig()
+    config = ExperimentConfig()
     assert config.stochastic.enabled is False
     assert isinstance(config.stochastic, StochasticOptions)
 
 
-def test_pipeline_config_roundtrip_with_stochastic():
-    config = PipelineConfig().with_overrides(enabled=True, stochastic_seed=7)
+def test_experiment_config_roundtrip_with_stochastic():
+    config = ExperimentConfig().with_overrides(enabled=True, stochastic_seed=7)
     assert config.stochastic.enabled is True
     assert config.stochastic.stochastic_seed == 7
 
     data = config.to_dict()
-    restored = PipelineConfig.from_dict(data)
+    restored = ExperimentConfig.from_dict(data)
     assert restored.stochastic == config.stochastic
 
 
@@ -170,7 +170,7 @@ def _make_predict_config(tmp_path, *, stochastic_enabled, seed=0):
     _write_full_frame(train_dir / "frame_00001.parquet", ids, pos0 + v, r)
     _write_full_frame(train_dir / "frame_00002.parquet", ids, pos0 + 2 * v, r)
 
-    return PipelineConfig(
+    return ExperimentConfig(
         data_dir=data_dir,
         train_data_dir=train_dir,
         frames_in=2,

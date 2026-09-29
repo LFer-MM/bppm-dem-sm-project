@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from bppm_dem_sm.metrics import run_metrics
-from bppm_dem_sm.config import MetricsOptions, PipelineConfig, PredictionOptions
+from bppm_dem_sm.config import ExperimentConfig, MetricsOptions, PredictionOptions
 
 
 def _write_frame(path, ids, xyz, r):
@@ -50,7 +50,7 @@ def _base_config(tmp_path, with_pred):
     if with_pred:
         _write_pred_frames(out_dir / "pred_frames", start_idx=10)
 
-    return PipelineConfig(
+    return ExperimentConfig(
         data_dir=data_dir,
         prediction=PredictionOptions(pred_out_dir=out_dir),
         metrics=MetricsOptions(
@@ -99,7 +99,7 @@ def test_compute_metrics_skips_velocity_with_single_frame(tmp_path):
     r = np.array([0.1, 0.1, 0.2, 0.2])
     _write_frame(data_dir / "frame_00000.parquet", ids, np.zeros((4, 3)), r)
 
-    config = PipelineConfig(
+    config = ExperimentConfig(
         data_dir=data_dir,
         prediction=PredictionOptions(pred_out_dir=tmp_path / "out"),
         metrics=MetricsOptions(cell_size=100.0, min_particles_per_cell=2),
@@ -107,3 +107,27 @@ def test_compute_metrics_skips_velocity_with_single_frame(tmp_path):
     metrics = run_metrics.compute_metrics(config)
     assert "velocity_gt" not in metrics
     assert "gt" in metrics
+
+
+def test_compute_metrics_persists_velocity_and_granular_temperature(tmp_path):
+    config = _base_config(tmp_path, with_pred=True)
+    run_metrics.compute_metrics(config)
+
+    assert (config.data_dir / "velocity_speed.json").is_file()
+    assert (config.data_dir / "granular_temperature.parquet").is_file()
+    assert (config.prediction.pred_frames_dir / "velocity_speed.json").is_file()
+    assert (config.prediction.pred_frames_dir / "granular_temperature.parquet").is_file()
+
+
+def test_load_metrics_reconstructs_compute_metrics_shape(tmp_path):
+    config = _base_config(tmp_path, with_pred=True)
+    computed = run_metrics.compute_metrics(config)
+    loaded = run_metrics.load_metrics(config)
+
+    assert set(loaded) == set(computed)
+    pd.testing.assert_frame_equal(loaded["gt"], computed["gt"])
+    pd.testing.assert_frame_equal(loaded["radial_gt"], computed["radial_gt"])
+    assert set(loaded["velocity_gt"]["speed"]) == set(computed["velocity_gt"]["speed"])
+    assert np.allclose(
+        loaded["velocity_gt"]["granular_temperature"], computed["velocity_gt"]["granular_temperature"]
+    )

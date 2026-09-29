@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pandas as pd
 
-from ..config import FIGURES_DIR, PipelineConfig
+from ..config import FIGURES_DIR, ExperimentConfig
 
 
-def plot_lacey_comparison(metrics: dict, config: PipelineConfig, show=True):
+def plot_lacey_comparison(metrics: dict, config: ExperimentConfig, show=True):
     """Plot ground-truth vs surrogate Lacey index over time.
 
     Args:
@@ -47,7 +47,7 @@ def _latest_time_slice(profile_df: pd.DataFrame) -> pd.DataFrame:
     return profile_df[profile_df["frame"] == profile_df["frame"].max()].sort_values("bin")
 
 
-def plot_segregation_profile(metrics: dict, config: PipelineConfig, show=True):
+def plot_segregation_profile(metrics: dict, config: ExperimentConfig, show=True):
     """Plot radial and axial large-particle fraction profiles at the final frame.
 
     Args:
@@ -104,7 +104,7 @@ def plot_segregation_profile(metrics: dict, config: PipelineConfig, show=True):
     return fig
 
 
-def plot_velocity_distribution(metrics: dict, config: PipelineConfig, show=True):
+def plot_velocity_distribution(metrics: dict, config: ExperimentConfig, show=True):
     """Plot small/large particle absolute-velocity distributions, DEM vs. surrogate.
 
     Args:
@@ -152,7 +152,7 @@ def plot_velocity_distribution(metrics: dict, config: PipelineConfig, show=True)
     return fig
 
 
-def plot_granular_temperature(metrics: dict, config: PipelineConfig, show=True):
+def plot_granular_temperature(metrics: dict, config: ExperimentConfig, show=True):
     """Plot boxplots of per-cell granular temperature, DEM vs. surrogate.
 
     Args:
@@ -195,15 +195,16 @@ def plot_granular_temperature(metrics: dict, config: PipelineConfig, show=True):
     return fig
 
 
-def plot_computing_speed(metrics: dict, config: PipelineConfig, show=True):
+def plot_computing_speed(metrics: dict, config: ExperimentConfig, show=True):
     """Plot dimensionless computing speed vs. the DEM reference (paper Fig. 15).
 
     Args:
         metrics: Mapping with an optional ``"computing_speed"`` entry from
-            :func:`bppm_dem_sm.metrics.run_metrics.compute_computing_speed`
-            (set by :func:`bppm_dem_sm.pipeline.run_pipeline`; absent if
-            :func:`~bppm_dem_sm.metrics.run_metrics.compute_metrics` was
-            called standalone without timing).
+            :func:`bppm_dem_sm.metrics.computing_speed.compute_computing_speed`
+            (set by :func:`bppm_dem_sm.experiment_pipeline.run_experiment_pipeline`,
+            or loaded from disk by
+            :func:`~bppm_dem_sm.metrics.run_metrics.load_metrics`; absent if
+            neither ever ran).
         config: If ``visualization.save_figures``, writes
             ``computing_speed_comparison.png`` under ``FIGURES_DIR``.
         show: If ``True``, display the figure interactively.

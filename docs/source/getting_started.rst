@@ -13,27 +13,29 @@ From the repository root (Python 3.12):
    pip install -r requirements.txt
    pip install -e .
 
-This registers the ``bppm-pipeline`` console script.
+This registers the ``bppm-dem-sm`` console script, with two subcommands:
+``dem-sim`` (launch a DEM simulation) and ``ml-pipeline`` (run the
+experiment pipeline).
 
 Run the pipeline (CLI)
 ----------------------
 
-Preferred: pass a JSON file whose keys match :class:`~bppm_dem_sm.config.PipelineConfig`
+Preferred: pass a JSON file whose keys match :class:`~bppm_dem_sm.config.ExperimentConfig`
 (nested ``training`` / ``prediction`` / ``metrics`` / ``visualization`` objects).
 When ``--config`` is set, other pipeline flags are ignored.
 
 .. code-block:: bash
 
-   bppm-pipeline --config configs/pipeline_example.json
+   bppm-dem-sm ml-pipeline --config configs/pipeline_example.json
 
 Override individual fields without JSON (Boolean flags use ``--flag`` /
 ``--no-flag``):
 
 .. code-block:: bash
 
-   bppm-pipeline --do-train --no-do-predict --epochs 10
+   bppm-dem-sm ml-pipeline --do-train --no-do-predict --epochs 10
 
-See ``bppm-pipeline --help`` for the full flag list.
+See ``bppm-dem-sm ml-pipeline --help`` for the full flag list.
 
 Example config
 --------------
@@ -58,27 +60,30 @@ Minimal shape (paths and stage toggles). A fuller example lives at
      }
    }
 
-Stages gated by ``do_train``, ``do_predict``, ``do_metrics``, and
-``do_visualization`` run in that order inside
-:func:`~bppm_dem_sm.pipeline.run_pipeline`.
+Stages gated by ``do_simulate``, ``do_process``, ``do_train``, ``do_predict``,
+``do_metrics``, and ``do_visualization`` run in that order inside
+:func:`~bppm_dem_sm.experiment_pipeline.run_experiment_pipeline`.
+``do_simulate`` additionally needs YADE installed and on ``PATH``
+(``dem_backend="yade"``, the default) -- BlazeDEM (``dem_backend="blaze"``)
+is not implemented yet.
 
 Use from Python
 ---------------
 
 .. code-block:: python
 
-   from bppm_dem_sm import PipelineConfig, TrainingOptions, run_pipeline
+   from bppm_dem_sm import ExperimentConfig, TrainingOptions, run_experiment_pipeline
 
-   cfg = PipelineConfig.from_json("configs/pipeline_example.json")
-   results = run_pipeline(cfg)
-   # or: run_pipeline(do_train=True, do_predict=False, epochs=10)
-   # or: PipelineConfig(do_train=True, training=TrainingOptions(epochs=10))
+   cfg = ExperimentConfig.from_json("configs/pipeline_example.json")
+   results = run_experiment_pipeline(cfg)
+   # or: run_experiment_pipeline(do_train=True, do_predict=False, epochs=10)
+   # or: ExperimentConfig(do_train=True, training=TrainingOptions(epochs=10))
 
 More snippets
 -------------
 
 Stage-by-stage recipes (data prep, training, prediction, Lacey metrics,
-visualization, and YADE) are in :doc:`examples`.
+visualization, and DEM simulation) are in :doc:`examples`.
 
 Build these docs locally
 ------------------------
