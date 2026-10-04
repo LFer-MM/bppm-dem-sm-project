@@ -18,10 +18,8 @@ from dataclasses import dataclass
 import numpy as np
 
 from ..config import ID_COL, TARGET_COLS, ExperimentConfig
+from ..data_processing import binning
 from ..data_processing import frames as data_io
-
-# Spatial-hash coefficients for 3D cell indices (same as the Lacey grid).
-_HASH_COEFFS = (73856093, 19349663, 83492791)
 
 
 @dataclass
@@ -48,7 +46,7 @@ class VelocityStdField:
         Returns:
             numpy.ndarray: Shape ``(N,)`` of isotropic velocity std per particle.
         """
-        idx = np.floor((positions - self.origin) / self.cell_size).astype(np.int64)
+        idx = binning.cell_indices(positions, self.cell_size, self.origin)
         return np.fromiter(
             (self.sigma_by_cell.get(tuple(row), 0.0) for row in idx),
             dtype=np.float32,
@@ -107,7 +105,7 @@ def build_velocity_std_field(
     origin = np.min(np.stack(positions), axis=(0, 1))
 
     cell_idx_stack = np.concatenate(
-        [np.floor((pos - origin) / cell_size).astype(np.int64) for pos in positions[:-1]],
+        [binning.cell_indices(pos, cell_size, origin) for pos in positions[:-1]],
         axis=0,
     )
     vel_stack = np.concatenate(
@@ -115,23 +113,14 @@ def build_velocity_std_field(
         axis=0,
     )
 
-    cx, cy, cz = _HASH_COEFFS
-    h = cell_idx_stack[:, 0] * cx + cell_idx_stack[:, 1] * cy + cell_idx_stack[:, 2] * cz
-    order = np.argsort(h, kind="stable")
-    idx_sorted = cell_idx_stack[order]
-    vel_sorted = vel_stack[order]
-    h_sorted = h[order]
-
-    splits = np.split(np.arange(len(h_sorted)), np.flatnonzero(np.diff(h_sorted)) + 1)
-
     sigma_by_cell: dict[tuple[int, int, int], float] = {}
-    for group in splits:
+    for group in binning.group_by_cell(cell_idx_stack):
         if len(group) < min_particles_per_cell:
             continue
-        v = vel_sorted[group]
+        v = vel_stack[group]
         mean_v = v.mean(axis=0)
         sq_dev = np.sum((v - mean_v) ** 2, axis=1)
-        key = tuple(idx_sorted[group[0]].tolist())
+        key = tuple(cell_idx_stack[group[0]].tolist())
         sigma_by_cell[key] = float(np.sqrt(sq_dev.mean()))
 
     return VelocityStdField(cell_size=cell_size, origin=origin, sigma_by_cell=sigma_by_cell)

@@ -10,6 +10,8 @@ import re
 
 import numpy as np
 
+from ..data_processing import binning
+
 #: Ground-truth frame filename (``frame_XXXXX.parquet``); group 1 is the index.
 GT_FRAME_RE = re.compile(r"frame_(\d+)\.parquet$", re.IGNORECASE)
 #: Predicted frame filename (``pred_frame_XXXXX.parquet``); group 1 is the index.
@@ -60,32 +62,20 @@ def lacey_index_for_frame(df, cell_size, tracer_radius, min_particles_per_cell=5
         ``M`` is the Lacey index, ``p_global`` is the global tracer fraction,
         and ``mean_particles_per_cell`` is over cells that passed the filter.
     """
-    x = df["x"].to_numpy(float)
-    y = df["y"].to_numpy(float)
-    z = df["z"].to_numpy(float)
+    positions = df[["x", "y", "z"]].to_numpy(float)
 
     r = np.round(df["r"].to_numpy(float), 12)
     tracer = (r == np.round(tracer_radius, 12)).astype(np.int32)
     p = float(tracer.mean())
 
-    ix = np.floor((x - x.min()) / cell_size).astype(np.int64)
-    iy = np.floor((y - y.min()) / cell_size).astype(np.int64)
-    iz = np.floor((z - z.min()) / cell_size).astype(np.int64)
-
-    # Spatial hash of the cell index; sorting by it groups particles per cell.
-    h = ix * 73856093 + iy * 19349663 + iz * 83492791
-    order = np.argsort(h)
-    h_sorted = h[order]
-    tracer_sorted = tracer[order]
-
-    splits = np.split(np.arange(len(h_sorted)), np.flatnonzero(np.diff(h_sorted)) + 1)
+    cell_idx = binning.cell_indices(positions, cell_size, positions.min(axis=0))
 
     n_list, p_list = [], []
-    for idxs in splits:
+    for idxs in binning.group_by_cell(cell_idx):
         if len(idxs) < min_particles_per_cell:
             continue
         n_list.append(len(idxs))
-        p_list.append(int(tracer_sorted[idxs].sum()) / len(idxs))
+        p_list.append(int(tracer[idxs].sum()) / len(idxs))
 
     n_i = np.asarray(n_list, dtype=float)
     p_i = np.asarray(p_list, dtype=float)

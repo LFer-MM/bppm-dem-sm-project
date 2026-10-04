@@ -14,9 +14,7 @@ from __future__ import annotations
 import numpy as np
 
 from ..config import ID_COL, TARGET_COLS
-
-# Spatial-hash coefficients for 3D cell indices (same as the Lacey grid).
-_HASH_COEFFS = (73856093, 19349663, 83492791)
+from ..data_processing import binning
 
 
 def _matched_velocity(df_t, df_t1, dt):
@@ -84,22 +82,13 @@ def granular_temperature_by_cell(df_t, df_t1, dt, cell_size, min_particles_per_c
         numpy.ndarray: One granular-temperature value per qualifying cell.
     """
     pos_t, velocity, _ = _matched_velocity(df_t, df_t1, dt)
-    origin = pos_t.min(axis=0)
-    cell_idx = np.floor((pos_t - origin) / cell_size).astype(np.int64)
-
-    cx, cy, cz = _HASH_COEFFS
-    h = cell_idx[:, 0] * cx + cell_idx[:, 1] * cy + cell_idx[:, 2] * cz
-    order = np.argsort(h, kind="stable")
-    h_sorted = h[order]
-    vel_sorted = velocity[order]
-
-    splits = np.split(np.arange(len(h_sorted)), np.flatnonzero(np.diff(h_sorted)) + 1)
+    cell_idx = binning.cell_indices(pos_t, cell_size, pos_t.min(axis=0))
 
     temperatures = []
-    for group in splits:
+    for group in binning.group_by_cell(cell_idx):
         if len(group) < min_particles_per_cell:
             continue
-        v = vel_sorted[group]
+        v = velocity[group]
         mean_v = v.mean(axis=0)
         sq_dev = np.sum((v - mean_v) ** 2, axis=1)
         temperatures.append(sq_dev.mean() / 3.0)

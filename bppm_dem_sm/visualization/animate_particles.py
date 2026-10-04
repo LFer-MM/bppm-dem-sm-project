@@ -16,7 +16,8 @@ LARGE_COLOR = "#1f77b4"
 #: Marker color for the small species.
 SMALL_COLOR = "#d62728"
 
-_PLANE_AXES = {"xy": ("x", "y"), "xz": ("x", "z"), "yz": ("y", "z")}
+#: Axis column names per projection plane (``"xy"``, ``"xz"``, ``"yz"``).
+PLANE_AXES = {"xy": ("x", "y"), "xz": ("x", "z"), "yz": ("y", "z")}
 
 
 def radius_colors(r):
@@ -61,7 +62,7 @@ def animate_particles(
     from matplotlib.animation import FuncAnimation
     import matplotlib.pyplot as plt
 
-    ax_x, ax_y = _PLANE_AXES[plane]
+    ax_x, ax_y = PLANE_AXES[plane]
     files = sorted(Path(frames_dir).glob(glob_pattern))[::every_nth_frame]
     df0 = pd.read_parquet(files[0])
 

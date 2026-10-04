@@ -7,74 +7,18 @@ import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-import pytest
 
-from bppm_dem_sm.config import ComputingSpeedOptions, ExperimentConfig, MetricsOptions, PredictionOptions
+from bppm_dem_sm.config import ComputingSpeedOptions, ExperimentConfig
 from bppm_dem_sm.metrics import computing_speed as cs_module
 from bppm_dem_sm.metrics import run_metrics
 from bppm_dem_sm.visualization import metrics_plots
 
-
-def _write_frame(path, ids, xyz, r):
-    """Write one parquet frame with ``id``, ``x``, ``y``, ``z``, ``r`` columns."""
-    pd.DataFrame(
-        {"id": ids, "x": xyz[:, 0], "y": xyz[:, 1], "z": xyz[:, 2], "r": r}
-    ).to_parquet(path, index=False)
-
-
-def _write_gt_frames(data_dir, seed=0):
-    """Write 3 ground-truth frames of 8 bidisperse particles in linear motion."""
-    data_dir.mkdir(parents=True, exist_ok=True)
-    ids = np.arange(8)
-    r = np.array([0.1] * 4 + [0.2] * 4)
-    rng = np.random.default_rng(seed)
-    pos0 = rng.uniform(-1, 1, size=(8, 3))
-    v = rng.normal(0, 0.1, size=(8, 3))
-    dt = 0.05
-    for step in range(3):
-        _write_frame(data_dir / f"frame_{step:05d}.parquet", ids, pos0 + step * v * dt, r)
-
-
-def _write_pred_frames(pred_frames_dir, start_idx, seed=1):
-    """Write 2 predicted frames numbered from ``start_idx``."""
-    pred_frames_dir.mkdir(parents=True, exist_ok=True)
-    ids = np.arange(8)
-    r = np.array([0.1] * 4 + [0.2] * 4)
-    rng = np.random.default_rng(seed)
-    pos0 = rng.uniform(-1, 1, size=(8, 3))
-    v = rng.normal(0, 0.1, size=(8, 3))
-    dt = 0.05
-    for step in range(2):
-        idx = start_idx + step
-        _write_frame(pred_frames_dir / f"pred_frame_{idx:05d}.parquet", ids, pos0 + step * v * dt, r)
-
-
-def _base_config(tmp_path, with_pred):
-    """Build a config over fresh GT frames, plus predicted frames if ``with_pred``."""
-    data_dir = tmp_path / "data"
-    _write_gt_frames(data_dir)
-
-    out_dir = tmp_path / "out"
-    if with_pred:
-        _write_pred_frames(out_dir / "pred_frames", start_idx=10)
-
-    return ExperimentConfig(
-        data_dir=data_dir,
-        prediction=PredictionOptions(pred_out_dir=out_dir),
-        metrics=MetricsOptions(
-            cell_size=100.0,
-            min_particles_per_cell=2,
-            metrics_dt=0.05,
-            n_radial_bins=2,
-            n_axial_bins=2,
-        ),
-    )
+from helpers import metrics_config
 
 
 def test_plot_functions_run_without_error(tmp_path):
-    config = _base_config(tmp_path, with_pred=True)
+    config = metrics_config(tmp_path, with_pred=True)
     metrics = run_metrics.compute_metrics(config)
 
     fig1 = metrics_plots.plot_lacey_comparison(metrics, config, show=False)

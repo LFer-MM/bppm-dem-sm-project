@@ -6,10 +6,11 @@ import json
 from pathlib import Path
 
 import numpy as np
-import pandas as pd
 
 from bppm_dem_sm.config import ExperimentConfig
 from bppm_dem_sm.model.rnn import training
+
+from helpers import write_frame
 
 
 class _StubHistory:
@@ -30,13 +31,6 @@ class _StubModel:
         Path(path).touch()
 
 
-def _write_frame(path, ids, xyz, r):
-    """Write one parquet frame with ``id``, ``x``, ``y``, ``z``, ``r`` columns."""
-    pd.DataFrame(
-        {"id": ids, "x": xyz[:, 0], "y": xyz[:, 1], "z": xyz[:, 2], "r": r}
-    ).to_parquet(path, index=False)
-
-
 def test_train_and_save_persists_model_and_history_json(tmp_path, monkeypatch):
     ids = np.arange(4)
     pos = np.zeros((4, 3))
@@ -45,7 +39,7 @@ def test_train_and_save_persists_model_and_history_json(tmp_path, monkeypatch):
     train_dir = tmp_path / "train"
     train_dir.mkdir()
     for i in range(3):
-        _write_frame(train_dir / f"frame_{i:05d}.parquet", ids, pos, r)
+        write_frame(train_dir / f"frame_{i:05d}.parquet", ids, pos, r)
 
     stub_model = _StubModel()
     monkeypatch.setattr(training, "build_model", lambda *a, **k: stub_model)

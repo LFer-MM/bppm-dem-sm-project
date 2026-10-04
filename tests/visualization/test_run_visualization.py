@@ -10,7 +10,6 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import pytest
 
 from bppm_dem_sm.config import ExperimentConfig, MetricsOptions, PredictionOptions
@@ -18,37 +17,7 @@ from bppm_dem_sm.metrics import computing_speed as cs_module
 from bppm_dem_sm.metrics import run_metrics
 from bppm_dem_sm.visualization import run_visualization
 
-
-def _write_frame(path, ids, xyz, r):
-    """Write one parquet frame with ``id``, ``x``, ``y``, ``z``, ``r`` columns."""
-    pd.DataFrame(
-        {"id": ids, "x": xyz[:, 0], "y": xyz[:, 1], "z": xyz[:, 2], "r": r}
-    ).to_parquet(path, index=False)
-
-
-def _write_frames(frames_dir, n_frames, seed):
-    """Write ``n_frames`` ground-truth frames of 8 bidisperse particles."""
-    frames_dir.mkdir(parents=True, exist_ok=True)
-    ids = np.arange(8)
-    r = np.array([0.1] * 4 + [0.2] * 4)
-    rng = np.random.default_rng(seed)
-    pos0 = rng.uniform(-1, 1, size=(8, 3))
-    v = rng.normal(0, 0.1, size=(8, 3))
-    for step in range(n_frames):
-        _write_frame(frames_dir / f"frame_{step:05d}.parquet", ids, pos0 + step * v * 0.05, r)
-
-
-def _write_pred_frames(pred_frames_dir, n_frames, start_idx, seed):
-    """Write ``n_frames`` predicted frames numbered from ``start_idx``."""
-    pred_frames_dir.mkdir(parents=True, exist_ok=True)
-    ids = np.arange(8)
-    r = np.array([0.1] * 4 + [0.2] * 4)
-    rng = np.random.default_rng(seed)
-    pos0 = rng.uniform(-1, 1, size=(8, 3))
-    v = rng.normal(0, 0.1, size=(8, 3))
-    for step in range(n_frames):
-        idx = start_idx + step
-        _write_frame(pred_frames_dir / f"pred_frame_{idx:05d}.parquet", ids, pos0 + step * v * 0.05, r)
+from helpers import write_frame, write_frames
 
 
 def test_generate_visualizations_empty_run_returns_no_artifacts(tmp_path, monkeypatch):
@@ -71,10 +40,10 @@ def test_generate_visualizations_full_run_reloads_persisted_metrics(tmp_path, mo
     monkeypatch.setattr(cs_module, "REPORTS_DIR", tmp_path / "reports")
 
     data_dir = tmp_path / "data"
-    _write_frames(data_dir, n_frames=3, seed=0)
+    write_frames(data_dir, n_frames=3, seed=0)
 
     out_dir = tmp_path / "out"
-    _write_pred_frames(out_dir / "pred_frames", n_frames=2, start_idx=10, seed=1)
+    write_frames(out_dir / "pred_frames", n_frames=2, start_idx=10, seed=1, prefix="pred_frame")
 
     model_path = tmp_path / "models" / "model.keras"
     model_path.parent.mkdir(parents=True)
@@ -111,7 +80,7 @@ def test_generate_visualizations_full_run_reloads_persisted_metrics(tmp_path, mo
 def test_plot_frame_grid_and_plot_sr_grid_use_different_cell_sizes(tmp_path):
     frame_path = tmp_path / "frame_00000.parquet"
     ids = np.arange(8)
-    _write_frame(frame_path, ids, np.zeros((8, 3)), np.array([0.1] * 4 + [0.2] * 4))
+    write_frame(frame_path, ids, np.zeros((8, 3)), np.array([0.1] * 4 + [0.2] * 4))
 
     config = ExperimentConfig(
         metrics=MetricsOptions(cell_size=1.0),

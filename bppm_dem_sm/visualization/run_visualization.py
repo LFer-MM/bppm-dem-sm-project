@@ -23,30 +23,12 @@ from ..data_processing import frames as data_io
 from ..metrics import run_metrics
 from ..progress import bar
 from . import metrics_plots
+from .animate_particles import PLANE_AXES, radius_colors
 from .cell_grid import plot_particles_with_grid
 from .training_curves import plot_training_history
 
-_PLANE_AXES = {"xy": ("x", "y"), "xz": ("x", "z"), "yz": ("y", "z")}
 #: Output directory for figures and animations when ``save_figures`` is set.
 VIZ_DIR = INTERIM_DIR / "figures"
-
-#: Marker color for the small species.
-SMALL_COLOR = "#d62728"
-#: Marker color for the large (tracer) species.
-LARGE_COLOR = "#1f77b4"
-
-
-def _radius_colors(r):
-    """Map a bidisperse radius array to small/large category colors.
-
-    Args:
-        r: 1-D array of particle radii (two distinct values expected).
-
-    Returns:
-        numpy.ndarray: Per-particle color codes (small -> red, large -> blue).
-    """
-    small_r = np.unique(r).min()
-    return np.where(r == small_r, SMALL_COLOR, LARGE_COLOR)
 
 
 def animate_frames(frames_dir, config: ExperimentConfig, pattern="frame_*.parquet", save_path=None):
@@ -72,7 +54,7 @@ def animate_frames(frames_dir, config: ExperimentConfig, pattern="frame_*.parque
     import matplotlib.pyplot as plt
 
     viz = config.visualization
-    ax_x, ax_y = _PLANE_AXES[viz.plane]
+    ax_x, ax_y = PLANE_AXES[viz.plane]
     files = data_io.sorted_frame_files(frames_dir, pattern)[:: viz.every_nth_frame]
 
     df0 = pd.read_parquet(files[0])
@@ -85,7 +67,7 @@ def animate_frames(frames_dir, config: ExperimentConfig, pattern="frame_*.parque
 
     sc = ax.scatter(
         df0[ax_x].to_numpy(), df0[ax_y].to_numpy(),
-        c=_radius_colors(df0["r"].to_numpy()), s=viz.marker_size, alpha=0.75,
+        c=radius_colors(df0["r"].to_numpy()), s=viz.marker_size, alpha=0.75,
     )
     title = ax.set_title(os.path.basename(files[0]))
 
@@ -93,7 +75,7 @@ def animate_frames(frames_dir, config: ExperimentConfig, pattern="frame_*.parque
         """Redraw the scatter for frame ``i`` (``FuncAnimation`` callback)."""
         df = pd.read_parquet(files[i])
         sc.set_offsets(np.column_stack([df[ax_x].to_numpy(), df[ax_y].to_numpy()]))
-        sc.set_color(_radius_colors(df["r"].to_numpy()))
+        sc.set_color(radius_colors(df["r"].to_numpy()))
         title.set_text(os.path.basename(files[i]))
         return sc, title
 

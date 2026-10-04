@@ -3,24 +3,13 @@
 from __future__ import annotations
 
 import numpy as np
-import pandas as pd
 import pytest
 
 from bppm_dem_sm.model.rnn import prediction
 from bppm_dem_sm.model import sr as sm
 from bppm_dem_sm.config import ExperimentConfig, PredictionOptions, StochasticOptions
 
-
-def _write_frame(path, ids, xyz):
-    """Write one parquet frame with ``id``, ``x``, ``y``, ``z`` columns (no radius)."""
-    pd.DataFrame(
-        {
-            "id": ids,
-            "x": xyz[:, 0],
-            "y": xyz[:, 1],
-            "z": xyz[:, 2],
-        }
-    ).to_parquet(path, index=False)
+from helpers import write_frame
 
 
 def test_build_velocity_std_field_zero_for_uniform_motion(tmp_path):
@@ -30,9 +19,9 @@ def test_build_velocity_std_field_zero_for_uniform_motion(tmp_path):
     velocity = np.array([0.1, 0.0, -0.2])
     dt = 0.05
 
-    _write_frame(tmp_path / "frame_00000.parquet", ids, pos0)
-    _write_frame(tmp_path / "frame_00001.parquet", ids, pos0 + velocity * dt)
-    _write_frame(tmp_path / "frame_00002.parquet", ids, pos0 + 2 * velocity * dt)
+    write_frame(tmp_path / "frame_00000.parquet", ids, pos0)
+    write_frame(tmp_path / "frame_00001.parquet", ids, pos0 + velocity * dt)
+    write_frame(tmp_path / "frame_00002.parquet", ids, pos0 + 2 * velocity * dt)
 
     field = sm.build_velocity_std_field(
         tmp_path, "frame_*.parquet", dt=dt, cell_size=1.0, min_particles_per_cell=5
@@ -51,8 +40,8 @@ def test_build_velocity_std_field_matches_known_variance(tmp_path):
     v[5:, 0] = -1.0
     dt = 1.0
 
-    _write_frame(tmp_path / "frame_00000.parquet", ids, pos0)
-    _write_frame(tmp_path / "frame_00001.parquet", ids, pos0 + v * dt)
+    write_frame(tmp_path / "frame_00000.parquet", ids, pos0)
+    write_frame(tmp_path / "frame_00001.parquet", ids, pos0 + v * dt)
 
     field = sm.build_velocity_std_field(
         tmp_path, "frame_*.parquet", dt=dt, cell_size=10.0, min_particles_per_cell=5
@@ -70,8 +59,8 @@ def test_sigma_at_returns_zero_outside_known_cells(tmp_path):
     v[:, 0] = np.array([1.0, -1.0, 2.0, -2.0, 0.5, -0.5])
     dt = 1.0
 
-    _write_frame(tmp_path / "frame_00000.parquet", ids, pos0)
-    _write_frame(tmp_path / "frame_00001.parquet", ids, pos0 + v * dt)
+    write_frame(tmp_path / "frame_00000.parquet", ids, pos0)
+    write_frame(tmp_path / "frame_00001.parquet", ids, pos0 + v * dt)
 
     field = sm.build_velocity_std_field(
         tmp_path, "frame_*.parquet", dt=dt, cell_size=1.0, min_particles_per_cell=6
@@ -86,8 +75,8 @@ def test_cell_below_min_particles_excluded(tmp_path):
     v = np.array([[1.0, 0, 0], [-1.0, 0, 0], [2.0, 0, 0]])
     dt = 1.0
 
-    _write_frame(tmp_path / "frame_00000.parquet", ids, pos0)
-    _write_frame(tmp_path / "frame_00001.parquet", ids, pos0 + v * dt)
+    write_frame(tmp_path / "frame_00000.parquet", ids, pos0)
+    write_frame(tmp_path / "frame_00001.parquet", ids, pos0 + v * dt)
 
     field = sm.build_velocity_std_field(
         tmp_path, "frame_*.parquet", dt=dt, cell_size=1.0, min_particles_per_cell=10
@@ -97,7 +86,7 @@ def test_cell_below_min_particles_excluded(tmp_path):
 
 
 def test_build_velocity_std_field_requires_two_frames(tmp_path):
-    _write_frame(tmp_path / "frame_00000.parquet", np.arange(3), np.zeros((3, 3)))
+    write_frame(tmp_path / "frame_00000.parquet", np.arange(3), np.zeros((3, 3)))
     with pytest.raises(ValueError):
         sm.build_velocity_std_field(tmp_path, "frame_*.parquet", dt=0.05, cell_size=1.0)
 
@@ -146,13 +135,6 @@ class _IdentityModel:
         return x_in[:, -1, :3]
 
 
-def _write_full_frame(path, ids, xyz, r):
-    """Write one parquet frame with ``id``, ``x``, ``y``, ``z``, ``r`` columns."""
-    pd.DataFrame(
-        {"id": ids, "x": xyz[:, 0], "y": xyz[:, 1], "z": xyz[:, 2], "r": r}
-    ).to_parquet(path, index=False)
-
-
 def _make_predict_config(tmp_path, *, stochastic_enabled, seed=0):
     """Build a one-step autoregressive config with a +/-x SR training set."""
     ids = np.arange(8)
@@ -161,17 +143,17 @@ def _make_predict_config(tmp_path, *, stochastic_enabled, seed=0):
 
     data_dir = tmp_path / "data"
     data_dir.mkdir(parents=True)
-    _write_full_frame(data_dir / "frame_00000.parquet", ids, pos0, r)
-    _write_full_frame(data_dir / "frame_00001.parquet", ids, pos0, r)
+    write_frame(data_dir / "frame_00000.parquet", ids, pos0, r)
+    write_frame(data_dir / "frame_00001.parquet", ids, pos0, r)
 
     train_dir = tmp_path / "train"
     train_dir.mkdir(parents=True)
     v = np.zeros((8, 3))
     v[::2, 0] = 1.0
     v[1::2, 0] = -1.0
-    _write_full_frame(train_dir / "frame_00000.parquet", ids, pos0, r)
-    _write_full_frame(train_dir / "frame_00001.parquet", ids, pos0 + v, r)
-    _write_full_frame(train_dir / "frame_00002.parquet", ids, pos0 + 2 * v, r)
+    write_frame(train_dir / "frame_00000.parquet", ids, pos0, r)
+    write_frame(train_dir / "frame_00001.parquet", ids, pos0 + v, r)
+    write_frame(train_dir / "frame_00002.parquet", ids, pos0 + 2 * v, r)
 
     return ExperimentConfig(
         data_dir=data_dir,
