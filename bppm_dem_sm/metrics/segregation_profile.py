@@ -20,7 +20,7 @@ import pandas as pd
 
 
 def radial_bin_edges(df, center_x=0.0, center_y=0.0, n_bins=12):
-    """Equal-width radial bin edges spanning the observed extent of ``df``.
+    """Return equal-width radial bin edges spanning the observed extent of ``df``.
 
     Args:
         df: Frame table with ``x``, ``y`` columns.
@@ -39,7 +39,7 @@ def radial_bin_edges(df, center_x=0.0, center_y=0.0, n_bins=12):
 
 
 def axial_bin_edges(df, center_z=0.0, n_bins=12):
-    """Equal-width axial bin edges spanning the observed extent of ``df``.
+    """Return equal-width axial bin edges spanning the observed extent of ``df``.
 
     Args:
         df: Frame table with ``z`` column.
@@ -74,7 +74,7 @@ def _fraction_by_bin(distance, is_tracer, bin_edges):
 
 
 def radial_fraction_profile(df, tracer_radius, bin_edges, center_x=0.0, center_y=0.0):
-    """Fraction of large particles vs. radial distance from ``(center_x, center_y)``.
+    """Compute the large-particle fraction vs. radial distance from ``(center_x, center_y)``.
 
     Args:
         df: Frame table with ``x``, ``y``, ``r`` columns.
@@ -85,7 +85,7 @@ def radial_fraction_profile(df, tracer_radius, bin_edges, center_x=0.0, center_y
         center_y: Mill central-axis Y coordinate.
 
     Returns:
-        pd.DataFrame: One row per bin with ``bin``, ``bin_center`` (radius,
+        pandas.DataFrame: One row per bin with ``bin``, ``bin_center`` (radius,
         m), ``fraction_large``, and ``n_particles``.
     """
     x = df["x"].to_numpy(float) - center_x
@@ -96,7 +96,7 @@ def radial_fraction_profile(df, tracer_radius, bin_edges, center_x=0.0, center_y
 
 
 def axial_fraction_profile(df, tracer_radius, bin_edges, center_z=0.0):
-    """Fraction of large particles vs. axial distance from ``center_z``.
+    """Compute the large-particle fraction vs. axial distance from ``center_z``.
 
     Args:
         df: Frame table with ``z``, ``r`` columns.
@@ -106,7 +106,7 @@ def axial_fraction_profile(df, tracer_radius, bin_edges, center_z=0.0):
         center_z: Mill central-axis Z reference (zero point of axial distance).
 
     Returns:
-        pd.DataFrame: One row per bin with ``bin``, ``bin_center`` (signed
+        pandas.DataFrame: One row per bin with ``bin``, ``bin_center`` (signed
         distance along the axis, m), ``fraction_large``, and ``n_particles``.
     """
     axial = df["z"].to_numpy(float) - center_z

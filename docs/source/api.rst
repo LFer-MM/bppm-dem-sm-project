@@ -7,6 +7,12 @@ interface** (importable modules, classes, and functions). The CLI
 :class:`~bppm_dem_sm.config.ExperimentConfig` and
 :func:`~bppm_dem_sm.experiment_pipeline.run_experiment_pipeline`.
 
+Package overview
+----------------
+
+.. automodule:: bppm_dem_sm
+   :no-members:
+
 Configuration and CLI
 ---------------------
 
@@ -25,12 +31,19 @@ Pipeline orchestration
    :members:
    :show-inheritance:
 
+.. automodule:: bppm_dem_sm.progress
+   :members:
+   :show-inheritance:
+
 .. automodule:: bppm_dem_sm.tf_quiet
    :members:
    :show-inheritance:
 
 Data processing
 ---------------
+
+.. automodule:: bppm_dem_sm.data_processing
+   :no-members:
 
 .. automodule:: bppm_dem_sm.data_processing.frames
    :members:
@@ -55,6 +68,12 @@ Data processing
 Model training and prediction
 -----------------------------
 
+.. automodule:: bppm_dem_sm.model
+   :no-members:
+
+.. automodule:: bppm_dem_sm.model.rnn
+   :no-members:
+
 .. automodule:: bppm_dem_sm.model.rnn.architecture
    :members:
    :show-inheritance:
@@ -77,6 +96,9 @@ Model training and prediction
 
 Metrics
 -------
+
+.. automodule:: bppm_dem_sm.metrics
+   :no-members:
 
 .. automodule:: bppm_dem_sm.metrics.lacey_mixing_index
    :members:
@@ -101,6 +123,9 @@ Metrics
 Visualization
 -------------
 
+.. automodule:: bppm_dem_sm.visualization
+   :no-members:
+
 .. automodule:: bppm_dem_sm.visualization.animate_particles
    :members:
    :show-inheritance:
@@ -124,12 +149,18 @@ Visualization
 DEM simulation
 --------------
 
+.. automodule:: bppm_dem_sm.simulation
+   :no-members:
+
 .. automodule:: bppm_dem_sm.simulation.launcher
    :members:
    :show-inheritance:
 
 YADE backend
 ~~~~~~~~~~~~
+
+.. automodule:: bppm_dem_sm.simulation.yade_dem
+   :no-members:
 
 .. automodule:: bppm_dem_sm.simulation.yade_dem.run_simulation
    :members:
@@ -168,3 +199,6 @@ BlazeDEM backend (placeholder)
 
 Not implemented yet -- every function raises ``NotImplementedError``. See
 :mod:`bppm_dem_sm.simulation.blaze_dem`.
+
+.. automodule:: bppm_dem_sm.simulation.blaze_dem
+   :no-members:

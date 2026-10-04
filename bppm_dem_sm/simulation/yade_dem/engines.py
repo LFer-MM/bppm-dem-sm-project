@@ -32,6 +32,7 @@ from yade.wrapper import (
 
 from . import stl
 
+#: Shared state for the force-balance monitor (:func:`run_until_forces_balanced`).
 BALANCE_STATE = {
     "done": False,
     "threshold": 1e-3,
@@ -41,11 +42,11 @@ BALANCE_STATE = {
 
 
 def initialize_engines(contact_model, contact_model_params, rotation_engine=False):
-    """Build O.engines for Cundall–Strack or Hertz–Mindlin; optionally append RotationEngine.
+    """Build ``O.engines`` for Cundall-Strack or Hertz-Mindlin; optionally add a RotationEngine.
 
     Args:
         contact_model: ``"cundall_strack"`` or ``"hertz_mindlin"``.
-        contact_model_params: For Hertz–Mindlin, must include a
+        contact_model_params: For Hertz-Mindlin, must include a
             ``"restitution"`` MatchMaker (see
             :func:`bppm_dem_sm.config.build_yade_material_interactions`).
         rotation_engine: If ``True``, append a ``RotationEngine`` labeled
@@ -100,7 +101,7 @@ def set_dt(new_dt=None, factor=0.3):
 
 
 def set_gravity_damping(new_gravity_damping):
-    """Set NewtonIntegrator damping by label.
+    """Set ``NewtonIntegrator`` damping by label.
 
     Args:
         new_gravity_damping: Numerical damping coefficient for the engine
@@ -112,9 +113,9 @@ def set_gravity_damping(new_gravity_damping):
 
 
 def run_until_forces_balanced(threshold=0.001, interval=1000, motion_start_steps=20, wait_chunk=1000, max_chunks=5000):
-    """Run until unbalancedForce falls below threshold.
+    """Run until ``unbalancedForce`` falls below ``threshold``.
 
-    Installs a ``PyRunner`` that calls :func:`_balance_check` every
+    Installs a ``PyRunner`` that calls ``_balance_check`` every
     ``interval`` iterations. Returns early when ``BALANCE_STATE["done"]``.
 
     Args:
@@ -148,7 +149,7 @@ def run_until_forces_balanced(threshold=0.001, interval=1000, motion_start_steps
 
 
 def rotate_mill_indefinitely(speed_rpm=9):
-    """Set rotation_engine angular velocity from RPM and ``O.run()`` open-ended.
+    """Set ``rotation_engine`` angular velocity from RPM and ``O.run()`` open-ended.
 
     Args:
         speed_rpm: Mill rotation speed in revolutions per minute.
@@ -159,7 +160,7 @@ def rotate_mill_indefinitely(speed_rpm=9):
 
 
 def rotate_mill_by_degrees(degrees, speed_rpm=9):
-    """Rotate mill for time matching ``degrees`` at given RPM.
+    """Rotate the mill for the time matching ``degrees`` at the given RPM.
 
     Args:
         degrees: Signed rotation angle in degrees (sign sets direction).
@@ -173,7 +174,7 @@ def rotate_mill_by_degrees(degrees, speed_rpm=9):
     direction = 1.0 if degrees > 0 else -1.0
     rotation_engine.angularVelocity = direction * omega
 
-    t_needed = (abs(float(degrees)) / 360.0) * (60.0 / rpm)  # SEGUNDOS VIRTUALES
+    t_needed = (abs(float(degrees)) / 360.0) * (60.0 / rpm)  # simulated seconds
     n_steps = int(round(t_needed / O.dt))
     if n_steps > 0:
         O.run(n_steps)
@@ -190,7 +191,7 @@ def rotate_mill_by_time(virtual_time_seconds, speed_rpm=9):
     rotation_engine = _get_rotation_engine("rotation_engine")
 
     rpm = abs(float(speed_rpm))
-    omega = rpm * (2*pi) / 60.0  # RADIANES / SEGUNDO
+    omega = rpm * (2*pi) / 60.0  # rad/s
 
     direction = 1.0 if virtual_time_seconds > 0 else -1.0
     rotation_engine.angularVelocity = direction * omega
@@ -201,7 +202,7 @@ def rotate_mill_by_time(virtual_time_seconds, speed_rpm=9):
 
 
 def _get_rotation_engine(label="rotation_engine"):
-    """Find a RotationEngine in O.engines by label.
+    """Find a ``RotationEngine`` in ``O.engines`` by label.
 
     Args:
         label: Engine label to match (default ``"rotation_engine"``).
@@ -216,7 +217,7 @@ def _get_rotation_engine(label="rotation_engine"):
 
 
 def _balance_check():
-    """PyRunner hook: stop sim when unbalancedForce is below threshold.
+    """Pause the simulation once ``unbalancedForce`` is below threshold (``PyRunner`` hook).
 
     Updates ``BALANCE_STATE``, removes the monitor engine, and calls
     ``O.pause()`` when balanced.

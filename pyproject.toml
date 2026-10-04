@@ -35,7 +35,12 @@ src = ["bppm_dem_sm"]
 include = ["pyproject.toml", "bppm_dem_sm/**/*.py"]
 
 [tool.ruff.lint]
-extend-select = ["I"]  # Add import sorting
+# I: import sorting. D + D401: Google-style docstrings with imperative summaries
+# (see docs/source/docstring_style.rst).
+extend-select = ["I", "D", "D401"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.ruff.lint.isort]
 known-first-party = ["bppm_dem_sm"]

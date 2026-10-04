@@ -13,7 +13,7 @@ from ..progress import track
 
 
 def sorted_frame_files(frames_dir, pattern="frame_*.parquet"):
-    """Sorted parquet paths under frames_dir matching pattern.
+    """Return sorted parquet paths under ``frames_dir`` matching ``pattern``.
 
     Args:
         frames_dir: Directory containing frame parquet files.
@@ -34,7 +34,7 @@ def load_frame(path, cols=None):
         cols: Optional column subset to read; ``None`` reads all columns.
 
     Returns:
-        pd.DataFrame: Frame rows sorted by particle ``id`` with a reset index.
+        pandas.DataFrame: Frame rows sorted by particle ``id`` with a reset index.
     """
     return pd.read_parquet(path, columns=cols).sort_values(ID_COL).reset_index(drop=True)
 
@@ -49,8 +49,8 @@ def load_frames_stacked(frames_dir, pattern="frame_*.parquet", feature_cols=None
             (``x``, ``y``, ``z``, ``r``).
 
     Returns:
-        tuple: ``(pos, rad, base_ids)`` where ``pos`` is ``[T, N, 3]``,
-        ``rad`` is ``[T, N, 1]``, and ``base_ids`` is length ``N``.
+        tuple: ``(pos, rad, base_ids)`` where ``pos`` is ``(T, N, 3)``,
+        ``rad`` is ``(T, N, 1)``, and ``base_ids`` is length ``N``.
     """
     feature_cols = feature_cols or FEATURE_COLS
     cols = [ID_COL] + [c for c in feature_cols if c != ID_COL]
@@ -62,6 +62,6 @@ def load_frames_stacked(frames_dir, pattern="frame_*.parquet", feature_cols=None
     ]
     base_ids = frames[0][ID_COL].to_numpy()
 
-    pos = np.stack([df[TARGET_COLS].to_numpy(np.float32) for df in frames])  # [T, N, 3]
-    rad = np.stack([df[["r"]].to_numpy(np.float32) for df in frames])  # [T, N, 1]
+    pos = np.stack([df[TARGET_COLS].to_numpy(np.float32) for df in frames])  # (T, N, 3)
+    rad = np.stack([df[["r"]].to_numpy(np.float32) for df in frames])  # (T, N, 1)
     return pos, rad, base_ids

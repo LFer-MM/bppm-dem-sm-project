@@ -23,37 +23,63 @@ import math
 from pathlib import Path
 from typing import Any, get_type_hints
 
+# --- Paths and dataset defaults --------------------------------------------
+
+#: Repository root (the directory containing ``bppm_dem_sm/``).
 REPO_ROOT = Path(__file__).resolve().parents[1]
+#: Root of all on-disk datasets.
 DATA_DIR = REPO_ROOT / "data"
+#: Raw DEM CSV frame dumps, as written by the simulation.
 RAW_DIR = DATA_DIR / "raw"
+#: Intermediate outputs (predictions, scratch figures).
 INTERIM_DIR = DATA_DIR / "interim"
+#: Training-ready parquet datasets.
 PROCESSED_DIR = DATA_DIR / "processed"
+#: Saved surrogate models and their training histories.
 MODELS_DIR = REPO_ROOT / "models"
+#: Persisted metric results (e.g. ``computing_speed.json``).
 REPORTS_DIR = REPO_ROOT / "reports"
+#: Saved comparison figures.
 FIGURES_DIR = REPORTS_DIR / "figures"
 
+#: Default ground-truth dataset directory name under :data:`PROCESSED_DIR`.
 DEFAULT_DATASET = "sic_dataset_20s_dt0p0001_parquet"
+#: Default short-time training dataset directory name under :data:`PROCESSED_DIR`.
 DEFAULT_TRAIN_DATASET = "sic_training_dataset_3s_4s_parquet"
+#: Default model file stem under :data:`MODELS_DIR`.
 DEFAULT_MODEL_NAME = "rnn_gru_sic_model"
 
+#: Particle id column shared by every frame table.
 ID_COL = "id"
+#: Per-timestep GRU input features (position plus radius).
 FEATURE_COLS = ["x", "y", "z", "r"]
+#: GRU regression targets (next-step position).
 TARGET_COLS = ["x", "y", "z"]
 
 # --- DEM simulation: shared / backend-agnostic -----------------------------
 
+#: Valid values for ``ExperimentConfig.dem_backend``.
 DEM_BACKENDS = ("yade", "blaze")
 
+#: SAG mill slice geometry loaded by the DEM backend.
 SAGMILL_STL_PATH = "sag_mill_40ft_m.stl"
-MILL_DIAMETER_M = 11.0  # mill diameter used for ingress chord geometry;
-                        # also D in the Lacey/granular-temperature cell
-                        # formula below (0.04 x D, Kishida et al. 2025 Sec 4.1)
+#: Mill diameter (m), used for ingress chord geometry and as ``D`` in the
+#: Lacey/granular-temperature cell formula ``0.04 x D`` (Kishida et al. 2025,
+#: Sec. 4.1).
+MILL_DIAMETER_M = 11.0
 
-ROCK_COUNT = 19888  # 9%
-ROCK_DIAM_M = 0.06985  # 2.75 inches
-BALL_COUNT = 4696  # 17%
-BALL_DIAM_M = 0.1397  # 5.5 inches -- the large/tracer species (material_large="steel")
+#: Number of rock (small-species) particles (9%).
+ROCK_COUNT = 19888
+#: Rock particle diameter (m); 2.75 inches.
+ROCK_DIAM_M = 0.06985
+#: Number of steel-ball (large-species) particles (17%).
+BALL_COUNT = 4696
+#: Steel-ball diameter (m); 5.5 inches. The large/tracer species
+#: (``material_large="steel"``).
+BALL_DIAM_M = 0.1397
 
+#: Per-material DEM properties (density, Young's modulus, Poisson ratio,
+#: friction angle) plus the label the DEM backend registers each material under.
 MATERIALS = {
     "steel": {
         "density": 7850,
@@ -71,6 +97,8 @@ MATERIALS = {
     },
 }
 
+#: Pairwise coefficients of restitution keyed by material-name pair; look up
+#: order-independently via ``_restitution``.
 RESTITUTION_COEFFICIENTS = {
     ("steel", "steel"): 0.8,
     ("steel", "rock"): 0.5,
@@ -89,10 +117,11 @@ def _restitution(a: str, b: str) -> float:
 
 
 def build_yade_material_interactions():
-    """Restitution MatchMaker for steel/rock contacts (idx 0 steel, 1 rock; needs YADE).
+    """Build the YADE restitution ``MatchMaker`` for steel/rock contacts.
 
-    Builds the YADE-specific ``MatchMaker`` from the backend-agnostic
-    :data:`RESTITUTION_COEFFICIENTS` table.
+    Requires YADE. Translates the backend-agnostic
+    :data:`RESTITUTION_COEFFICIENTS` table into YADE material indices
+    (0 = steel, 1 = rock).
 
     Returns:
         dict: Mapping with a ``"restitution"`` key whose value is a YADE
@@ -111,23 +140,38 @@ def build_yade_material_interactions():
 
 
 # --- BlazeDEM specific ------------------------------------------------------
-# Placeholder -- no BlazeDEM fields yet. Reserved for backend-specific
-# settings (GPU device index, solver tolerances, contact model variant,
-# etc.) once BlazeDEM support lands.
+# No BlazeDEM fields yet. Reserved for backend-specific settings (GPU device
+# index, solver tolerances, contact model variant, etc.) once BlazeDEM
+# support lands.
 
 
 def build_blaze_material_interactions():
-    """Placeholder for BlazeDEM's material-interaction builder.
+    """Raise ``NotImplementedError`` (BlazeDEM placeholder).
+
+    Reserves the BlazeDEM counterpart of :func:`build_yade_material_interactions`.
 
     Raises:
-        NotImplementedError: Always -- BlazeDEM backend not yet implemented.
+        NotImplementedError: Always; the BlazeDEM backend is not implemented yet.
     """
     raise NotImplementedError("BlazeDEM backend not yet implemented")
 
 
+# --- Experiment configuration ----------------------------------------------
+
+
 @dataclass
 class TrainingOptions:
-    """GRU training hyperparameters."""
+    """GRU training hyperparameters.
+
+    Attributes:
+        epochs: Number of training epochs.
+        batch_size: Samples per gradient step.
+        learning_rate: Adam optimizer learning rate.
+        val_fraction: Fraction of samples held out for validation.
+        seed: RNG seed for the train/validation shuffle.
+        gru_units: Hidden size of the GRU layer.
+        dense_units: Units in the intermediate Dense layer.
+    """
 
     epochs: int = 20
     batch_size: int = 500
@@ -140,7 +184,22 @@ class TrainingOptions:
 
 @dataclass
 class PredictionOptions:
-    """Sliding-window prediction settings and output paths."""
+    """Sliding-window prediction settings and output paths.
+
+    Attributes:
+        start_frame: Index of the first seed frame in ``data_dir``.
+        autoregressive: If ``True``, feed each prediction back as the next
+            input; otherwise slide over ground-truth frames.
+        predict_until_end: If ``True``, predict through the last available
+            frame; otherwise stop after ``max_steps``.
+        max_steps: Number of steps to predict when ``predict_until_end`` is
+            ``False``.
+        predict_batch_size: Particles per model forward pass.
+        dt0: Time stamp (s) written for the first predicted frame.
+        dt_step: Time (s) between predicted frames; also the SR term's
+            Delta t_RNN.
+        pred_out_dir: Root directory for prediction outputs.
+    """
 
     start_frame: int = 66
     autoregressive: bool = False
@@ -153,20 +212,12 @@ class PredictionOptions:
 
     @property
     def pred_frames_dir(self) -> Path:
-        """Directory holding one parquet per predicted frame.
-
-        Returns:
-            Path: ``pred_out_dir / "pred_frames"``.
-        """
+        """Directory holding one parquet per predicted frame (``pred_out_dir / "pred_frames"``)."""
         return Path(self.pred_out_dir) / "pred_frames"
 
     @property
     def pred_combined_parquet(self) -> Path:
-        """Path to the combined predictions table.
-
-        Returns:
-            Path: ``pred_out_dir / "predictions_all.parquet"``.
-        """
+        """Combined predictions table (``pred_out_dir / "predictions_all.parquet"``)."""
         return Path(self.pred_out_dir) / "predictions_all.parquet"
 
 
@@ -183,6 +234,16 @@ class MetricsOptions:
     radial/axial large-particle fraction profile; the mill's circular cross
     section is assumed to lie in the XY plane (see
     :mod:`bppm_dem_sm.metrics.segregation_profile`).
+
+    Attributes:
+        cell_size: Cubic cell edge length (m) for Lacey and granular temperature.
+        min_particles_per_cell: Minimum particles for a cell to contribute.
+        metrics_dt: Time (s) per frame index; ``time = frame * metrics_dt``.
+        center_x: Mill central-axis X coordinate (m).
+        center_y: Mill central-axis Y coordinate (m).
+        center_z: Axial reference point (m) for the axial profile.
+        n_radial_bins: Number of equal-width radial bins.
+        n_axial_bins: Number of equal-width axial bins.
     """
 
     cell_size: float = 0.04 * MILL_DIAMETER_M  # 0.44 m
@@ -199,24 +260,25 @@ class MetricsOptions:
 class ComputingSpeedOptions:
     """Reference DEM wall-clock times for the dimensionless computing-speed metric.
 
-    ``bppm_dem_sm.experiment_pipeline.run_experiment_pipeline`` times its own
+    :func:`~bppm_dem_sm.experiment_pipeline.run_experiment_pipeline` times its own
     training/prediction stages, but the DEM side of the comparison (Kishida
     et al. 2025, Powder Technology 455, 120811, Fig. 15) has no equivalent
     unless ``do_simulate`` is timed too: DEM simulations may run separately
     under YADE, outside this pipeline. There is no way to derive their
     wall-clock time automatically in that case, so both fields here are
     plain user-supplied measurements, in seconds for consistency with every
-    other time-valued field in this config (e.g. ``metrics_dt``, ``dt_step``):
+    other time-valued field in this config (e.g. ``metrics_dt``, ``dt_step``).
 
-    - ``dem_reference_seconds``: wall-clock time of a full DEM run reproducing
-      the same target simulated duration as your training/prediction run, on
-      the same hardware. The default (24 h) is a placeholder, not a
-      measurement.
-    - ``dem_data_acquisition_seconds``: wall-clock time of the short reference
-      DEM run used to generate this GRU's training data (paper Steps 1-2).
-      Defaults to 0.0 (excluded), matching the paper's "all RNNSR steps"
-      figure once set; leave at 0.0 to report only the Python-side
-      train+predict time.
+    Attributes:
+        dem_reference_seconds: Wall-clock time of a full DEM run reproducing
+            the same target simulated duration as your training/prediction
+            run, on the same hardware. The default (24 h) is a placeholder,
+            not a measurement.
+        dem_data_acquisition_seconds: Wall-clock time of the short reference
+            DEM run used to generate this GRU's training data (paper Steps
+            1-2). Defaults to 0.0 (excluded), matching the paper's "all
+            RNNSR steps" figure once set; leave at 0.0 to report only the
+            Python-side train+predict time.
     """
 
     dem_reference_seconds: float = 86400.0
@@ -240,6 +302,13 @@ class StochasticOptions:
     purpose (0.5588 m vs. 0.44 m here) because they answer different
     questions over different reference lengths, even though the paper's own
     reference DEM happens to use a small cell for both.
+
+    Attributes:
+        enabled: If ``True``, add the SR displacement to every prediction.
+        velocity_cell_size: Cubic cell edge length (m) for the sigma_v(x) grid.
+        velocity_min_particles_per_cell: Minimum pooled observations for a
+            cell to receive a non-zero sigma_v.
+        stochastic_seed: RNG seed for the SR draws.
     """
 
     enabled: bool = False
@@ -250,7 +319,16 @@ class StochasticOptions:
 
 @dataclass
 class VisualizationOptions:
-    """Animation and figure display / save settings."""
+    """Animation and figure display / save settings.
+
+    Attributes:
+        plane: Projection plane for animations: ``"xy"``, ``"xz"``, or ``"yz"``.
+        fps: Animation frames per second.
+        marker_size: Scatter marker size.
+        every_nth_frame: Subsample stride over frame files when animating.
+        save_figures: If ``True``, write figures and animations to disk.
+        show_plots: If ``True``, display figures interactively.
+    """
 
     plane: str = "xy"
     fps: int = 30
@@ -270,28 +348,46 @@ class ExperimentConfig:
     when a group is omitted). Used by
     :func:`bppm_dem_sm.experiment_pipeline.run_experiment_pipeline`.
 
-    Renamed from ``PipelineConfig``: once ``do_simulate`` gates a physics
-    simulation (not just an ML data transform), "pipeline" undersold what
-    this class configures -- the full setup for reproducing one run of the
-    study, DEM and ML halves both. "Experiment config" is the standard term
-    for that in research-code paper reproductions.
+    Attributes:
+        data_dir: Ground-truth parquet frames (prediction seed and metrics).
+        train_data_dir: Short-time parquet frames used for training and for
+            the SR velocity field.
+        raw_data_dir: Raw DEM CSV dumps converted by ``do_process``.
+        frame_glob: Glob pattern for ground-truth frame files.
+        feature_cols: Per-timestep model input columns.
+        model_path: Saved model path (``.keras``, ``.h5``, or SavedModel dir).
+        frames_in: Input window length (frames per GRU sequence).
+        dem_backend: DEM backend launched by ``do_simulate``; one of
+            :data:`DEM_BACKENDS`.
+        do_simulate: Run the DEM simulation stage.
+        do_process: Run the raw-CSV-to-parquet stage.
+        do_train: Run the training stage.
+        do_predict: Run the prediction stage.
+        do_metrics: Run the metrics stage.
+        do_visualization: Run the visualization stage.
+        training: Training hyperparameters.
+        prediction: Prediction settings and output paths.
+        metrics: Metrics-stage settings.
+        stochastic: SR (stochastic-random) perturbation settings.
+        computing_speed: DEM reference times for the computing-speed metric.
+        visualization: Figure and animation settings.
     """
 
-    # data
+    # Data
     data_dir: Path = PROCESSED_DIR / DEFAULT_DATASET
     train_data_dir: Path = PROCESSED_DIR / DEFAULT_TRAIN_DATASET
     raw_data_dir: Path = RAW_DIR
     frame_glob: str = "frame_*.parquet"
     feature_cols: list[str] = field(default_factory=lambda: list(FEATURE_COLS))
 
-    # model
+    # Model
     model_path: Path = MODELS_DIR / f"{DEFAULT_MODEL_NAME}.keras"
     frames_in: int = 15
 
     # DEM backend selection (do_simulate only)
     dem_backend: str = "yade"
 
-    # stages, in the order they'd run end to end
+    # Stage toggles, in end-to-end run order
     do_simulate: bool = False
     do_process: bool = False
     do_train: bool = False
@@ -365,7 +461,7 @@ class ExperimentConfig:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ExperimentConfig:
-        """Build a config from a mapping (e.g. parsed JSON). Unknown keys raise.
+        """Build a config from a mapping such as parsed JSON; unknown keys raise.
 
         Nested groups are objects keyed ``training``, ``prediction``,
         ``metrics``, and ``visualization``. Paths may be strings; bools may be

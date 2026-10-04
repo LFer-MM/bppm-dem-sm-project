@@ -9,11 +9,13 @@ from yade import FrictMat, Vector3, ymport
 from yade.utils import facet
 from yade.wrapper import O
 
+#: Body ids of the loaded mill slice and its end caps; set by
+#: :func:`initialize_sag_mill_slice`.
 SAG_MILL_SLICE_BODY_GROUP = None
 
 
 def initialize_sag_mill_slice(sagmill_stl_path):
-    """Load STL slice, add end caps, set SAG_MILL_SLICE_BODY_GROUP.
+    """Load the STL slice, add end caps, and set :data:`SAG_MILL_SLICE_BODY_GROUP`.
 
     Args:
         sagmill_stl_path: Path to the SAG mill slice STL (steel material).
@@ -34,18 +36,18 @@ def initialize_sag_mill_slice(sagmill_stl_path):
 def createBox(x, y, z):
     """Append box facets (half-extents ``x``, ``y``; wall height fixed at 0.375 m).
 
-    Note:
-        The ``z`` argument is accepted for API compatibility but the facet
-        height is hardcoded to ``0.375``.
-
     Args:
         x: Half-extent in X (meters).
         y: Half-extent in Y (meters).
         z: Unused (see note); retained for call-site compatibility.
+
+    Note:
+        The ``z`` argument is accepted for API compatibility but the facet
+        height is hardcoded to ``0.375``.
     """
     mat = O.materials.append(FrictMat(density=7850, young=1e9, poisson=0.3, frictionAngle=radians(10)))
 
-    # corner points
+    # Corner points
     b0 = (-x, -y, 0)
     b1 = ( x, -y, 0)
     b2 = ( x,  y, 0)
@@ -56,10 +58,10 @@ def createBox(x, y, z):
     t3 = (-x,  y, 0.375)
 
     facets = [
-        # bottom (z=0)
+        # Bottom (z=0)
         [b0, b1, b2],
         [b0, b2, b3],
-        # top (z=0.375)
+        # Top (z=0.375)
         [t0, t2, t1],
         [t0, t3, t2],
         # -x wall
@@ -68,7 +70,7 @@ def createBox(x, y, z):
         # +x wall
         [b1, b2, t2],
         [b1, t2, t1],
-        # -y wall (commented out in your original)
+        # -y wall
         [b0, b1, t1],
         [b0, t1, t0],
     ]
@@ -90,8 +92,8 @@ def createFunnel(x, y, z, fx, fy, dy):
     """
     mat = O.materials.append(FrictMat(density=7850, young=1e9, poisson=0.3, frictionAngle=radians(10)))
 
-    # -- TOP BOX corners -------------------------------------
-    # centered at 0,0 so X goes from -x to +x, Y goes from -y/2 to +y/2
+    # --- Top box corners -----------------------------------------------------
+    # Centered at (0, 0): X spans -x..+x and Y spans -y/2..+y/2.
     tb0 = (-x, -y/2, 0)
     tb1 = ( x, -y/2, 0)
     tb2 = ( x, -y/2, z)
@@ -101,24 +103,24 @@ def createFunnel(x, y, z, fx, fy, dy):
     tt2 = ( x,  y/2, z)
     tt3 = (-x,  y/2, z)
 
-    # -- FUNNEL corners ---------------------------------------
-    # top of funnel = bottom of top box at y=-y/2
-    # bottom of funnel = y=-y/2-dy, narrowed to fx
+    # --- Funnel corners ------------------------------------------------------
+    # Funnel top is the top box's bottom (y = -y/2); its bottom is at
+    # y = -y/2 - dy, narrowed to fx.
     fb0 = (-fx, -y/2-dy, 0)
     fb1 = ( fx, -y/2-dy, 0)
     fb2 = ( fx, -y/2-dy, z)
     fb3 = (-fx, -y/2-dy, z)
 
-    # -- DEPOSIT BOX corners ----------------------------------
-    # top = bottom of funnel at y=-y/2-dy
-    # bottom = y=-y/2-dy-fy
+    # --- Deposit box corners -------------------------------------------------
+    # Deposit box top is the funnel bottom (y = -y/2 - dy); its bottom is at
+    # y = -y/2 - dy - fy.
     db0 = (-fx, -y/2-dy-fy, 0)
     db1 = ( fx, -y/2-dy-fy, 0)
     db2 = ( fx, -y/2-dy-fy, z)
     db3 = (-fx, -y/2-dy-fy, z)
 
     facets = [
-        # -- TOP BOX -----------------------------------------
+        # --- Top box ---------------------------------------------------------
         # -z wall
         [tb0, tb1, tt1],
         [tb0, tt1, tt0],
@@ -135,7 +137,7 @@ def createFunnel(x, y, z, fx, fy, dy):
         [tt0, tt1, tt2],
         [tt0, tt2, tt3],
 
-        # -- FUNNEL SLOPES ------------------------------------
+        # --- Funnel slopes ---------------------------------------------------
         # -x slope
         [tb0, fb0, fb3],
         [tb0, fb3, tb3],
@@ -149,8 +151,8 @@ def createFunnel(x, y, z, fx, fy, dy):
         [tb3, fb3, fb2],
         [tb3, fb2, tb2],
 
-        # -- DEPOSIT BOX --------------------------------------
-        # bottom face (closed)
+        # --- Deposit box -----------------------------------------------------
+        # Bottom face (closed)
         [db0, db2, db1],
         [db0, db3, db2],
         # -z wall
@@ -175,7 +177,7 @@ def createFunnel(x, y, z, fx, fy, dy):
 
 
 def chord_box_3d(diameter, y, box_height, depth):
-    """3D box whose bottom face is the chord at ``y``, spanning the full Z depth.
+    """Return a 3D box whose bottom face is the chord at ``y``, spanning the full Z depth.
 
     Args:
         diameter: Mill / circle diameter in meters.
@@ -202,7 +204,7 @@ def chord_box_3d(diameter, y, box_height, depth):
 
 
 def get_surface_y(padding=0.1):
-    """Max sphere top Y in the current scene plus padding.
+    """Return the highest sphere-top Y in the current scene plus ``padding``.
 
     Args:
         padding: Extra clearance above the tallest sphere top (meters).
@@ -215,7 +217,7 @@ def get_surface_y(padding=0.1):
 
 
 def _obtain_sag_mill_slice_measurements(sag_mill_body_group):
-    """Bounding radius and Z extents from slice body ids.
+    """Return the bounding radius and Z extents of the slice bodies.
 
     Args:
         sag_mill_body_group: Iterable of YADE body ids belonging to the STL slice.

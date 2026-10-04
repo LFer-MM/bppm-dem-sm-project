@@ -61,7 +61,10 @@ def save_particle_positions(csv_path, include_velocity=True, include_ang_vel=Tru
 
 
 def load_particle_positions(csv_path, *, set_vel_zero = True, set_ang_vel_zero = True):
-    """Recreate spheres from CSV using materials.MATERIALS_MAP.
+    """Recreate spheres from a CSV snapshot.
+
+    Materials are looked up by label in
+    :data:`~bppm_dem_sm.simulation.yade_dem.materials.MATERIALS_MAP`.
 
     Args:
         csv_path: CSV written by :func:`save_particle_positions` (needs
@@ -94,13 +97,12 @@ def load_particle_positions(csv_path, *, set_vel_zero = True, set_ang_vel_zero =
             else:
                 sph_color = (0,0,1)
 
-            # Create sphere
             bid = O.bodies.append(sphere((x, y, z), r, material=mat, color=sph_color))
             created_ids.append(bid)
 
             b = O.bodies[bid]
 
-            # Velocities
+            # Restore velocities unless zeroing was requested or the CSV lacks them.
             if set_vel_zero or not has_v:
                 b.state.vel = Vector3(0, 0, 0)
             else:

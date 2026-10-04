@@ -18,12 +18,14 @@ from bppm_dem_sm.visualization import metrics_plots
 
 
 def _write_frame(path, ids, xyz, r):
+    """Write one parquet frame with ``id``, ``x``, ``y``, ``z``, ``r`` columns."""
     pd.DataFrame(
         {"id": ids, "x": xyz[:, 0], "y": xyz[:, 1], "z": xyz[:, 2], "r": r}
     ).to_parquet(path, index=False)
 
 
 def _write_gt_frames(data_dir, seed=0):
+    """Write 3 ground-truth frames of 8 bidisperse particles in linear motion."""
     data_dir.mkdir(parents=True, exist_ok=True)
     ids = np.arange(8)
     r = np.array([0.1] * 4 + [0.2] * 4)
@@ -36,6 +38,7 @@ def _write_gt_frames(data_dir, seed=0):
 
 
 def _write_pred_frames(pred_frames_dir, start_idx, seed=1):
+    """Write 2 predicted frames numbered from ``start_idx``."""
     pred_frames_dir.mkdir(parents=True, exist_ok=True)
     ids = np.arange(8)
     r = np.array([0.1] * 4 + [0.2] * 4)
@@ -49,6 +52,7 @@ def _write_pred_frames(pred_frames_dir, start_idx, seed=1):
 
 
 def _base_config(tmp_path, with_pred):
+    """Build a config over fresh GT frames, plus predicted frames if ``with_pred``."""
     data_dir = tmp_path / "data"
     _write_gt_frames(data_dir)
 

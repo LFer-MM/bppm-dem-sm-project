@@ -6,24 +6,24 @@ import numpy as np
 
 
 def build_supervised_dataset(pos, rad, frames_in):
-    """Sliding-window (X, y): frames_in steps of [x,y,z,r] -> next [x,y,z].
+    """Build sliding-window ``(X, y)``: ``frames_in`` steps of ``x, y, z, r`` -> next ``x, y, z``.
 
     Args:
-        pos: Position tensor of shape ``[T, N, 3]``.
-        rad: Radius tensor of shape ``[T, N, 1]``.
+        pos: Position tensor of shape ``(T, N, 3)``.
+        rad: Radius tensor of shape ``(T, N, 1)``.
         frames_in: Number of input frames in each supervised window.
 
     Returns:
         tuple[numpy.ndarray, numpy.ndarray]: ``X`` of shape
-        ``[(T - frames_in) * N, frames_in, 4]`` and ``y`` of shape
-        ``[(T - frames_in) * N, 3]``.
+        ``((T - frames_in) * N, frames_in, 4)`` and ``y`` of shape
+        ``((T - frames_in) * N, 3)``.
     """
     Xs, Ys = [], []
     for t0 in range(pos.shape[0] - frames_in):
         t1 = t0 + frames_in
-        x_seq = np.concatenate([pos[t0:t1], rad[t0:t1]], axis=-1)  # [frames_in, N, 4]
-        Xs.append(np.transpose(x_seq, (1, 0, 2)))  # [N, frames_in, 4]
-        Ys.append(pos[t1])  # [N, 3]
+        x_seq = np.concatenate([pos[t0:t1], rad[t0:t1]], axis=-1)  # (frames_in, N, 4)
+        Xs.append(np.transpose(x_seq, (1, 0, 2)))  # (N, frames_in, 4)
+        Ys.append(pos[t1])  # (N, 3)
     return np.concatenate(Xs), np.concatenate(Ys)
 
 

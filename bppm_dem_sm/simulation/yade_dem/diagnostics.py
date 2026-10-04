@@ -7,13 +7,13 @@ from yade.wrapper import O
 
 
 def check_overlaps():
-    """Max relative sphere–sphere penetration depth.
+    """Return the max relative sphere-sphere penetration depth.
 
     Scans real interactions, ignoring facet contacts. Relative overlap is
     ``penetrationDepth / min(r1, r2)``.
 
     Returns:
-        float: Maximum relative overlap ratio among sphere–sphere contacts.
+        float: Maximum relative overlap ratio among sphere-sphere contacts.
     """
     max_rel = 0.0
     worst_pair = None
@@ -22,7 +22,7 @@ def check_overlaps():
             continue
         b1 = O.bodies[i.id1]
         b2 = O.bodies[i.id2]
-        # skip any contact involving a facet (non-sphere)
+        # Skip any contact involving a facet (non-sphere).
         if not isinstance(b1.shape, Sphere) or not isinstance(b2.shape, Sphere):
             continue
         depth = i.geom.penetrationDepth
@@ -37,7 +37,7 @@ def check_overlaps():
 
 
 def get_particle_inventory(r_small, r_large, tol=1e-6, verbose=True):
-    """Count spheres per size class (small/large) within tol of each radius.
+    """Count spheres per size class (small/large) within ``tol`` of each radius.
 
     Args:
         r_small: Expected small-species radius (meters).

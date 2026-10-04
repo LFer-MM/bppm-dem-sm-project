@@ -16,6 +16,7 @@ from yade.wrapper import O, PyRunner
 
 from . import materials
 
+# Runner state shared between start_frame_capture and the PyRunner hook.
 _frameCaptureState = {}
 
 
@@ -23,7 +24,7 @@ def start_frame_capture(folder_name, interval, runner_label="frameCapture", iter
     """Configure periodic CSV sphere dumps via PyRunner.
 
     Creates a folder named ``folder_name + str(O.dt) + "_"`` under the CWD and
-    appends a runner that calls :func:`_save_sphere_frame`.
+    appends a runner that calls ``_save_sphere_frame``.
 
     Args:
         folder_name: Base name for the output folder (``O.dt`` is appended).
@@ -54,7 +55,7 @@ def start_frame_capture(folder_name, interval, runner_label="frameCapture", iter
 
 
 def _save_sphere_frame():
-    """PyRunner: write sphere CSV when ``O.time`` reaches the next interval.
+    """Write a sphere CSV once ``O.time`` reaches the next interval (``PyRunner`` hook).
 
     Uses module-level ``_frameCaptureState`` configured by
     :func:`start_frame_capture`. Advances ``frame_id`` and ``next_save_time``.

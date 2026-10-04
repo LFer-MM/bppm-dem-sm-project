@@ -218,6 +218,7 @@ def test_build_parser_requires_a_subcommand():
 
 def test_main_dem_sim_missing_yade_returns_nonzero(monkeypatch, capsys):
     def _raise(**kwargs):
+        """Simulate YADE missing from PATH."""
         raise FileNotFoundError("YADE executable 'yade' not found on PATH.")
 
     monkeypatch.setattr("bppm_dem_sm.cli.launcher.launch_simulation", _raise)

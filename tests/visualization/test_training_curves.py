@@ -32,6 +32,7 @@ def test_plot_training_history_from_json_path(tmp_path):
 
 def test_plot_training_history_from_keras_like_object():
     class _StubHistory:
+        """Minimal stand-in for a Keras ``History``."""
         history = _HISTORY
 
     fig = plot_training_history(_StubHistory(), show=False)

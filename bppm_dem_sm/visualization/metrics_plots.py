@@ -1,4 +1,8 @@
-"""Plots comparing ground-truth vs. surrogate metrics from :mod:`bppm_dem_sm.metrics.run_metrics`."""
+"""Plots comparing ground-truth vs. surrogate metrics.
+
+Each plot renders results produced by :mod:`bppm_dem_sm.metrics.run_metrics`
+or :mod:`bppm_dem_sm.metrics.computing_speed`.
+"""
 
 from __future__ import annotations
 
@@ -8,7 +12,7 @@ from ..config import FIGURES_DIR, ExperimentConfig
 
 
 def plot_lacey_comparison(metrics: dict, config: ExperimentConfig, show=True):
-    """Plot ground-truth vs surrogate Lacey index over time.
+    """Plot ground-truth vs. surrogate Lacey index over time.
 
     Args:
         metrics: Mapping from :func:`bppm_dem_sm.metrics.run_metrics.compute_metrics`
@@ -43,7 +47,7 @@ def plot_lacey_comparison(metrics: dict, config: ExperimentConfig, show=True):
 
 
 def _latest_time_slice(profile_df: pd.DataFrame) -> pd.DataFrame:
-    """Rows for the last (largest) ``frame`` present in a profile summary."""
+    """Return the rows for the last (largest) ``frame`` in a profile summary."""
     return profile_df[profile_df["frame"] == profile_df["frame"].max()].sort_values("bin")
 
 
@@ -115,7 +119,7 @@ def plot_velocity_distribution(metrics: dict, config: ExperimentConfig, show=Tru
         show: If ``True``, display the figure interactively.
 
     Returns:
-        matplotlib.figure.Figure or None: Side-by-side histogram figure, or
+        matplotlib.figure.Figure | None: Side-by-side histogram figure, or
         ``None`` if ``velocity_gt`` is unavailable.
     """
     if "velocity_gt" not in metrics:
@@ -163,7 +167,7 @@ def plot_granular_temperature(metrics: dict, config: ExperimentConfig, show=True
         show: If ``True``, display the figure interactively.
 
     Returns:
-        matplotlib.figure.Figure or None: Boxplot figure, or ``None`` if
+        matplotlib.figure.Figure | None: Boxplot figure, or ``None`` if
         ``velocity_gt`` is unavailable.
     """
     if "velocity_gt" not in metrics:
@@ -210,7 +214,7 @@ def plot_computing_speed(metrics: dict, config: ExperimentConfig, show=True):
         show: If ``True``, display the figure interactively.
 
     Returns:
-        matplotlib.figure.Figure or None: Bar-chart figure, or ``None`` if no
+        matplotlib.figure.Figure | None: Bar-chart figure, or ``None`` if no
         speedup could be computed (no timing recorded this run).
     """
     cs = metrics.get("computing_speed")

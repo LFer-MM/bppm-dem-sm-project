@@ -1,5 +1,6 @@
-"""Lacey mixing-index, segregation-profile, velocity, and granular-temperature
-metrics over directories of ground-truth and predicted frames.
+"""Lacey, segregation-profile, velocity, and granular-temperature metrics over frame dirs.
+
+Each metric runs over directories of ground-truth and predicted frames.
 
 Computation only; the matching plots live in
 :mod:`bppm_dem_sm.visualization.metrics_plots`. The computing-speed metric
@@ -34,7 +35,8 @@ def compute_lacey_over_dir(frames_dir, pattern, frame_re, tracer_r, config, out_
     Args:
         frames_dir: Directory of parquet frames.
         pattern: Glob for frame files.
-        frame_re: Regex used by :func:`extract_frame_index`.
+        frame_re: Regex used by
+            :func:`~bppm_dem_sm.metrics.lacey_mixing_index.extract_frame_index`.
         tracer_r: Tracer (large) particle radius.
         config: Supplies ``metrics.cell_size``, ``metrics.min_particles_per_cell``,
             and ``metrics.metrics_dt``.
@@ -42,7 +44,7 @@ def compute_lacey_over_dir(frames_dir, pattern, frame_re, tracer_r, config, out_
         label: Short label for log messages (e.g. ``"GT"``, ``"PRED"``).
 
     Returns:
-        pd.DataFrame: Per-frame Lacey summary sorted by ``frame``, with columns
+        pandas.DataFrame: Per-frame Lacey summary sorted by ``frame``, with columns
         ``frame``, ``time``, ``lacey``, ``n_cells_used``,
         ``tracer_fraction_global``, ``mean_particles_per_cell``.
     """
@@ -79,19 +81,21 @@ def compute_profile_over_dir(
     Args:
         frames_dir: Directory of parquet frames.
         pattern: Glob for frame files.
-        frame_re: Regex used by :func:`extract_frame_index`.
+        frame_re: Regex used by
+            :func:`~bppm_dem_sm.metrics.lacey_mixing_index.extract_frame_index`.
         tracer_r: Tracer (large) particle radius.
         config: Supplies ``metrics.center_x/center_y/center_z`` and ``metrics_dt``.
         radial_edges: Shared radial bin edges (same for every frame/directory
-            being compared), from :func:`segregation_profile.radial_bin_edges`.
+            being compared), from
+            :func:`~bppm_dem_sm.metrics.segregation_profile.radial_bin_edges`.
         axial_edges: Shared axial bin edges, from
-            :func:`segregation_profile.axial_bin_edges`.
+            :func:`~bppm_dem_sm.metrics.segregation_profile.axial_bin_edges`.
         out_prefix: Filename prefix for the two summary parquets written into
             ``frames_dir`` (``{prefix}_radial.parquet`` / ``{prefix}_axial.parquet``).
         label: Short label for log messages (e.g. ``"GT"``, ``"PRED"``).
 
     Returns:
-        tuple[pd.DataFrame, pd.DataFrame]: Long-format ``(radial, axial)``
+        tuple[pandas.DataFrame, pandas.DataFrame]: Long-format ``(radial, axial)``
         profiles with columns ``frame``, ``time``, ``bin``, ``bin_center``,
         ``fraction_large``, ``n_particles``.
     """
@@ -130,23 +134,22 @@ def compute_velocity_and_granular_temperature(frames_dir, pattern, frame_re, tra
     snapshot rather than a time series, using the last two consecutive frames
     present in ``frames_dir``.
 
+    Persists ``velocity_speed.json`` and ``granular_temperature.parquet``
+    into ``frames_dir`` so a later ``do_visualization``-only run can read
+    them back; see :func:`load_velocity_and_granular_temperature`.
+
     Args:
         frames_dir: Directory of parquet frames.
         pattern: Glob for frame files.
-        frame_re: Regex used by :func:`extract_frame_index`.
+        frame_re: Regex used by
+            :func:`~bppm_dem_sm.metrics.lacey_mixing_index.extract_frame_index`.
         tracer_r: Tracer (large) particle radius.
         config: Supplies ``metrics.cell_size``, ``metrics.min_particles_per_cell``,
             and ``metrics.metrics_dt``.
         label: Short label for log messages (e.g. ``"GT"``, ``"PRED"``).
 
-    Persists ``velocity_speed.json`` and ``granular_temperature.parquet``
-    into ``frames_dir`` -- unlike the Lacey/segregation-profile summaries,
-    these were only ever an in-memory dict before, so a later
-    ``do_visualization``-only run had nothing to read; see
-    :func:`load_velocity_and_granular_temperature`.
-
     Returns:
-        dict or None: ``{"time", "frame_t", "frame_t1", "speed", "granular_temperature"}``,
+        dict | None: ``{"time", "frame_t", "frame_t1", "speed", "granular_temperature"}``,
         or ``None`` if fewer than 2 frames are available.
     """
     m = config.metrics
@@ -211,7 +214,7 @@ def load_velocity_and_granular_temperature(frames_dir) -> dict | None:
             for PRED).
 
     Returns:
-        dict or None: Same shape as :func:`compute_velocity_and_granular_temperature`,
+        dict | None: Same shape as :func:`compute_velocity_and_granular_temperature`,
         or ``None`` if either file is missing.
     """
     speed_path = os.path.join(str(frames_dir), _VELOCITY_SPEED_FILENAME)
@@ -244,9 +247,9 @@ def compute_metrics(config: ExperimentConfig) -> dict:
         config: Pipeline settings for data paths and metric parameters.
 
     Returns:
-        dict: ``"gt"`` / optional ``"pred"`` Lacey summaries (``pd.DataFrame``);
+        dict: ``"gt"`` / optional ``"pred"`` Lacey summaries (``pandas.DataFrame``);
         ``"radial_gt"`` / ``"axial_gt"`` / optional ``"radial_pred"`` /
-        ``"axial_pred"`` profile summaries (``pd.DataFrame``); ``"velocity_gt"``
+        ``"axial_pred"`` profile summaries (``pandas.DataFrame``); ``"velocity_gt"``
         / optional ``"velocity_pred"`` (``dict`` from
         :func:`compute_velocity_and_granular_temperature`, or absent if fewer
         than 2 frames were available).
@@ -303,7 +306,7 @@ def load_metrics(config: ExperimentConfig) -> dict:
     without re-running ``do_metrics`` in the same process -- every value
     :func:`compute_metrics` returns is written to disk by the time it
     returns, so this reads exactly those files back
-    (see project_structure_proposal.md section 6).
+    (see ``project_structure_proposal.md`` section 6).
 
     Args:
         config: Pipeline settings for data paths.

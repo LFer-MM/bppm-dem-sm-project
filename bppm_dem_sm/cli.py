@@ -26,14 +26,17 @@ from .config import DEM_BACKENDS, ExperimentConfig, _option_group_types
 from .experiment_pipeline import run_experiment_pipeline
 from .simulation import launcher
 
+# Fields with a hand-written flag instead of the generic per-field one.
 _SKIP_CLI_FIELDS = frozenset({"feature_cols"})
 
 
 def _bool_fields(cls: type) -> frozenset[str]:
+    """Return the names of ``cls``'s fields annotated as ``bool``."""
     return frozenset(name for name, hint in get_type_hints(cls).items() if hint is bool)
 
 
 def _path_fields(cls: type) -> frozenset[str]:
+    """Return the names of ``cls``'s fields annotated as ``Path``."""
     return frozenset(name for name, hint in get_type_hints(cls).items() if hint is Path)
 
 
@@ -185,7 +188,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _leaf_override_names() -> list[str]:
-    """CLI dest names that map onto ``ExperimentConfig.with_overrides``."""
+    """Return the CLI dest names that map onto ``ExperimentConfig.with_overrides``."""
     names = []
     group_types = _option_group_types()
     for f in fields(ExperimentConfig):
@@ -202,7 +205,7 @@ def config_from_args(args: argparse.Namespace) -> ExperimentConfig:
 
     If ``args.config`` is set, load only from that JSON file; all other
     pipeline flags are ignored. Otherwise apply any non-``None`` flags via
-    :meth:`ExperimentConfig.with_overrides` (flat leaf names).
+    :meth:`~bppm_dem_sm.config.ExperimentConfig.with_overrides` (flat leaf names).
 
     Args:
         args: Namespace produced by parsing the ``ml-pipeline`` subcommand.

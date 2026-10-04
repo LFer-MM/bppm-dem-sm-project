@@ -39,7 +39,7 @@ def load_rock_particles(rock_diam_m, rock_count):
 
 
 def load_ball_particles(ball_diam_m, ball_count):
-    """Spawn ball_steel spheres in four vertical regions of the mill slice.
+    """Spawn ``ball_steel`` spheres in four vertical regions of the mill slice.
 
     Args:
         ball_diam_m: Steel ball diameter in meters.
@@ -66,7 +66,7 @@ def load_ball_particles(ball_diam_m, ball_count):
 
 
 def load_all_particles(particle_diam_m, particle_count):
-    """Spawn white ball_steel particles across vertical stack regions.
+    """Spawn white ``ball_steel`` particles across vertical stack regions.
 
     Args:
         particle_diam_m: Particle diameter in meters.

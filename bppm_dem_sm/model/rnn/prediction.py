@@ -27,7 +27,7 @@ def predict_frames(config: ExperimentConfig, model=None) -> pd.DataFrame:
         model: Optional pre-loaded model; if ``None``, loads ``config.model_path``.
 
     Returns:
-        pd.DataFrame: Combined predictions with ``frame_pred``, ``step``,
+        pandas.DataFrame: Combined predictions with ``frame_pred``, ``step``,
         ``id``, ``x``, ``y``, ``z``, ``dt``, and ``r`` columns.
     """
     pred = config.prediction

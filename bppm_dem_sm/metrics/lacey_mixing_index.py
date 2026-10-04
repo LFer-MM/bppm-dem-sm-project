@@ -10,7 +10,9 @@ import re
 
 import numpy as np
 
+#: Ground-truth frame filename (``frame_XXXXX.parquet``); group 1 is the index.
 GT_FRAME_RE = re.compile(r"frame_(\d+)\.parquet$", re.IGNORECASE)
+#: Predicted frame filename (``pred_frame_XXXXX.parquet``); group 1 is the index.
 PRED_FRAME_RE = re.compile(r"pred_frame_(\d+)\.parquet$", re.IGNORECASE)
 
 
@@ -70,6 +72,7 @@ def lacey_index_for_frame(df, cell_size, tracer_radius, min_particles_per_cell=5
     iy = np.floor((y - y.min()) / cell_size).astype(np.int64)
     iz = np.floor((z - z.min()) / cell_size).astype(np.int64)
 
+    # Spatial hash of the cell index; sorting by it groups particles per cell.
     h = ix * 73856093 + iy * 19349663 + iz * 83492791
     order = np.argsort(h)
     h_sorted = h[order]

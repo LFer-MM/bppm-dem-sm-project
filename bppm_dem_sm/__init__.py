@@ -21,7 +21,7 @@ Plus top-level plumbing: ``config``, ``experiment_pipeline``, ``cli``,
 
 The ``bppm-dem-sm`` CLI (:mod:`bppm_dem_sm.cli`) exposes two subcommands:
 ``dem-sim`` (launches a DEM simulation as a subprocess) and ``ml-pipeline``
-(runs :func:`run_experiment_pipeline`).
+(runs :func:`~bppm_dem_sm.experiment_pipeline.run_experiment_pipeline`).
 """
 
 from .config import (

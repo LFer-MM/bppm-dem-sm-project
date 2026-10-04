@@ -17,3 +17,4 @@ below document that **Python library surface**—not an HTTP/REST service.
    getting_started
    examples
    api
+   docstring_style

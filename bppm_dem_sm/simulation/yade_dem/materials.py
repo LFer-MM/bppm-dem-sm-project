@@ -7,11 +7,12 @@ from math import radians
 from yade import FrictMat
 from yade.wrapper import O
 
+#: Registered ``FrictMat`` objects keyed by material label.
 MATERIALS_MAP = {}
 
 
 def initialize_simulation_materials(materials):
-    """Register FrictMat entries from dict values into O.materials and MATERIALS_MAP.
+    """Register ``FrictMat`` entries into ``O.materials`` and :data:`MATERIALS_MAP`.
 
     Args:
         materials: Mapping of material name to property dicts with keys
@@ -30,7 +31,7 @@ def initialize_simulation_materials(materials):
 
 
 def _mat_label(b):
-    """Material label string for body ``b``, or empty.
+    """Return the material label of body ``b``, or ``""`` if it has none.
 
     Args:
         b: YADE body.

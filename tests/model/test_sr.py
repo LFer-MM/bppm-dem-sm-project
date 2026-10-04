@@ -12,6 +12,7 @@ from bppm_dem_sm.config import ExperimentConfig, PredictionOptions, StochasticOp
 
 
 def _write_frame(path, ids, xyz):
+    """Write one parquet frame with ``id``, ``x``, ``y``, ``z`` columns (no radius)."""
     pd.DataFrame(
         {
             "id": ids,
@@ -146,12 +147,14 @@ class _IdentityModel:
 
 
 def _write_full_frame(path, ids, xyz, r):
+    """Write one parquet frame with ``id``, ``x``, ``y``, ``z``, ``r`` columns."""
     pd.DataFrame(
         {"id": ids, "x": xyz[:, 0], "y": xyz[:, 1], "z": xyz[:, 2], "r": r}
     ).to_parquet(path, index=False)
 
 
 def _make_predict_config(tmp_path, *, stochastic_enabled, seed=0):
+    """Build a one-step autoregressive config with a +/-x SR training set."""
     ids = np.arange(8)
     pos0 = np.zeros((8, 3))
     r = np.full(8, 0.5)

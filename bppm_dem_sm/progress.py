@@ -47,7 +47,7 @@ def complete(message: str = "Pipeline complete.") -> None:
 
 
 def track(iterable, desc: str, unit: str = "it", **kwargs):
-    """Wrap *iterable* in a tqdm bar (same style as prediction).
+    """Wrap ``iterable`` in a tqdm bar (same style as prediction).
 
     Args:
         iterable: Sequence or iterator to consume with a progress bar.

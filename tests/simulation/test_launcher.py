@@ -39,6 +39,7 @@ def test_launch_simulation_uses_default_script_and_resolved_executable(monkeypat
     captured = {}
 
     def fake_run(cmd, check=False):
+        """Record the command instead of running it."""
         captured["cmd"] = cmd
         captured["check"] = check
         return subprocess.CompletedProcess(cmd, returncode=0)
@@ -60,6 +61,7 @@ def test_launch_simulation_custom_script_and_extra_args(monkeypatch, tmp_path):
     captured = {}
 
     def fake_run(cmd, check=False):
+        """Record the command instead of running it."""
         captured["cmd"] = cmd
         return subprocess.CompletedProcess(cmd, returncode=0)
 

@@ -16,10 +16,12 @@ from pathlib import Path
 import shutil
 import subprocess
 
+#: Packaged scenario script per DEM backend, run by :func:`launch_simulation`.
 DEFAULT_SIMULATION_SCRIPTS = {
     "yade": Path(__file__).resolve().parent / "yade_dem" / "run_simulation.py",
     "blaze": Path(__file__).resolve().parent / "blaze_dem" / "run_simulation.py",
 }
+#: The YADE entry of :data:`DEFAULT_SIMULATION_SCRIPTS`.
 DEFAULT_SIMULATION_SCRIPT = DEFAULT_SIMULATION_SCRIPTS["yade"]
 
 
@@ -31,7 +33,7 @@ def find_yade_executable(name: str = "yade") -> str | None:
             like ``"yade-2024.02a"``).
 
     Returns:
-        str or None: Absolute path to the executable, or ``None`` if not found.
+        str | None: Absolute path to the executable, or ``None`` if not found.
     """
     return shutil.which(name)
 

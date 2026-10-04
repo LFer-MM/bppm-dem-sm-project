@@ -11,7 +11,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+#: Marker color for the large (tracer) species.
 LARGE_COLOR = "#1f77b4"
+#: Marker color for the small species.
 SMALL_COLOR = "#d62728"
 
 _PLANE_AXES = {"xy": ("x", "y"), "xz": ("x", "z"), "yz": ("y", "z")}
@@ -24,7 +26,7 @@ def radius_colors(r):
         r: 1-D array of particle radii (two distinct values expected).
 
     Returns:
-        numpy.ndarray: Per-particle color codes (small → red, large → blue).
+        numpy.ndarray: Per-particle color codes (small -> red, large -> blue).
     """
     small_r = np.unique(r).min()
     return np.where(r == small_r, SMALL_COLOR, LARGE_COLOR)
@@ -77,6 +79,7 @@ def animate_particles(
     title = ax.set_title(files[0].name)
 
     def update(i):
+        """Redraw the scatter for frame ``i`` (``FuncAnimation`` callback)."""
         df = pd.read_parquet(files[i])
         sc.set_offsets(np.column_stack([df[ax_x].to_numpy(), df[ax_y].to_numpy()]))
         sc.set_color(radius_colors(df["r"].to_numpy()))

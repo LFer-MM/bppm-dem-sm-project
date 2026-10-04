@@ -13,11 +13,13 @@ from bppm_dem_sm.model.rnn import training
 
 
 class _StubHistory:
+    """Minimal stand-in for a Keras ``History``."""
     def __init__(self, history):
         self.history = history
 
 
 class _StubModel:
+    """Keras-model stand-in: fixed loss history, empty file on ``save``."""
     def summary(self):
         pass
 
@@ -29,6 +31,7 @@ class _StubModel:
 
 
 def _write_frame(path, ids, xyz, r):
+    """Write one parquet frame with ``id``, ``x``, ``y``, ``z``, ``r`` columns."""
     pd.DataFrame(
         {"id": ids, "x": xyz[:, 0], "y": xyz[:, 1], "z": xyz[:, 2], "r": r}
     ).to_parquet(path, index=False)

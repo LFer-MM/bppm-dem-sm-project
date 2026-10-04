@@ -4,7 +4,7 @@ Reads a persisted training history rather than requiring a live Keras
 ``History`` object in the same process, so it can run standalone in a
 ``do_visualization``-only pass after ``do_train`` produced
 ``models/<name>.history.json`` in an earlier run (see
-project_structure_proposal.md section 6, "Persist everywhere, render only
+``project_structure_proposal.md`` section 6, "Persist everywhere, render only
 in Visualization").
 """
 

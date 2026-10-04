@@ -9,6 +9,7 @@ from bppm_dem_sm.metrics import segregation_profile as sp
 
 
 def _frame(x, y, z, r):
+    """Build a frame table from per-particle coordinates and radii."""
     return pd.DataFrame({"x": x, "y": y, "z": z, "r": r})
 
 

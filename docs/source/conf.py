@@ -17,19 +17,36 @@ release = '0.1'
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('../..'))  # points to your repo root
+sys.path.insert(0, os.path.abspath('../..'))  # repo root, so autodoc can import bppm_dem_sm
 
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
 ]
 
-# Google-style docstrings in the package.
+# Google-style docstrings in the package; see docs/source/docstring_style.rst.
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 napoleon_include_init_with_doc = True
 napoleon_include_private_with_doc = False
+
+# Resolve third-party types named in docstrings (``numpy.ndarray``,
+# ``pandas.DataFrame``, ``pathlib.Path``, ...) to their upstream docs.
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3', None),
+    'numpy': ('https://numpy.org/doc/stable/', None),
+    'pandas': ('https://pandas.pydata.org/docs/', None),
+    'matplotlib': ('https://matplotlib.org/stable/', None),
+}
+
+# Types with no reachable intersphinx inventory; keeps ``sphinx-build -n`` quiet.
+nitpick_ignore = [
+    ('py:class', 'keras.Model'),
+    ('py:class', 'tqdm.tqdm'),
+    ('py:class', 'numpy.random._generator.Generator'),
+]
 
 autodoc_default_options = {
     'members': True,
@@ -45,8 +62,6 @@ autodoc_mock_imports = [
     "yade.utils",
     "yade.wrapper",
 ]
-
-html_theme = 'sphinx_rtd_theme'
 
 templates_path = ['_templates']
 

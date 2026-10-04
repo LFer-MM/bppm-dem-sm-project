@@ -6,7 +6,7 @@ from __future__ import annotations
 def build_model(frames_in, n_features=4, gru_units=20, dense_units=15, learning_rate=0.01):
     """Build and compile the GRU -> Dense regression model.
 
-    Architecture: ``Input(frames_in, n_features)`` → GRU → Dense(tanh) →
+    Architecture: ``Input(frames_in, n_features)`` -> GRU -> Dense(tanh) ->
     Dense(3, linear) predicting next ``(x, y, z)``. Compiled with Adam and MSE.
 
     Args:

@@ -20,12 +20,14 @@ from bppm_dem_sm.visualization import run_visualization
 
 
 def _write_frame(path, ids, xyz, r):
+    """Write one parquet frame with ``id``, ``x``, ``y``, ``z``, ``r`` columns."""
     pd.DataFrame(
         {"id": ids, "x": xyz[:, 0], "y": xyz[:, 1], "z": xyz[:, 2], "r": r}
     ).to_parquet(path, index=False)
 
 
 def _write_frames(frames_dir, n_frames, seed):
+    """Write ``n_frames`` ground-truth frames of 8 bidisperse particles."""
     frames_dir.mkdir(parents=True, exist_ok=True)
     ids = np.arange(8)
     r = np.array([0.1] * 4 + [0.2] * 4)
@@ -37,6 +39,7 @@ def _write_frames(frames_dir, n_frames, seed):
 
 
 def _write_pred_frames(pred_frames_dir, n_frames, start_idx, seed):
+    """Write ``n_frames`` predicted frames numbered from ``start_idx``."""
     pred_frames_dir.mkdir(parents=True, exist_ok=True)
     ids = np.arange(8)
     r = np.array([0.1] * 4 + [0.2] * 4)

@@ -6,7 +6,7 @@ sizes, see :mod:`bppm_dem_sm.config`), the five GT-vs-surrogate metrics
 comparison plots, and the prediction animation. Every other stage
 (``do_train``, ``do_process``, ``do_predict``, ``do_metrics``) only computes
 and persists; nothing it produces is plotted until ``do_visualization`` runs
-and reads it back from disk -- see project_structure_proposal.md section 6,
+and reads it back from disk -- see ``project_structure_proposal.md`` section 6,
 "Persist everywhere, render only in Visualization".
 """
 
@@ -27,9 +27,12 @@ from .cell_grid import plot_particles_with_grid
 from .training_curves import plot_training_history
 
 _PLANE_AXES = {"xy": ("x", "y"), "xz": ("x", "z"), "yz": ("y", "z")}
+#: Output directory for figures and animations when ``save_figures`` is set.
 VIZ_DIR = INTERIM_DIR / "figures"
 
+#: Marker color for the small species.
 SMALL_COLOR = "#d62728"
+#: Marker color for the large (tracer) species.
 LARGE_COLOR = "#1f77b4"
 
 
@@ -40,7 +43,7 @@ def _radius_colors(r):
         r: 1-D array of particle radii (two distinct values expected).
 
     Returns:
-        numpy.ndarray: Per-particle color codes (small → red, large → blue).
+        numpy.ndarray: Per-particle color codes (small -> red, large -> blue).
     """
     small_r = np.unique(r).min()
     return np.where(r == small_r, SMALL_COLOR, LARGE_COLOR)
@@ -87,6 +90,7 @@ def animate_frames(frames_dir, config: ExperimentConfig, pattern="frame_*.parque
     title = ax.set_title(os.path.basename(files[0]))
 
     def update(i):
+        """Redraw the scatter for frame ``i`` (``FuncAnimation`` callback)."""
         df = pd.read_parquet(files[i])
         sc.set_offsets(np.column_stack([df[ax_x].to_numpy(), df[ax_y].to_numpy()]))
         sc.set_color(_radius_colors(df["r"].to_numpy()))
@@ -106,6 +110,7 @@ def animate_frames(frames_dir, config: ExperimentConfig, pattern="frame_*.parque
         pbar = bar(total=len(files), desc="Saving animation", unit="frame")
 
         def _on_progress(current_frame, total_frames):
+            """Mirror ``anim.save`` progress onto the tqdm bar."""
             if total_frames:
                 pbar.total = total_frames
             pbar.n = current_frame + 1
@@ -142,7 +147,8 @@ def plot_frame_grid(frame_path, config: ExperimentConfig, save_path=None, show=T
         show: Whether to display the figure interactively.
 
     Returns:
-        matplotlib.figure.Figure: Figure from :func:`plot_particles_with_grid`.
+        matplotlib.figure.Figure: Figure from
+        :func:`~bppm_dem_sm.visualization.cell_grid.plot_particles_with_grid`.
     """
     return plot_particles_with_grid(
         str(frame_path),
@@ -168,7 +174,8 @@ def plot_sr_grid(frame_path, config: ExperimentConfig, save_path=None, show=True
         show: Whether to display the figure interactively.
 
     Returns:
-        matplotlib.figure.Figure: Figure from :func:`plot_particles_with_grid`.
+        matplotlib.figure.Figure: Figure from
+        :func:`~bppm_dem_sm.visualization.cell_grid.plot_particles_with_grid`.
     """
     return plot_particles_with_grid(
         str(frame_path),

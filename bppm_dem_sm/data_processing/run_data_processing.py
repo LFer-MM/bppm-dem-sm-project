@@ -27,7 +27,7 @@ def process_frames(config):
         config: Pipeline settings; uses ``raw_data_dir`` and ``data_dir``.
 
     Returns:
-        dict: ``{"data_dir": config.data_dir, "integrity_report": pd.DataFrame}``
+        dict: ``{"data_dir": config.data_dir, "integrity_report": pandas.DataFrame}``
         (the integrity report from
         :func:`~bppm_dem_sm.data_processing.integrity.particle_radius_counts_per_file`).
     """

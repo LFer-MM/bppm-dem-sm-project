@@ -58,13 +58,13 @@ class _SavedModelWrapper:
 
 
 def _resolve_model_path(path: Path) -> Path:
-    """Return an existing `.keras`, `.h5`, or SavedModel directory path.
+    """Return an existing ``.keras``, ``.h5``, or SavedModel directory path.
 
     Args:
         path: Requested model path (file or directory); alternate suffixes are tried.
 
     Returns:
-        Path: Resolved artifact path that exists on disk.
+        pathlib.Path: Resolved artifact path that exists on disk.
 
     Raises:
         FileNotFoundError: If no Keras file or SavedModel directory is found.
@@ -91,7 +91,8 @@ def load_model(path):
         path: Path to a ``.keras``/``.h5`` file or SavedModel directory.
 
     Returns:
-        keras.Model or _SavedModelWrapper: Loaded model with a ``predict`` method.
+        keras.Model: Loaded model, or a ``_SavedModelWrapper`` for a legacy
+        SavedModel directory; both expose ``predict``.
     """
     from ...tf_quiet import silence_tensorflow
 

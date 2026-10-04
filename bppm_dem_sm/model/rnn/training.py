@@ -1,13 +1,11 @@
-"""GRU surrogate model training: persists the model and its loss history (TensorFlow imported lazily).
+"""GRU surrogate training: persists the model and its loss history (TensorFlow imported lazily).
 
-No rendering happens here anymore -- ``train_and_save`` used to plot the
-loss curve inline from the live ``History`` object, which meant a
-``do_train``-only run lost that curve the moment the process exited. It now
-persists ``history.history`` to a ``<model_path stem>.history.json`` sibling
-of the saved model instead;
+No rendering happens here. ``train_and_save`` persists ``history.history``
+to a ``<model_path stem>.history.json`` sibling of the saved model, so the
+loss curve survives a ``do_train``-only run;
 :func:`bppm_dem_sm.visualization.training_curves.plot_training_history`
 reads that file, gated by ``ExperimentConfig.do_visualization``, same as
-every other plot in this project (see project_structure_proposal.md
+every other plot in this project (see ``project_structure_proposal.md``
 section 6, "Persist everywhere, render only in Visualization").
 """
 
@@ -23,7 +21,7 @@ from .architecture import build_model
 
 
 def train_and_save(config: ExperimentConfig):
-    """Train the GRU surrogate on config.train_data_dir and save it + its loss history.
+    """Train the GRU surrogate on ``config.train_data_dir``; save it and its loss history.
 
     Builds a supervised sliding-window dataset, fits the model, writes a
     ``.keras`` artifact to ``config.model_path`` and a sibling
@@ -33,7 +31,7 @@ def train_and_save(config: ExperimentConfig):
         config: Pipeline settings (train data dir, epochs, batch size, etc.).
 
     Returns:
-        tuple: ``(model, history)`` — the trained Keras model and its
+        tuple: ``(model, history)`` -- the trained Keras model and its
         ``History`` object.
     """
     train = config.training

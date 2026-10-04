@@ -18,7 +18,7 @@ def convert_csv_file_to_parquet(csv_path, parquet_path):
 
 
 def convert_folder_csv_to_parquet(input_folder, output_folder):
-    """Convert every .csv in input_folder to .parquet in output_folder.
+    """Convert every ``.csv`` in ``input_folder`` to ``.parquet`` in ``output_folder``.
 
     Creates ``output_folder`` if needed. Each ``*.csv`` becomes a sibling-named
     ``*.parquet`` file.

@@ -3,8 +3,7 @@
 ``run_experiment_pipeline`` can span all six stages -- Simulation, Data
 Processing, Training, Prediction, Metrics, Visualization -- or any subset,
 gated by ``ExperimentConfig``'s ``do_*`` flags. Each stage is also
-importable on its own. Renamed from ``pipeline.py``/``run_pipeline`` because
-it now configures a physics simulation too, not just the ML side; see
+importable on its own. Configured by
 :class:`bppm_dem_sm.config.ExperimentConfig`.
 
 ``do_simulate`` differs from every other stage: ``yade_dem/run_simulation.py``
@@ -18,7 +17,7 @@ propagate rather than swallowing them, same as any other stage failure.
 
 Rendering happens nowhere but ``do_visualization`` -- ``do_train``,
 ``do_process``, ``do_predict``, and ``do_metrics`` only compute and persist.
-See project_structure_proposal.md section 6.
+See ``project_structure_proposal.md`` section 6.
 """
 
 from __future__ import annotations
@@ -36,7 +35,7 @@ from .visualization import run_visualization
 
 
 def run_experiment_pipeline(config: ExperimentConfig | None = None, **overrides):
-    """Run the configurable six-stage experiment; returns a dict of artifacts.
+    """Run the configurable six-stage experiment and return its artifacts.
 
     Stages (each gated by the corresponding ``do_*`` flag on ``config``, in
     execution order):
@@ -61,7 +60,7 @@ def run_experiment_pipeline(config: ExperimentConfig | None = None, **overrides)
     Args:
         config: Base pipeline configuration; ``None`` uses defaults.
         **overrides: Field overrides applied via
-            :meth:`ExperimentConfig.with_overrides`. Accepts core fields
+            :meth:`~bppm_dem_sm.config.ExperimentConfig.with_overrides`. Accepts core fields
             (``do_train=True``), nested leaf names (``epochs=5``), or whole
             option groups (``training=TrainingOptions(epochs=5)``).
 

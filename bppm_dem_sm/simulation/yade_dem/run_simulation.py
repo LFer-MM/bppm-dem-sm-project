@@ -1,10 +1,11 @@
 """Random-mix ingress simulation for the bidisperse SAG mill slice (YADE).
 
-Renamed from ``simulation.py`` to match the ``run_<subpackage>.py``
-orchestrator convention used by :mod:`bppm_dem_sm.metrics.run_metrics` and
+Follows the ``run_<subpackage>.py`` orchestrator convention of
+:mod:`bppm_dem_sm.metrics.run_metrics` and
 :mod:`bppm_dem_sm.visualization.run_visualization`. Imports every concern
 module unaliased (not just the ones called directly) so the ``PyRunner``
-command strings inside :mod:`engines` and :mod:`capture` -- evaluated by
+command strings inside :mod:`~bppm_dem_sm.simulation.yade_dem.engines` and
+:mod:`~bppm_dem_sm.simulation.yade_dem.capture` -- evaluated by
 YADE in this script's global namespace when run as ``yade run_simulation.py``
 -- can resolve ``engines._balance_check()`` / ``capture._save_sphere_frame()``.
 """
@@ -19,11 +20,9 @@ def run():
     """Set up the mill and ingress a random bidisperse particle charge.
 
     Initializes YADE materials, loads the SAG mill STL slice, configures
-    Hertz–Mindlin contacts, opens a Qt viewer, and calls
-    :func:`particles.ingress_random` with the bidisperse rock/steel charge.
-
-    Returns:
-        None
+    Hertz-Mindlin contacts, opens a Qt viewer, and calls
+    :func:`~bppm_dem_sm.simulation.yade_dem.particles.ingress_random` with the
+    bidisperse rock/steel charge.
     """
     materials.initialize_simulation_materials(config.MATERIALS)
     stl.initialize_sag_mill_slice(config.SAGMILL_STL_PATH)
@@ -55,6 +54,11 @@ def run():
         padding=0.1,
     )
 
+
+# --- Manual follow-up steps --------------------------------------------------
+# Not run automatically: uncomment, or type into the YADE terminal, as needed
+# once ingress has settled.
+
 # engines.set_gravity_damping(new_gravity_damping=0.0)
 
 # diagnostics.check_overlaps()
@@ -63,7 +67,8 @@ def run():
 
 # state.load_ball_particles(s0_global_sim_config.ball_diam_m, s0_global_sim_config.ball_count)
 
-# EJECUTAR MANUALMENTE EN LA TERMINAL DE YADE -> state.settle_balance_save(0.2, "rmic_nopf_settled.csv")
+# Run by hand in the YADE terminal:
+# state.settle_balance_save(0.2, "rmic_nopf_settled.csv")
 
 # engines.run_until_forces_balanced(threshold=0.01)
 

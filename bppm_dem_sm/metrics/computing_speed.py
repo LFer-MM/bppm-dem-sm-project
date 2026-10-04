@@ -1,8 +1,8 @@
 """Dimensionless computing-speed metric: this run's cost vs. a DEM reference (paper Fig. 15).
 
-Was ``compute_computing_speed`` inside ``run_metrics.py`` -- pulled into its
-own module because it's an unrelated concern (wall-clock comparison, not a
-particle-frame metric computed from parquet frames).
+Kept apart from :mod:`bppm_dem_sm.metrics.run_metrics` because it is a
+wall-clock comparison, not a particle-frame metric computed from parquet
+frames.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ _COMPUTING_SPEED_FILENAME = "computing_speed.json"
 
 
 def compute_computing_speed(timing: dict, config: ExperimentConfig) -> dict:
-    """Dimensionless computing speed vs. a user-supplied DEM reference (paper Fig. 15).
+    """Compute dimensionless computing speed vs. a user-supplied DEM reference (paper Fig. 15).
 
     Compares this run's own wall-clock training/prediction time (plus, if
     supplied, the short reference-DEM run used to build the GRU's training
@@ -90,7 +90,7 @@ def load_computing_speed(path: Path | str | None = None) -> dict | None:
             ``REPORTS_DIR / "computing_speed.json"``.
 
     Returns:
-        dict or None: The persisted result (same shape as
+        dict | None: The persisted result (same shape as
         :func:`compute_computing_speed`'s return), or ``None`` if the file
         doesn't exist yet.
     """

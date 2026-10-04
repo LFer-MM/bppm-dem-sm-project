@@ -15,11 +15,12 @@ import numpy as np
 
 from ..config import ID_COL, TARGET_COLS
 
+# Spatial-hash coefficients for 3D cell indices (same as the Lacey grid).
 _HASH_COEFFS = (73856093, 19349663, 83492791)
 
 
 def _matched_velocity(df_t, df_t1, dt):
-    """Finite-difference velocity between two id-aligned frames.
+    """Compute finite-difference velocities between two id-aligned frames.
 
     Args:
         df_t: Earlier frame (``id``, ``x``, ``y``, ``z``, ``r`` columns).
@@ -46,7 +47,7 @@ def _matched_velocity(df_t, df_t1, dt):
 
 
 def velocity_speed_by_species(df_t, df_t1, dt, tracer_radius):
-    """Absolute velocity per species between two consecutive frames (Fig. 9a data).
+    """Compute absolute velocity per species between two consecutive frames (Fig. 9a data).
 
     Args:
         df_t: Earlier frame (``id``, ``x``, ``y``, ``z``, ``r`` columns).
@@ -64,7 +65,7 @@ def velocity_speed_by_species(df_t, df_t1, dt, tracer_radius):
 
 
 def granular_temperature_by_cell(df_t, df_t1, dt, cell_size, min_particles_per_cell=15):
-    """Per-cell granular temperature, ``mean(||v_i - <v>_cell||^2) / 3`` (Fig. 9b data).
+    """Compute per-cell granular temperature ``mean(||v_i - <v>_cell||^2) / 3`` (Fig. 9b).
 
     Particles are binned by their position in ``df_t`` into cubic cells of
     edge ``cell_size`` (same grid convention as

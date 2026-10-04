@@ -7,10 +7,13 @@ from __future__ import annotations
 
 
 def run():
-    """Placeholder -- see :func:`bppm_dem_sm.simulation.yade_dem.run_simulation.run`.
+    """Raise ``NotImplementedError`` (BlazeDEM placeholder).
+
+    Reserves the signature of
+    :func:`bppm_dem_sm.simulation.yade_dem.run_simulation.run`.
 
     Raises:
-        NotImplementedError: Always -- BlazeDEM backend not yet implemented.
+        NotImplementedError: Always; the BlazeDEM backend is not implemented yet.
     """
     raise NotImplementedError("BlazeDEM backend not yet implemented")
 

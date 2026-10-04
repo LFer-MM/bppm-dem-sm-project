@@ -20,12 +20,20 @@ import numpy as np
 from ..config import ID_COL, TARGET_COLS, ExperimentConfig
 from ..data_processing import frames as data_io
 
+# Spatial-hash coefficients for 3D cell indices (same as the Lacey grid).
 _HASH_COEFFS = (73856093, 19349663, 83492791)
 
 
 @dataclass
 class VelocityStdField:
-    """Lookup table for the local (Eulerian) velocity std sigma_v(x) on a cubic grid."""
+    """Lookup table for the local (Eulerian) velocity std sigma_v(x) on a cubic grid.
+
+    Attributes:
+        cell_size: Cubic cell edge length (m).
+        origin: Grid origin ``(x, y, z)``; cell indices are
+            ``floor((position - origin) / cell_size)``.
+        sigma_by_cell: sigma_v per populated cell index ``(i, j, k)``.
+    """
 
     cell_size: float
     origin: np.ndarray
