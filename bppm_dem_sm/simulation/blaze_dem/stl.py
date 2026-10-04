@@ -5,8 +5,13 @@ Mirrors :mod:`bppm_dem_sm.simulation.yade_dem.stl`'s public API.
 
 from __future__ import annotations
 
+# --- Module state ------------------------------------------------------------
+
 #: Mirrors :data:`bppm_dem_sm.simulation.yade_dem.stl.SAG_MILL_SLICE_BODY_GROUP`.
 SAG_MILL_SLICE_BODY_GROUP = None
+
+
+# --- Public functions --------------------------------------------------------
 
 
 def initialize_sag_mill_slice(sagmill_stl_path):
@@ -67,6 +72,9 @@ def get_surface_y(padding=0.1):
         NotImplementedError: Always; the BlazeDEM backend is not implemented yet.
     """
     raise NotImplementedError("BlazeDEM backend not yet implemented")
+
+
+# --- Private helper functions ------------------------------------------------
 
 
 def _obtain_sag_mill_slice_measurements(sag_mill_body_group):

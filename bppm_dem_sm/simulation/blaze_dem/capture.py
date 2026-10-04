@@ -5,8 +5,13 @@ Mirrors :mod:`bppm_dem_sm.simulation.yade_dem.capture`'s public API.
 
 from __future__ import annotations
 
+# --- Module state ------------------------------------------------------------
+
 # Mirrors the YADE backend's runner state; unused until implemented.
 _frameCaptureState = {}
+
+
+# --- Public functions --------------------------------------------------------
 
 
 def start_frame_capture(folder_name, interval, runner_label="frameCapture", iter_period=50):
@@ -19,6 +24,9 @@ def start_frame_capture(folder_name, interval, runner_label="frameCapture", iter
         NotImplementedError: Always; the BlazeDEM backend is not implemented yet.
     """
     raise NotImplementedError("BlazeDEM backend not yet implemented")
+
+
+# --- Private helper functions ------------------------------------------------
 
 
 def _save_sphere_frame():

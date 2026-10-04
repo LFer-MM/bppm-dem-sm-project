@@ -11,6 +11,62 @@ from bppm_dem_sm.config import ExperimentConfig, PredictionOptions, StochasticOp
 
 from helpers import write_frame
 
+# --- Helpers -----------------------------------------------------------------
+
+
+class _IdentityModel:
+    """Stub GRU stand-in: 'predicts' the last input frame's (x, y, z) unchanged."""
+
+    input_shape = (None, 2, 4)
+    output_shape = (None, 3)
+
+    def predict(self, x_in, batch_size=32, verbose=0):
+        return x_in[:, -1, :3]
+
+
+def _make_predict_config(tmp_path, *, stochastic_enabled, seed=0):
+    """Build a one-step autoregressive config with a +/-x SR training set."""
+    ids = np.arange(8)
+    pos0 = np.zeros((8, 3))
+    r = np.full(8, 0.5)
+
+    data_dir = tmp_path / "data"
+    data_dir.mkdir(parents=True)
+    write_frame(data_dir / "frame_00000.parquet", ids, pos0, r)
+    write_frame(data_dir / "frame_00001.parquet", ids, pos0, r)
+
+    train_dir = tmp_path / "train"
+    train_dir.mkdir(parents=True)
+    v = np.zeros((8, 3))
+    v[::2, 0] = 1.0
+    v[1::2, 0] = -1.0
+    write_frame(train_dir / "frame_00000.parquet", ids, pos0, r)
+    write_frame(train_dir / "frame_00001.parquet", ids, pos0 + v, r)
+    write_frame(train_dir / "frame_00002.parquet", ids, pos0 + 2 * v, r)
+
+    return ExperimentConfig(
+        data_dir=data_dir,
+        train_data_dir=train_dir,
+        frames_in=2,
+        prediction=PredictionOptions(
+            start_frame=0,
+            autoregressive=True,
+            predict_until_end=False,
+            max_steps=1,
+            dt_step=0.05,
+            pred_out_dir=tmp_path / "out",
+        ),
+        stochastic=StochasticOptions(
+            enabled=stochastic_enabled,
+            velocity_cell_size=10.0,
+            velocity_min_particles_per_cell=5,
+            stochastic_seed=seed,
+        ),
+    )
+
+
+# --- Tests -------------------------------------------------------------------
+
 
 def test_build_velocity_std_field_zero_for_uniform_motion(tmp_path):
     ids = np.arange(20)
@@ -123,57 +179,6 @@ def test_experiment_config_roundtrip_with_stochastic():
     data = config.to_dict()
     restored = ExperimentConfig.from_dict(data)
     assert restored.stochastic == config.stochastic
-
-
-class _IdentityModel:
-    """Stub GRU stand-in: 'predicts' the last input frame's (x, y, z) unchanged."""
-
-    input_shape = (None, 2, 4)
-    output_shape = (None, 3)
-
-    def predict(self, x_in, batch_size=32, verbose=0):
-        return x_in[:, -1, :3]
-
-
-def _make_predict_config(tmp_path, *, stochastic_enabled, seed=0):
-    """Build a one-step autoregressive config with a +/-x SR training set."""
-    ids = np.arange(8)
-    pos0 = np.zeros((8, 3))
-    r = np.full(8, 0.5)
-
-    data_dir = tmp_path / "data"
-    data_dir.mkdir(parents=True)
-    write_frame(data_dir / "frame_00000.parquet", ids, pos0, r)
-    write_frame(data_dir / "frame_00001.parquet", ids, pos0, r)
-
-    train_dir = tmp_path / "train"
-    train_dir.mkdir(parents=True)
-    v = np.zeros((8, 3))
-    v[::2, 0] = 1.0
-    v[1::2, 0] = -1.0
-    write_frame(train_dir / "frame_00000.parquet", ids, pos0, r)
-    write_frame(train_dir / "frame_00001.parquet", ids, pos0 + v, r)
-    write_frame(train_dir / "frame_00002.parquet", ids, pos0 + 2 * v, r)
-
-    return ExperimentConfig(
-        data_dir=data_dir,
-        train_data_dir=train_dir,
-        frames_in=2,
-        prediction=PredictionOptions(
-            start_frame=0,
-            autoregressive=True,
-            predict_until_end=False,
-            max_steps=1,
-            dt_step=0.05,
-            pred_out_dir=tmp_path / "out",
-        ),
-        stochastic=StochasticOptions(
-            enabled=stochastic_enabled,
-            velocity_cell_size=10.0,
-            velocity_min_particles_per_cell=5,
-            stochastic_seed=seed,
-        ),
-    )
 
 
 def test_predict_frames_leaves_positions_unchanged_when_disabled(tmp_path):

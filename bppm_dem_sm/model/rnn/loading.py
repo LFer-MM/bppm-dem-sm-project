@@ -4,6 +4,32 @@ from __future__ import annotations
 
 from pathlib import Path
 
+# --- Public functions --------------------------------------------------------
+
+
+def load_model(path):
+    """Load a saved Keras model (``.keras``/``.h5``) or legacy SavedModel directory.
+
+    Args:
+        path: Path to a ``.keras``/``.h5`` file or SavedModel directory.
+
+    Returns:
+        keras.Model: Loaded model, or a ``_SavedModelWrapper`` for a legacy
+        SavedModel directory; both expose ``predict``.
+    """
+    from ...tf_quiet import silence_tensorflow
+
+    silence_tensorflow()
+    import keras
+
+    resolved = _resolve_model_path(Path(path))
+    if resolved.is_dir():
+        return _SavedModelWrapper(resolved)
+    return keras.models.load_model(str(resolved))
+
+
+# --- Private classes ---------------------------------------------------------
+
 
 class _SavedModelWrapper:
     """Thin adapter for legacy TensorFlow SavedModel exports (Keras 3 cannot load these directly).
@@ -57,6 +83,9 @@ class _SavedModelWrapper:
         return np.concatenate(parts, axis=0)
 
 
+# --- Private helper functions ------------------------------------------------
+
+
 def _resolve_model_path(path: Path) -> Path:
     """Return an existing ``.keras``, ``.h5``, or SavedModel directory path.
 
@@ -82,24 +111,3 @@ def _resolve_model_path(path: Path) -> Path:
             return candidate
 
     raise FileNotFoundError(f"No Keras or SavedModel artifact found for: {path}")
-
-
-def load_model(path):
-    """Load a saved Keras model (``.keras``/``.h5``) or legacy SavedModel directory.
-
-    Args:
-        path: Path to a ``.keras``/``.h5`` file or SavedModel directory.
-
-    Returns:
-        keras.Model: Loaded model, or a ``_SavedModelWrapper`` for a legacy
-        SavedModel directory; both expose ``predict``.
-    """
-    from ...tf_quiet import silence_tensorflow
-
-    silence_tensorflow()
-    import keras
-
-    resolved = _resolve_model_path(Path(path))
-    if resolved.is_dir():
-        return _SavedModelWrapper(resolved)
-    return keras.models.load_model(str(resolved))

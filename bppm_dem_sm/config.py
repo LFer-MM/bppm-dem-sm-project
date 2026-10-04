@@ -3,12 +3,11 @@
 Two tiers, both in this one file:
 
 - Plain module constants for DEM simulation setup -- paths, particle counts
-  and diameters, material properties, mill geometry. Shared/backend-agnostic
-  data comes first; a ``YADE DEM specific`` section and a ``BlazeDEM
-  specific`` section follow, each holding only the glue code that turns the
-  shared data into that backend's own objects (e.g. a YADE ``MatchMaker``).
-  These are hardcoded values with no CLI flag or JSON key -- edit them here
-  directly.
+  and diameters, material properties, mill geometry. They hold
+  backend-agnostic data only; the ``YADE DEM specific`` and ``BlazeDEM
+  specific`` function sections hold the glue code that turns that data into
+  each backend's own objects (e.g. a YADE ``MatchMaker``). These are
+  hardcoded values with no CLI flag or JSON key -- edit them here directly.
 - :class:`ExperimentConfig`, a dataclass tree (with nested per-stage option
   groups) that drives the RNN surrogate pipeline and DEM-backend selection.
   Drivable from Python, JSON (``configs/pipeline_example.json``), or
@@ -23,7 +22,7 @@ import math
 from pathlib import Path
 from typing import Any, get_type_hints
 
-# --- Paths and dataset defaults --------------------------------------------
+# --- Constants: paths and dataset defaults -----------------------------------
 
 #: Repository root (the directory containing ``bppm_dem_sm/``).
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -56,7 +55,8 @@ FEATURE_COLS = ["x", "y", "z", "r"]
 #: GRU regression targets (next-step position).
 TARGET_COLS = ["x", "y", "z"]
 
-# --- DEM simulation: shared / backend-agnostic -----------------------------
+
+# --- Constants: DEM simulation, shared / backend-agnostic --------------------
 
 #: Valid values for ``ExperimentConfig.dem_backend``.
 DEM_BACKENDS = ("yade", "blaze")
@@ -106,57 +106,7 @@ RESTITUTION_COEFFICIENTS = {
 }
 
 
-def _restitution(a: str, b: str) -> float:
-    """Look up a pairwise restitution coefficient regardless of pair order."""
-    if (a, b) in RESTITUTION_COEFFICIENTS:
-        return RESTITUTION_COEFFICIENTS[(a, b)]
-    return RESTITUTION_COEFFICIENTS[(b, a)]
-
-
-# --- YADE DEM specific ------------------------------------------------------
-
-
-def build_yade_material_interactions():
-    """Build the YADE restitution ``MatchMaker`` for steel/rock contacts.
-
-    Requires YADE. Translates the backend-agnostic
-    :data:`RESTITUTION_COEFFICIENTS` table into YADE material indices
-    (0 = steel, 1 = rock).
-
-    Returns:
-        dict: Mapping with a ``"restitution"`` key whose value is a YADE
-        ``MatchMaker`` of pairwise restitution coefficients.
-    """
-    from yade import MatchMaker
-
-    return {
-        "restitution": MatchMaker(matches=[
-            (0, 0, _restitution("steel", "steel")),  # steel-steel
-            (0, 1, _restitution("steel", "rock")),   # steel-rock
-            (1, 0, _restitution("rock", "steel")),   # rock-steel
-            (1, 1, _restitution("rock", "rock")),    # rock-rock
-        ])
-    }
-
-
-# --- BlazeDEM specific ------------------------------------------------------
-# No BlazeDEM fields yet. Reserved for backend-specific settings (GPU device
-# index, solver tolerances, contact model variant, etc.) once BlazeDEM
-# support lands.
-
-
-def build_blaze_material_interactions():
-    """Raise ``NotImplementedError`` (BlazeDEM placeholder).
-
-    Reserves the BlazeDEM counterpart of :func:`build_yade_material_interactions`.
-
-    Raises:
-        NotImplementedError: Always; the BlazeDEM backend is not implemented yet.
-    """
-    raise NotImplementedError("BlazeDEM backend not yet implemented")
-
-
-# --- Experiment configuration ----------------------------------------------
+# --- Public classes: experiment configuration --------------------------------
 
 
 @dataclass
@@ -502,6 +452,59 @@ class ExperimentConfig:
         if not isinstance(data, dict):
             raise ValueError(f"Config JSON must be an object, got {type(data).__name__}")
         return cls.from_dict(data)
+
+
+# --- Public functions: YADE DEM specific -------------------------------------
+
+
+def build_yade_material_interactions():
+    """Build the YADE restitution ``MatchMaker`` for steel/rock contacts.
+
+    Requires YADE. Translates the backend-agnostic
+    :data:`RESTITUTION_COEFFICIENTS` table into YADE material indices
+    (0 = steel, 1 = rock).
+
+    Returns:
+        dict: Mapping with a ``"restitution"`` key whose value is a YADE
+        ``MatchMaker`` of pairwise restitution coefficients.
+    """
+    from yade import MatchMaker
+
+    return {
+        "restitution": MatchMaker(matches=[
+            (0, 0, _restitution("steel", "steel")),  # steel-steel
+            (0, 1, _restitution("steel", "rock")),   # steel-rock
+            (1, 0, _restitution("rock", "steel")),   # rock-steel
+            (1, 1, _restitution("rock", "rock")),    # rock-rock
+        ])
+    }
+
+
+# --- Public functions: BlazeDEM specific -------------------------------------
+# No BlazeDEM fields yet. Reserved for backend-specific settings (GPU device
+# index, solver tolerances, contact model variant, etc.) once BlazeDEM
+# support lands.
+
+
+def build_blaze_material_interactions():
+    """Raise ``NotImplementedError`` (BlazeDEM placeholder).
+
+    Reserves the BlazeDEM counterpart of :func:`build_yade_material_interactions`.
+
+    Raises:
+        NotImplementedError: Always; the BlazeDEM backend is not implemented yet.
+    """
+    raise NotImplementedError("BlazeDEM backend not yet implemented")
+
+
+# --- Private helper functions ------------------------------------------------
+
+
+def _restitution(a: str, b: str) -> float:
+    """Look up a pairwise restitution coefficient regardless of pair order."""
+    if (a, b) in RESTITUTION_COEFFICIENTS:
+        return RESTITUTION_COEFFICIENTS[(a, b)]
+    return RESTITUTION_COEFFICIENTS[(b, a)]
 
 
 def _option_group_types() -> dict[str, type]:

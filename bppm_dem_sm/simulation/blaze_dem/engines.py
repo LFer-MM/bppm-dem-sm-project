@@ -5,6 +5,8 @@ Mirrors :mod:`bppm_dem_sm.simulation.yade_dem.engines`'s public API.
 
 from __future__ import annotations
 
+# --- Module state ------------------------------------------------------------
+
 #: Mirrors :data:`bppm_dem_sm.simulation.yade_dem.engines.BALANCE_STATE`.
 BALANCE_STATE = {
     "done": False,
@@ -12,6 +14,9 @@ BALANCE_STATE = {
     "label": "balance_monitor",
     "last_unb": None,
 }
+
+
+# --- Public functions --------------------------------------------------------
 
 
 def initialize_engines(contact_model, contact_model_params, rotation_engine=False):
@@ -96,6 +101,9 @@ def rotate_mill_by_time(virtual_time_seconds, speed_rpm=9):
         NotImplementedError: Always; the BlazeDEM backend is not implemented yet.
     """
     raise NotImplementedError("BlazeDEM backend not yet implemented")
+
+
+# --- Private helper functions ------------------------------------------------
 
 
 def _get_rotation_engine(label="rotation_engine"):

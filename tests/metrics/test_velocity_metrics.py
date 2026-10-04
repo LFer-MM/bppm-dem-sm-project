@@ -8,12 +8,17 @@ import pytest
 
 from bppm_dem_sm.metrics import velocity_metrics as vm
 
+# --- Helpers -----------------------------------------------------------------
+
 
 def _frame(ids, xyz, r):
     """Build a frame table from ids, an ``(N, 3)`` position array, and radii."""
     return pd.DataFrame(
         {"id": ids, "x": xyz[:, 0], "y": xyz[:, 1], "z": xyz[:, 2], "r": r}
     )
+
+
+# --- Tests -------------------------------------------------------------------
 
 
 def test_velocity_speed_by_species_splits_correctly():

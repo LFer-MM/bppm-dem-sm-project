@@ -7,8 +7,13 @@ from math import radians
 from yade import FrictMat
 from yade.wrapper import O
 
+# --- Module state ------------------------------------------------------------
+
 #: Registered ``FrictMat`` objects keyed by material label.
 MATERIALS_MAP = {}
+
+
+# --- Public functions --------------------------------------------------------
 
 
 def initialize_simulation_materials(materials):
@@ -28,6 +33,9 @@ def initialize_simulation_materials(materials):
         O.materials.append(m)
         MATERIALS_MAP[material_properties["label"]] = m
         print("Added material:", material_properties["label"])
+
+
+# --- Private helper functions ------------------------------------------------
 
 
 def _mat_label(b):

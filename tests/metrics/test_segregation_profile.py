@@ -7,10 +7,15 @@ import pandas as pd
 
 from bppm_dem_sm.metrics import segregation_profile as sp
 
+# --- Helpers -----------------------------------------------------------------
+
 
 def _frame(x, y, z, r):
     """Build a frame table from per-particle coordinates and radii."""
     return pd.DataFrame({"x": x, "y": y, "z": z, "r": r})
+
+
+# --- Tests -------------------------------------------------------------------
 
 
 def test_radial_bin_edges_span_zero_to_max():

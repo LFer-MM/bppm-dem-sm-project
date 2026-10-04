@@ -16,6 +16,8 @@ from pathlib import Path
 import shutil
 import subprocess
 
+# --- Constants ---------------------------------------------------------------
+
 #: Packaged scenario script per DEM backend, run by :func:`launch_simulation`.
 DEFAULT_SIMULATION_SCRIPTS = {
     "yade": Path(__file__).resolve().parent / "yade_dem" / "run_simulation.py",
@@ -23,6 +25,9 @@ DEFAULT_SIMULATION_SCRIPTS = {
 }
 #: The YADE entry of :data:`DEFAULT_SIMULATION_SCRIPTS`.
 DEFAULT_SIMULATION_SCRIPT = DEFAULT_SIMULATION_SCRIPTS["yade"]
+
+
+# --- Public functions --------------------------------------------------------
 
 
 def find_yade_executable(name: str = "yade") -> str | None:

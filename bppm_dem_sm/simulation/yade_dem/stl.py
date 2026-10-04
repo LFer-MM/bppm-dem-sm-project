@@ -9,9 +9,14 @@ from yade import FrictMat, Vector3, ymport
 from yade.utils import facet
 from yade.wrapper import O
 
+# --- Module state ------------------------------------------------------------
+
 #: Body ids of the loaded mill slice and its end caps; set by
 #: :func:`initialize_sag_mill_slice`.
 SAG_MILL_SLICE_BODY_GROUP = None
+
+
+# --- Public functions --------------------------------------------------------
 
 
 def initialize_sag_mill_slice(sagmill_stl_path):
@@ -214,6 +219,9 @@ def get_surface_y(padding=0.1):
     """
     tops = [b.state.pos[1] + b.shape.radius for b in O.bodies if type(b.shape).__name__ == "Sphere"]
     return max(tops) + padding
+
+
+# --- Private helper functions ------------------------------------------------
 
 
 def _obtain_sag_mill_slice_measurements(sag_mill_body_group):

@@ -27,8 +27,13 @@ from .animate_particles import PLANE_AXES, radius_colors
 from .cell_grid import plot_particles_with_grid
 from .training_curves import plot_training_history
 
+# --- Constants ---------------------------------------------------------------
+
 #: Output directory for figures and animations when ``save_figures`` is set.
 VIZ_DIR = INTERIM_DIR / "figures"
+
+
+# --- Public functions --------------------------------------------------------
 
 
 def animate_frames(frames_dir, config: ExperimentConfig, pattern="frame_*.parquet", save_path=None):

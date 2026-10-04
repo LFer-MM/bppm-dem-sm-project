@@ -12,7 +12,12 @@ from pathlib import Path
 
 from ..config import REPORTS_DIR, ExperimentConfig
 
+# --- Constants ---------------------------------------------------------------
+
 _COMPUTING_SPEED_FILENAME = "computing_speed.json"
+
+
+# --- Public functions --------------------------------------------------------
 
 
 def compute_computing_speed(timing: dict, config: ExperimentConfig) -> dict:

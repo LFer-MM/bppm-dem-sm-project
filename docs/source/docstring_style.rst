@@ -120,13 +120,52 @@ Comments
   comment.
 - Explain why, units, or shapes (``# (N, seq_len, F)``, ``# rad/s``), not
   what the next line obviously does.
-- Section dividers within a file use a single style, padded with ``-`` to
-  column 79::
-
-      # --- DEM simulation: shared / backend-agnostic -----------------------------
-
 - Avoid commented-out code. When kept on purpose (e.g. manual YADE steps),
-  group it under a divider and a comment saying how it is meant to be used.
+  put a comment above it saying how it is meant to be used.
+
+File layout
+-----------
+
+Every file has the same shape: module docstring, then imports (sorted by
+ruff), then the top-level code in a fixed order of sections. Empty sections
+are left out.
+
+Package files (``bppm_dem_sm/``, and non-test modules such as
+``tests/helpers.py``):
+
+1. ``Constants`` -- module-level values that never change.
+2. ``Module state`` -- module-level variables mutated at run time (e.g.
+   ``BALANCE_STATE``, ``MATERIALS_MAP``).
+3. ``Public classes``
+4. ``Public functions``
+5. ``Private classes`` -- names starting with ``_``.
+6. ``Private helper functions`` -- names starting with ``_``.
+7. ``Script entry point`` -- the ``if __name__ == "__main__":`` block.
+
+Test files (``test_*.py``):
+
+1. ``Setup`` -- module-level constants.
+2. ``Helpers`` -- helper functions and stub classes.
+3. ``Tests`` -- ``test_*`` functions.
+
+When a file has two or more sections, each one starts with a divider padded
+with ``-`` to column 79, preceded by two blank lines (one when it directly
+follows the imports, as ruff's import sorting requires). A divider may add a
+qualifier after a colon to split one section into named groups, as
+``config.py`` does::
+
+    # --- Public functions --------------------------------------------------------
+
+    # --- Constants: paths and dataset defaults -----------------------------------
+
+A file with a single section (most small modules and tests) has no dividers.
+Code stays in its own module; placing a helper at the bottom of its file
+under ``Private helper functions`` instead of next to its caller is the
+accepted trade-off for a predictable layout.
+
+``tests/test_code_layout.py`` checks every file against these rules, so a
+misplaced function or a non-standard divider fails the test suite. The only
+exemption is ``bppm_dem_sm/__main__.py``, whose statements must run in order.
 
 Tests
 -----
@@ -134,6 +173,7 @@ Tests
 - Every test module has a module docstring naming what it covers.
 - ``test_*`` functions are named descriptively and need no docstring. Add one
   only when the scenario needs explaining.
-- Helpers (``_write_frame``, ``_base_config``, fake callbacks) and stub
-  classes get a one-line docstring. Stub methods that just mirror a real
-  API (e.g. Keras ``fit``/``save``) do not need one.
+- Helpers and stub classes get a one-line docstring. Stub methods that just
+  mirror a real API (e.g. Keras ``fit``/``save``) do not need one.
+- Helpers used by more than one test module live in ``tests/helpers.py``
+  (imported as ``from helpers import ...``) instead of being copied.

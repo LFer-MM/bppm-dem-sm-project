@@ -10,6 +10,8 @@ import pandas as pd
 
 from ..config import FIGURES_DIR, ExperimentConfig
 
+# --- Public functions --------------------------------------------------------
+
 
 def plot_lacey_comparison(metrics: dict, config: ExperimentConfig, show=True):
     """Plot ground-truth vs. surrogate Lacey index over time.
@@ -44,11 +46,6 @@ def plot_lacey_comparison(metrics: dict, config: ExperimentConfig, show=True):
     if show:
         plt.show()
     return fig
-
-
-def _latest_time_slice(profile_df: pd.DataFrame) -> pd.DataFrame:
-    """Return the rows for the last (largest) ``frame`` in a profile summary."""
-    return profile_df[profile_df["frame"] == profile_df["frame"].max()].sort_values("bin")
 
 
 def plot_segregation_profile(metrics: dict, config: ExperimentConfig, show=True):
@@ -250,3 +247,11 @@ def plot_computing_speed(metrics: dict, config: ExperimentConfig, show=True):
     if show:
         plt.show()
     return fig
+
+
+# --- Private helper functions ------------------------------------------------
+
+
+def _latest_time_slice(profile_df: pd.DataFrame) -> pd.DataFrame:
+    """Return the rows for the last (largest) ``frame`` in a profile summary."""
+    return profile_df[profile_df["frame"] == profile_df["frame"].max()].sort_values("bin")

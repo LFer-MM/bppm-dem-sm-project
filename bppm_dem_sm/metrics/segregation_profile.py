@@ -18,6 +18,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+# --- Public functions --------------------------------------------------------
+
 
 def radial_bin_edges(df, center_x=0.0, center_y=0.0, n_bins=12):
     """Return equal-width radial bin edges spanning the observed extent of ``df``.
@@ -52,25 +54,6 @@ def axial_bin_edges(df, center_z=0.0, n_bins=12):
     """
     axial = df["z"].to_numpy(float) - center_z
     return np.linspace(axial.min(), axial.max(), n_bins + 1)
-
-
-def _fraction_by_bin(distance, is_tracer, bin_edges):
-    """Bin ``distance`` by ``bin_edges`` and report the tracer fraction per bin."""
-    n_bins = len(bin_edges) - 1
-    bin_idx = np.clip(np.digitize(distance, bin_edges[1:-1], right=False), 0, n_bins - 1)
-    rows = []
-    for b in range(n_bins):
-        mask = bin_idx == b
-        n = int(mask.sum())
-        rows.append(
-            {
-                "bin": b,
-                "bin_center": float((bin_edges[b] + bin_edges[b + 1]) / 2.0),
-                "fraction_large": float(is_tracer[mask].mean()) if n else np.nan,
-                "n_particles": n,
-            }
-        )
-    return pd.DataFrame(rows)
 
 
 def radial_fraction_profile(df, tracer_radius, bin_edges, center_x=0.0, center_y=0.0):
@@ -112,3 +95,25 @@ def axial_fraction_profile(df, tracer_radius, bin_edges, center_z=0.0):
     axial = df["z"].to_numpy(float) - center_z
     is_tracer = np.round(df["r"].to_numpy(float), 12) == np.round(tracer_radius, 12)
     return _fraction_by_bin(axial, is_tracer, bin_edges)
+
+
+# --- Private helper functions ------------------------------------------------
+
+
+def _fraction_by_bin(distance, is_tracer, bin_edges):
+    """Bin ``distance`` by ``bin_edges`` and report the tracer fraction per bin."""
+    n_bins = len(bin_edges) - 1
+    bin_idx = np.clip(np.digitize(distance, bin_edges[1:-1], right=False), 0, n_bins - 1)
+    rows = []
+    for b in range(n_bins):
+        mask = bin_idx == b
+        n = int(mask.sum())
+        rows.append(
+            {
+                "bin": b,
+                "bin_center": float((bin_edges[b] + bin_edges[b + 1]) / 2.0),
+                "fraction_large": float(is_tracer[mask].mean()) if n else np.nan,
+                "n_particles": n,
+            }
+        )
+    return pd.DataFrame(rows)

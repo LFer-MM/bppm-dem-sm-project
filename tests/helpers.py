@@ -11,8 +11,6 @@ import pandas as pd
 
 from bppm_dem_sm.config import ExperimentConfig, MetricsOptions, PredictionOptions
 
-# --- Public functions --------------------------------------------------------
-
 
 def write_frame(path, ids, xyz, r=None):
     """Write one parquet frame with ``id``, ``x``, ``y``, ``z`` (and ``r``) columns.

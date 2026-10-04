@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from tqdm import tqdm
 
+# --- Constants ---------------------------------------------------------------
+
 _RULE = "=" * 60
+
+
+# --- Public functions --------------------------------------------------------
 
 
 def plan(titles: list[str]) -> None:

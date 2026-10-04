@@ -21,6 +21,8 @@ from ..config import ID_COL, TARGET_COLS, ExperimentConfig
 from ..data_processing import binning
 from ..data_processing import frames as data_io
 
+# --- Public classes ----------------------------------------------------------
+
 
 @dataclass
 class VelocityStdField:
@@ -52,6 +54,9 @@ class VelocityStdField:
             dtype=np.float32,
             count=len(idx),
         )
+
+
+# --- Public functions --------------------------------------------------------
 
 
 def build_velocity_std_field(

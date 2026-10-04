@@ -15,6 +15,8 @@ from yade import qt
 from ... import config
 from . import capture, diagnostics, engines, materials, particles, state, stl  # noqa: F401
 
+# --- Public functions --------------------------------------------------------
+
 
 def run():
     """Set up the mill and ingress a random bidisperse particle charge.
@@ -55,9 +57,8 @@ def run():
     )
 
 
-# --- Manual follow-up steps --------------------------------------------------
-# Not run automatically: uncomment, or type into the YADE terminal, as needed
-# once ingress has settled.
+# Manual follow-up steps, not run automatically: uncomment, or type into the
+# YADE terminal, as needed once ingress has settled.
 
 # engines.set_gravity_damping(new_gravity_damping=0.0)
 
@@ -74,6 +75,8 @@ def run():
 
 # state.save_particle_positions("rmic_nopf.csv")
 
+
+# --- Script entry point ------------------------------------------------------
 
 if __name__ == "__main__":
     run()

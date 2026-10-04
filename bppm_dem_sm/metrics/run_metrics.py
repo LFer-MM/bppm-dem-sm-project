@@ -25,8 +25,13 @@ from . import segregation_profile as segprofile
 from . import velocity_metrics as velmet
 from .lacey_mixing_index import GT_FRAME_RE, PRED_FRAME_RE
 
+# --- Constants ---------------------------------------------------------------
+
 _VELOCITY_SPEED_FILENAME = "velocity_speed.json"
 _GRANULAR_TEMPERATURE_FILENAME = "granular_temperature.parquet"
+
+
+# --- Public functions --------------------------------------------------------
 
 
 def compute_lacey_over_dir(frames_dir, pattern, frame_re, tracer_r, config, out_name, label):
@@ -184,26 +189,6 @@ def compute_velocity_and_granular_temperature(frames_dir, pattern, frame_re, tra
     return result
 
 
-def _save_velocity_and_granular_temperature(frames_dir, result: dict) -> None:
-    """Persist one :func:`compute_velocity_and_granular_temperature` result."""
-    speed_path = os.path.join(str(frames_dir), _VELOCITY_SPEED_FILENAME)
-    with open(speed_path, "w", encoding="utf-8") as fh:
-        json.dump(
-            {
-                "time": result["time"],
-                "frame_t": int(result["frame_t"]),
-                "frame_t1": int(result["frame_t1"]),
-                "speed": {k: np.asarray(v).tolist() for k, v in result["speed"].items()},
-            },
-            fh,
-        )
-
-    temp_path = os.path.join(str(frames_dir), _GRANULAR_TEMPERATURE_FILENAME)
-    pd.DataFrame({"granular_temperature": result["granular_temperature"]}).to_parquet(
-        temp_path, index=False
-    )
-
-
 def load_velocity_and_granular_temperature(frames_dir) -> dict | None:
     """Read a persisted :func:`compute_velocity_and_granular_temperature` result back.
 
@@ -345,3 +330,26 @@ def load_metrics(config: ExperimentConfig) -> dict:
         results["computing_speed"] = cs
 
     return results
+
+
+# --- Private helper functions ------------------------------------------------
+
+
+def _save_velocity_and_granular_temperature(frames_dir, result: dict) -> None:
+    """Persist one :func:`compute_velocity_and_granular_temperature` result."""
+    speed_path = os.path.join(str(frames_dir), _VELOCITY_SPEED_FILENAME)
+    with open(speed_path, "w", encoding="utf-8") as fh:
+        json.dump(
+            {
+                "time": result["time"],
+                "frame_t": int(result["frame_t"]),
+                "frame_t1": int(result["frame_t1"]),
+                "speed": {k: np.asarray(v).tolist() for k, v in result["speed"].items()},
+            },
+            fh,
+        )
+
+    temp_path = os.path.join(str(frames_dir), _GRANULAR_TEMPERATURE_FILENAME)
+    pd.DataFrame({"granular_temperature": result["granular_temperature"]}).to_parquet(
+        temp_path, index=False
+    )

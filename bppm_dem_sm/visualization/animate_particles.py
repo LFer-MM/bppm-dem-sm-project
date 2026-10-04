@@ -11,6 +11,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+# --- Constants ---------------------------------------------------------------
+
 #: Marker color for the large (tracer) species.
 LARGE_COLOR = "#1f77b4"
 #: Marker color for the small species.
@@ -18,6 +20,9 @@ SMALL_COLOR = "#d62728"
 
 #: Axis column names per projection plane (``"xy"``, ``"xz"``, ``"yz"``).
 PLANE_AXES = {"xy": ("x", "y"), "xz": ("x", "z"), "yz": ("y", "z")}
+
+
+# --- Public functions --------------------------------------------------------
 
 
 def radius_colors(r):

@@ -32,6 +32,8 @@ from yade.wrapper import (
 
 from . import stl
 
+# --- Module state ------------------------------------------------------------
+
 #: Shared state for the force-balance monitor (:func:`run_until_forces_balanced`).
 BALANCE_STATE = {
     "done": False,
@@ -39,6 +41,9 @@ BALANCE_STATE = {
     "label": "balance_monitor",
     "last_unb": None,
 }
+
+
+# --- Public functions --------------------------------------------------------
 
 
 def initialize_engines(contact_model, contact_model_params, rotation_engine=False):
@@ -199,6 +204,9 @@ def rotate_mill_by_time(virtual_time_seconds, speed_rpm=9):
     n_steps = int(round(abs(float(virtual_time_seconds)) / O.dt))
     if n_steps > 0:
         O.run(n_steps)
+
+
+# --- Private helper functions ------------------------------------------------
 
 
 def _get_rotation_engine(label="rotation_engine"):

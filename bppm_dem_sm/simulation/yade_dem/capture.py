@@ -16,8 +16,13 @@ from yade.wrapper import O, PyRunner
 
 from . import materials
 
+# --- Module state ------------------------------------------------------------
+
 # Runner state shared between start_frame_capture and the PyRunner hook.
 _frameCaptureState = {}
+
+
+# --- Public functions --------------------------------------------------------
 
 
 def start_frame_capture(folder_name, interval, runner_label="frameCapture", iter_period=50):
@@ -52,6 +57,9 @@ def start_frame_capture(folder_name, interval, runner_label="frameCapture", iter
 
     print(f"[FrameCapture] Saving spheres every {interval}s into: {folder}")
     return r
+
+
+# --- Private helper functions ------------------------------------------------
 
 
 def _save_sphere_frame():

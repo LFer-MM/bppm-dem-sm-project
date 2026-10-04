@@ -12,7 +12,12 @@ import matplotlib.pyplot as plt
 
 from bppm_dem_sm.visualization.training_curves import plot_training_history
 
+# --- Setup -------------------------------------------------------------------
+
 _HISTORY = {"loss": [1.0, 0.5, 0.25], "val_loss": [1.1, 0.6, 0.3]}
+
+
+# --- Tests -------------------------------------------------------------------
 
 
 def test_plot_training_history_from_dict():

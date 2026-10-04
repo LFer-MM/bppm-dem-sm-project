@@ -12,6 +12,8 @@ from bppm_dem_sm.model.rnn import training
 
 from helpers import write_frame
 
+# --- Helpers -----------------------------------------------------------------
+
 
 class _StubHistory:
     """Minimal stand-in for a Keras ``History``."""
@@ -29,6 +31,9 @@ class _StubModel:
 
     def save(self, path):
         Path(path).touch()
+
+
+# --- Tests -------------------------------------------------------------------
 
 
 def test_train_and_save_persists_model_and_history_json(tmp_path, monkeypatch):

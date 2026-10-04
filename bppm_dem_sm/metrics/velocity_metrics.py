@@ -16,32 +16,7 @@ import numpy as np
 from ..config import ID_COL, TARGET_COLS
 from ..data_processing import binning
 
-
-def _matched_velocity(df_t, df_t1, dt):
-    """Compute finite-difference velocities between two id-aligned frames.
-
-    Args:
-        df_t: Earlier frame (``id``, ``x``, ``y``, ``z``, ``r`` columns).
-        df_t1: Later frame, same particle ids as ``df_t``.
-        dt: Time spacing between the two frames (seconds).
-
-    Returns:
-        tuple: ``(positions_t, velocity, r)`` for particles present in both
-        frames, aligned by ``id``; ``positions_t`` and ``r`` are taken from
-        ``df_t``.
-
-    Raises:
-        ValueError: If the two frames do not share the same particle ids in
-            the same order once sorted by id.
-    """
-    a = df_t.sort_values(ID_COL).reset_index(drop=True)
-    b = df_t1.sort_values(ID_COL).reset_index(drop=True)
-    if not np.array_equal(a[ID_COL].to_numpy(), b[ID_COL].to_numpy()):
-        raise ValueError("Frame pair must share the same particle ids in the same order")
-    pos_t = a[TARGET_COLS].to_numpy(np.float64)
-    pos_t1 = b[TARGET_COLS].to_numpy(np.float64)
-    velocity = (pos_t1 - pos_t) / dt
-    return pos_t, velocity, a["r"].to_numpy(float)
+# --- Public functions --------------------------------------------------------
 
 
 def velocity_speed_by_species(df_t, df_t1, dt, tracer_radius):
@@ -93,3 +68,33 @@ def granular_temperature_by_cell(df_t, df_t1, dt, cell_size, min_particles_per_c
         sq_dev = np.sum((v - mean_v) ** 2, axis=1)
         temperatures.append(sq_dev.mean() / 3.0)
     return np.asarray(temperatures, dtype=np.float64)
+
+
+# --- Private helper functions ------------------------------------------------
+
+
+def _matched_velocity(df_t, df_t1, dt):
+    """Compute finite-difference velocities between two id-aligned frames.
+
+    Args:
+        df_t: Earlier frame (``id``, ``x``, ``y``, ``z``, ``r`` columns).
+        df_t1: Later frame, same particle ids as ``df_t``.
+        dt: Time spacing between the two frames (seconds).
+
+    Returns:
+        tuple: ``(positions_t, velocity, r)`` for particles present in both
+        frames, aligned by ``id``; ``positions_t`` and ``r`` are taken from
+        ``df_t``.
+
+    Raises:
+        ValueError: If the two frames do not share the same particle ids in
+            the same order once sorted by id.
+    """
+    a = df_t.sort_values(ID_COL).reset_index(drop=True)
+    b = df_t1.sort_values(ID_COL).reset_index(drop=True)
+    if not np.array_equal(a[ID_COL].to_numpy(), b[ID_COL].to_numpy()):
+        raise ValueError("Frame pair must share the same particle ids in the same order")
+    pos_t = a[TARGET_COLS].to_numpy(np.float64)
+    pos_t1 = b[TARGET_COLS].to_numpy(np.float64)
+    velocity = (pos_t1 - pos_t) / dt
+    return pos_t, velocity, a["r"].to_numpy(float)

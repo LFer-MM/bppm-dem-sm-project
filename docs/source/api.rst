@@ -53,6 +53,10 @@ Data processing
    :members:
    :show-inheritance:
 
+.. automodule:: bppm_dem_sm.data_processing.binning
+   :members:
+   :show-inheritance:
+
 .. automodule:: bppm_dem_sm.data_processing.convert
    :members:
    :show-inheritance:

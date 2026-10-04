@@ -12,10 +12,15 @@ import numpy as np
 
 from ..data_processing import binning
 
+# --- Constants ---------------------------------------------------------------
+
 #: Ground-truth frame filename (``frame_XXXXX.parquet``); group 1 is the index.
 GT_FRAME_RE = re.compile(r"frame_(\d+)\.parquet$", re.IGNORECASE)
 #: Predicted frame filename (``pred_frame_XXXXX.parquet``); group 1 is the index.
 PRED_FRAME_RE = re.compile(r"pred_frame_(\d+)\.parquet$", re.IGNORECASE)
+
+
+# --- Public functions --------------------------------------------------------
 
 
 def extract_frame_index(path, frame_re=GT_FRAME_RE):

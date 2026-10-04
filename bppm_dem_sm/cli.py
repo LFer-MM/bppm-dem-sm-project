@@ -26,8 +26,98 @@ from .config import DEM_BACKENDS, ExperimentConfig, _option_group_types
 from .experiment_pipeline import run_experiment_pipeline
 from .simulation import launcher
 
+# --- Constants ---------------------------------------------------------------
+
 # Fields with a hand-written flag instead of the generic per-field one.
 _SKIP_CLI_FIELDS = frozenset({"feature_cols"})
+
+
+# --- Public functions --------------------------------------------------------
+
+
+def build_parser() -> argparse.ArgumentParser:
+    """Build the top-level ``bppm-dem-sm`` parser with its two subcommands.
+
+    Returns:
+        argparse.ArgumentParser: Configured parser with ``dem-sim`` and
+        ``ml-pipeline`` subparsers (``args.command`` selects between them).
+    """
+    parser = argparse.ArgumentParser(
+        prog="bppm-dem-sm",
+        description=(
+            "Bidisperse DEM surrogate-model toolkit: launch a DEM "
+            "simulation, or run the RNN surrogate experiment pipeline."
+        ),
+    )
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    dem_parser = subparsers.add_parser(
+        "dem-sim",
+        help="Launch a DEM simulation as a subprocess (YADE implemented; BlazeDEM not yet).",
+        description="Launch a DEM simulation as a subprocess. --dem-backend yade requires YADE installed and on PATH.",
+    )
+    _add_dem_sim_arguments(dem_parser)
+
+    ml_parser = subparsers.add_parser(
+        "ml-pipeline",
+        help="Run the experiment pipeline (simulate / process / train / predict / metrics / visualization).",
+        description=(
+            "Run the experiment pipeline (simulate / process / train / predict / "
+            "metrics / visualization). Pass --config path.json to load settings from "
+            "JSON; when set, other pipeline flags are ignored."
+        ),
+    )
+    _add_ml_pipeline_arguments(ml_parser)
+
+    return parser
+
+
+def config_from_args(args: argparse.Namespace) -> ExperimentConfig:
+    """Resolve ``ExperimentConfig`` from parsed ``ml-pipeline`` CLI args.
+
+    If ``args.config`` is set, load only from that JSON file; all other
+    pipeline flags are ignored. Otherwise apply any non-``None`` flags via
+    :meth:`~bppm_dem_sm.config.ExperimentConfig.with_overrides` (flat leaf names).
+
+    Args:
+        args: Namespace produced by parsing the ``ml-pipeline`` subcommand.
+
+    Returns:
+        ExperimentConfig: Defaults with any non-``None`` CLI overrides
+        applied, or the JSON-loaded config when ``--config`` is present.
+    """
+    if args.config is not None:
+        return ExperimentConfig.from_json(args.config)
+
+    overrides: dict[str, Any] = {}
+    for name in _leaf_override_names():
+        value = getattr(args, name, None)
+        if value is not None:
+            overrides[name] = value
+    return ExperimentConfig().with_overrides(**overrides) if overrides else ExperimentConfig()
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Parse CLI args, dispatch to the selected subcommand, return process exit code.
+
+    Args:
+        argv: Optional argument list (as for ``ArgumentParser.parse_args``);
+            ``None`` uses ``sys.argv``.
+
+    Returns:
+        int: ``0`` on success; a nonzero exit code on failure (e.g. YADE not
+        found, an unimplemented DEM backend, or the DEM subprocess itself
+        exiting nonzero).
+    """
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    if args.command == "dem-sim":
+        return _run_dem_sim(args)
+    return _run_ml_pipeline(args)
+
+
+# --- Private helper functions ------------------------------------------------
 
 
 def _bool_fields(cls: type) -> frozenset[str]:
@@ -150,43 +240,6 @@ def _add_dem_sim_arguments(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def build_parser() -> argparse.ArgumentParser:
-    """Build the top-level ``bppm-dem-sm`` parser with its two subcommands.
-
-    Returns:
-        argparse.ArgumentParser: Configured parser with ``dem-sim`` and
-        ``ml-pipeline`` subparsers (``args.command`` selects between them).
-    """
-    parser = argparse.ArgumentParser(
-        prog="bppm-dem-sm",
-        description=(
-            "Bidisperse DEM surrogate-model toolkit: launch a DEM "
-            "simulation, or run the RNN surrogate experiment pipeline."
-        ),
-    )
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    dem_parser = subparsers.add_parser(
-        "dem-sim",
-        help="Launch a DEM simulation as a subprocess (YADE implemented; BlazeDEM not yet).",
-        description="Launch a DEM simulation as a subprocess. --dem-backend yade requires YADE installed and on PATH.",
-    )
-    _add_dem_sim_arguments(dem_parser)
-
-    ml_parser = subparsers.add_parser(
-        "ml-pipeline",
-        help="Run the experiment pipeline (simulate / process / train / predict / metrics / visualization).",
-        description=(
-            "Run the experiment pipeline (simulate / process / train / predict / "
-            "metrics / visualization). Pass --config path.json to load settings from "
-            "JSON; when set, other pipeline flags are ignored."
-        ),
-    )
-    _add_ml_pipeline_arguments(ml_parser)
-
-    return parser
-
-
 def _leaf_override_names() -> list[str]:
     """Return the CLI dest names that map onto ``ExperimentConfig.with_overrides``."""
     names = []
@@ -198,31 +251,6 @@ def _leaf_override_names() -> list[str]:
     for group_cls in group_types.values():
         names.extend(sf.name for sf in fields(group_cls))
     return names
-
-
-def config_from_args(args: argparse.Namespace) -> ExperimentConfig:
-    """Resolve ``ExperimentConfig`` from parsed ``ml-pipeline`` CLI args.
-
-    If ``args.config`` is set, load only from that JSON file; all other
-    pipeline flags are ignored. Otherwise apply any non-``None`` flags via
-    :meth:`~bppm_dem_sm.config.ExperimentConfig.with_overrides` (flat leaf names).
-
-    Args:
-        args: Namespace produced by parsing the ``ml-pipeline`` subcommand.
-
-    Returns:
-        ExperimentConfig: Defaults with any non-``None`` CLI overrides
-        applied, or the JSON-loaded config when ``--config`` is present.
-    """
-    if args.config is not None:
-        return ExperimentConfig.from_json(args.config)
-
-    overrides: dict[str, Any] = {}
-    for name in _leaf_override_names():
-        value = getattr(args, name, None)
-        if value is not None:
-            overrides[name] = value
-    return ExperimentConfig().with_overrides(**overrides) if overrides else ExperimentConfig()
 
 
 def _run_dem_sim(args: argparse.Namespace) -> int:
@@ -249,25 +277,7 @@ def _run_ml_pipeline(args: argparse.Namespace) -> int:
     return 0
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    """Parse CLI args, dispatch to the selected subcommand, return process exit code.
-
-    Args:
-        argv: Optional argument list (as for ``ArgumentParser.parse_args``);
-            ``None`` uses ``sys.argv``.
-
-    Returns:
-        int: ``0`` on success; a nonzero exit code on failure (e.g. YADE not
-        found, an unimplemented DEM backend, or the DEM subprocess itself
-        exiting nonzero).
-    """
-    parser = build_parser()
-    args = parser.parse_args(argv)
-
-    if args.command == "dem-sim":
-        return _run_dem_sim(args)
-    return _run_ml_pipeline(args)
-
+# --- Script entry point ------------------------------------------------------
 
 if __name__ == "__main__":
     raise SystemExit(main())
