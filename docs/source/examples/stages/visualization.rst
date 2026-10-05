@@ -65,6 +65,12 @@ Takes the history file ``train_and_save`` wrote, a loaded dict, or a Keras
    )
    # or: plot_training_history(history) right after train_and_save
 
+.. figure:: ../_images/training_curves.png
+   :alt: Training and validation MSE over 20 epochs.
+   :width: 60%
+
+   20 epochs on the 3.0-4.0 s window. The first epoch's loss dominates the scale; both curves are flat from epoch 2.
+
 Metrics comparison plots
 ------------------------
 
@@ -90,6 +96,12 @@ plot whose input is missing prints a message and returns ``None``:
 These save under ``reports/figures/`` when
 ``visualization.save_figures`` is set.
 
+.. figure:: ../_images/metrics_overview.png
+   :alt: Four comparison plots: Lacey index over time, segregation profiles, velocity distributions, granular temperature.
+   :width: 100%
+
+   Four of the five plots, as rendered; SiC dataset, trained on 3.0-4.0 s, autoregressive with SR from 4.05 s (the walkthrough settings). ``plot_computing_speed`` is left out: it needs a measured DEM wall-clock time.
+
 Cell-grid overlay on one frame
 ------------------------------
 
@@ -111,6 +123,12 @@ A frame's XY scatter (rocks red, balls blue) with a square grid of
 :func:`~bppm_dem_sm.visualization.run_visualization.plot_sr_grid` read
 those values from a config.
 
+.. figure:: ../_images/cell_grids.png
+   :alt: The first DEM frame in XY with a 0.44 m grid (left) and a 0.5588 m grid (right); balls on top, rocks below.
+   :width: 100%
+
+   Frame 0 of the SiC dataset with the Lacey grid (0.44 m, left) and the SR grid (0.5588 m, right).
+
 Animating frames
 ----------------
 
@@ -125,6 +143,22 @@ From a config (plane, fps, marker size, and stride come from
        cfg.prediction.pred_frames_dir, cfg, pattern="pred_frame_*.parquet",
        save_path="reports/figures/pred_animation.mp4",
    )
+
+.. only:: html
+
+   .. figure:: ../_images/pred_animation.gif
+      :alt: Animation of the predicted particle positions in XY over the rollout.
+      :width: 60%
+
+      Predicted frames 4.05-19.85 s, every 4th frame; SiC dataset, trained on 3.0-4.0 s, autoregressive with SR from 4.05 s (the walkthrough settings).
+
+.. only:: latex
+
+   .. figure:: ../_images/pred_animation_last_frame.png
+      :alt: Last predicted frame in XY.
+      :width: 60%
+
+      Last frame of the prediction animation (19.85 s); SiC dataset, trained on 3.0-4.0 s, autoregressive with SR from 4.05 s (the walkthrough settings).
 
 Without a config, for any frame directory:
 

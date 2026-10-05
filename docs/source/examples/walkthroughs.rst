@@ -77,6 +77,12 @@ Python -- the same settings:
    print("final Lacey index, DEM:", m["gt"]["lacey"].iloc[-1])
    print("final Lacey index, surrogate:", m["pred"]["lacey"].iloc[-1])
 
+.. figure:: _images/lacey_comparison.png
+   :alt: Lacey mixing index over 20 s for DEM and the surrogate; the surrogate starts at 4 s and ends above DEM.
+   :width: 80%
+
+   Result of this walkthrough on the SiC dataset, trained on 3.0-4.0 s, autoregressive with SR from 4.05 s (the walkthrough settings). The surrogate ends at a Lacey index of 0.75 against DEM's 0.60: it mixes too much over the rollout.
+
 What you get:
 
 - ``models/rnn_gru_sic_model.keras`` and ``.history.json``
@@ -140,3 +146,29 @@ Python -- keep both metric dicts in memory and compare directly:
    visualization run overwrites the previous one's figures. Move or rename
    them between runs to keep both. Ground-truth metric tables are rewritten
    on every metrics run too; they do not change, as ``data_dir`` is the same.
+
+On the dataset used for these docs (same trained model, predicting from
+4.05 s to 19.85 s), the final values were:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 30 30
+
+   * - Prediction mode
+     - Final Lacey index
+     - Mean large-particle speed (m/s)
+   * - DEM (ground truth)
+     - 0.599
+     - 0.53
+   * - Teacher-forced
+     - 0.604
+     - 0.58
+   * - Autoregressive, no SR
+     - 0.441
+     - 1.32
+   * - Autoregressive + SR
+     - 0.753
+     - 1.31
+
+Teacher-forced prediction tracks DEM because every step starts from
+ground truth; in the autoregressive rollouts, errors accumulate.

@@ -71,6 +71,12 @@ particles are skipped:
 
 ``0.44`` m is ``0.04 x MILL_DIAMETER_M``, the paper's Lacey cell.
 
+.. figure:: ../_images/lacey_comparison.png
+   :alt: Lacey index over time, DEM and surrogate.
+   :width: 80%
+
+   ``M`` per frame for DEM and the surrogate; SiC dataset, trained on 3.0-4.0 s, autoregressive with SR from 4.05 s (the walkthrough settings).
+
 Segregation profile
 -------------------
 
@@ -97,6 +103,12 @@ every frame you compare, so bins line up:
 
 Empty bins have ``fraction_large = NaN``.
 
+.. figure:: ../_images/segregation_profile_comparison.png
+   :alt: Large-particle fraction against radial and axial distance at the final frame, DEM and surrogate.
+   :width: 100%
+
+   Radial and axial profiles at the last frame (19.85 s); SiC dataset, trained on 3.0-4.0 s, autoregressive with SR from 4.05 s (the walkthrough settings).
+
 Velocity distribution and granular temperature
 ----------------------------------------------
 
@@ -122,6 +134,18 @@ same particle ids:
 
 Rows are matched by ``id``, so the two frames may be stored in different
 orders; differing particle sets raise ``ValueError``.
+
+.. figure:: ../_images/velocity_distribution_comparison.png
+   :alt: Histograms of absolute velocity for small and large particles, DEM and surrogate.
+   :width: 100%
+
+   Speed per species at the last frame pair; SiC dataset, trained on 3.0-4.0 s, autoregressive with SR from 4.05 s (the walkthrough settings).
+
+.. figure:: ../_images/granular_temperature_comparison.png
+   :alt: Boxplots of per-cell granular temperature on a log scale, DEM and surrogate.
+   :width: 60%
+
+   Granular temperature per cell at the last frame pair; SiC dataset, trained on 3.0-4.0 s, autoregressive with SR from 4.05 s (the walkthrough settings).
 
 Computing speed
 ---------------
