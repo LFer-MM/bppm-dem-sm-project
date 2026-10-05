@@ -82,8 +82,9 @@ Use from Python
 More snippets
 -------------
 
-Stage-by-stage recipes (data prep, training, prediction, Lacey metrics,
-visualization, and DEM simulation) are in :doc:`examples`.
+CLI recipes, the Python pipeline, stage-by-stage snippets (data prep,
+training, prediction, SR, metrics, visualization, DEM simulation), and
+end-to-end walkthroughs are in :doc:`examples/index`.
 
 Build these docs locally
 ------------------------

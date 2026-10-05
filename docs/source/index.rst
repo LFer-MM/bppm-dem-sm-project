@@ -15,6 +15,6 @@ below document that **Python library surface**—not an HTTP/REST service.
    :caption: Contents:
 
    getting_started
-   examples
+   examples/index
    api
    docstring_style

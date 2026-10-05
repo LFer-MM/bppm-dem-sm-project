@@ -1,6 +1,6 @@
 # bi-poly-particle-mixing-dem-sub-model
 
-![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![pytest](https://img.shields.io/badge/tests-pytest-0A9EDC?logo=pytest&logoColor=white)
 ![pandas](https://img.shields.io/badge/pandas-data-150458?logo=pandas&logoColor=white)
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-RNN-FF6F00?logo=tensorflow&logoColor=white)
