@@ -66,6 +66,14 @@ Building the supervised dataset
 What ``train_and_save`` does before fitting: stack every frame, cut sliding
 windows of ``frames_in`` steps, and split off a validation set.
 
+.. figure:: ../_images/sliding_window.png
+   :alt: Twenty frames, from which five overlapping windows of fifteen input
+         frames are cut, each followed by its one-frame target.
+   :width: 100%
+
+   With the 20-frame reference window and ``frames_in=15``, every particle
+   gives 5 windows, one frame apart.
+
 .. code-block:: python
 
    from bppm_dem_sm.config import FEATURE_COLS

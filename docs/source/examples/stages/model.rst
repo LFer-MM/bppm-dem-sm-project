@@ -93,6 +93,14 @@ With ``autoregressive=False`` (default), every step slides the next
 measures one-step accuracy. With ``autoregressive=True``, the model's own
 ``(x, y, z)`` is fed back in, which is how the surrogate would replace DEM:
 
+.. figure:: ../_images/prediction_modes.png
+   :alt: Three prediction steps in each mode. Teacher-forced windows contain
+         only ground-truth frames; autoregressive windows fill up with the
+         model's own predictions.
+   :width: 100%
+
+   Where each step's newest input frame comes from, in the two modes.
+
 .. code-block:: python
 
    cfg_ar = cfg.with_overrides(autoregressive=True, predict_until_end=False, max_steps=50)

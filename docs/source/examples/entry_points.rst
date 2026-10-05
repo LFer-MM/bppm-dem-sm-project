@@ -35,6 +35,16 @@ Pipeline stages
 
 In run order, each gated by a ``do_*`` flag:
 
+.. figure:: _images/pipeline_stages.png
+   :alt: Pipeline flow: simulation writes raw CSVs, data processing writes
+         parquet frames, prediction uses them with the trained model and writes
+         predicted frames, metrics scores predictions against ground truth, and
+         visualization renders the metric tables.
+   :width: 100%
+
+   Stages (dark) and the files they read and write (light). Training reads a
+   short reference window you prepare beforehand.
+
 .. list-table::
    :header-rows: 1
    :widths: 22 30 48
