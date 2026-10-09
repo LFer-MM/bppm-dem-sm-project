@@ -103,9 +103,37 @@ def test_build_velocity_std_field_matches_known_variance(tmp_path):
         tmp_path, "frame_*.parquet", dt=dt, cell_size=10.0, min_particles_per_cell=5
     )
 
-    # mean velocity is 0, so sigma_v = sqrt(mean(||v_i||^2)) = sqrt(1.0) = 1.0
+    # Eq. 2 per axis: x velocities are +/-1 around a zero mean, y and z are 0.
     sigma = field.sigma_at(pos0[:1])[0]
-    assert sigma == pytest.approx(1.0, rel=1e-6)
+    assert sigma == pytest.approx([1.0, 0.0, 0.0], abs=1e-6)
+
+
+def test_build_velocity_std_field_uses_dem_velocity_columns(tmp_path):
+    # Positions never move, so finite differences would give sigma 0; the
+    # DEM velocity columns carry +/-2 along y, which Eq. 2 must pick up.
+    ids = np.arange(10)
+    pos0 = np.full((10, 3), 0.1)
+    v = np.zeros((10, 3))
+    v[:5, 1] = 2.0
+    v[5:, 1] = -2.0
+
+    write_frame(tmp_path / "frame_00000.parquet", ids, pos0, v=v)
+    write_frame(tmp_path / "frame_00001.parquet", ids, pos0, v=v)
+
+    field = sm.build_velocity_std_field(
+        tmp_path, "frame_*.parquet", dt=1.0, cell_size=10.0, min_particles_per_cell=5
+    )
+
+    assert field.sigma_at(pos0[:1])[0] == pytest.approx([0.0, 2.0, 0.0], abs=1e-6)
+
+
+def test_sample_stochastic_displacement_is_per_axis():
+    field = sm.VelocityStdField(
+        cell_size=1.0, origin=np.zeros(3), sigma_by_cell={(0, 0, 0): np.array([1.0, 0.0, 0.0])}
+    )
+    disp = sm.sample_stochastic_displacement(np.zeros((50, 3)), field, 0.05, np.random.default_rng(0))
+    assert not np.allclose(disp[:, 0], 0.0)
+    assert np.allclose(disp[:, 1:], 0.0)
 
 
 def test_sigma_at_returns_zero_outside_known_cells(tmp_path):
@@ -122,7 +150,7 @@ def test_sigma_at_returns_zero_outside_known_cells(tmp_path):
         tmp_path, "frame_*.parquet", dt=dt, cell_size=1.0, min_particles_per_cell=6
     )
     far_away = np.array([[1000.0, 1000.0, 1000.0]])
-    assert field.sigma_at(far_away)[0] == 0.0
+    assert np.all(field.sigma_at(far_away)[0] == 0.0)
 
 
 def test_cell_below_min_particles_excluded(tmp_path):
@@ -138,7 +166,7 @@ def test_cell_below_min_particles_excluded(tmp_path):
         tmp_path, "frame_*.parquet", dt=dt, cell_size=1.0, min_particles_per_cell=10
     )
     assert field.sigma_by_cell == {}
-    assert field.sigma_at(pos0)[0] == 0.0
+    assert np.all(field.sigma_at(pos0)[0] == 0.0)
 
 
 def test_build_velocity_std_field_requires_two_frames(tmp_path):
@@ -148,7 +176,7 @@ def test_build_velocity_std_field_requires_two_frames(tmp_path):
 
 
 def test_sample_stochastic_displacement_zero_sigma_gives_zero_displacement():
-    field = sm.VelocityStdField(cell_size=1.0, origin=np.zeros(3), sigma_by_cell={(0, 0, 0): 0.0})
+    field = sm.VelocityStdField(cell_size=1.0, origin=np.zeros(3), sigma_by_cell={(0, 0, 0): np.zeros(3)})
     positions = np.zeros((5, 3))
     rng = np.random.default_rng(1)
     disp = sm.sample_stochastic_displacement(positions, field, dt_rnn=0.05, rng=rng)
@@ -157,7 +185,7 @@ def test_sample_stochastic_displacement_zero_sigma_gives_zero_displacement():
 
 
 def test_sample_stochastic_displacement_reproducible_with_seed():
-    field = sm.VelocityStdField(cell_size=1.0, origin=np.zeros(3), sigma_by_cell={(0, 0, 0): 0.5})
+    field = sm.VelocityStdField(cell_size=1.0, origin=np.zeros(3), sigma_by_cell={(0, 0, 0): np.full(3, 0.5)})
     positions = np.zeros((5, 3))
     disp1 = sm.sample_stochastic_displacement(positions, field, 0.05, np.random.default_rng(42))
     disp2 = sm.sample_stochastic_displacement(positions, field, 0.05, np.random.default_rng(42))

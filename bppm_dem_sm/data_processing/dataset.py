@@ -5,6 +5,24 @@ from __future__ import annotations
 import numpy as np
 
 
+def local_mean_positions(pos, vel, dt_rnn):
+    """Convert raw DEM positions to local mean components (Kishida et al. 2025, Eq. 1).
+
+    ``x_bar_i^{t - dt} = x_i^t - v_i * dt_RNN``: the displacement implied by
+    each particle's instantaneous DEM velocity (its local variability
+    component) is subtracted, leaving the local mean component the RNN learns.
+
+    Args:
+        pos: Position tensor of shape ``(T, N, 3)``.
+        vel: DEM velocity tensor of shape ``(T, N, 3)``, aligned with ``pos``.
+        dt_rnn: RNN time step Delta t_RNN (seconds).
+
+    Returns:
+        numpy.ndarray: Local mean positions, same shape and dtype as ``pos``.
+    """
+    return (pos - vel * dt_rnn).astype(pos.dtype)
+
+
 def build_supervised_dataset(pos, rad, frames_in):
     """Build sliding-window ``(X, y)``: ``frames_in`` steps of ``x, y, z, r`` -> next ``x, y, z``.
 

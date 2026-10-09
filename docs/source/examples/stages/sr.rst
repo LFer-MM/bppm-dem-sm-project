@@ -50,14 +50,19 @@ Or from any directory of consecutive frames that share particle ids:
    field = build_velocity_std_field(
        "data/processed/sic_training_dataset_3s_4s_parquet",
        "frame_*.parquet",
-       dt=0.05,                 # seconds between consecutive frames
+       dt=0.05,                 # frame spacing; only for the fallback below
        cell_size=0.5588,        # 4 x large-particle diameter
        min_particles_per_cell=15,
    )
 
-Velocities are finite-differenced between consecutive frames and pooled
-over all pairs per cell. Cells with fewer than ``min_particles_per_cell``
-observations get sigma_v = 0, i.e. no added noise.
+Each particle's DEM velocity (the ``vx``, ``vy``, ``vz`` columns) is binned
+by position and pooled over all frames per cell, and sigma_v is the
+standard deviation of each velocity component (paper Eq. 2), so it is a
+3-vector per cell. Large and small particles share one field. Frames
+without velocity columns fall back to velocities finite-differenced
+between consecutive frames, which only approximates the DEM velocity.
+Cells with fewer than ``min_particles_per_cell`` observations get
+sigma_v = 0, i.e. no added noise.
 
 .. note::
 
@@ -83,6 +88,6 @@ What ``predict_frames`` adds at each step, for any ``(N, 3)`` positions:
    pos = df[["x", "y", "z"]].to_numpy(np.float32)
 
    rng = np.random.default_rng(0)
-   sigma = field.sigma_at(pos)  # (N,) sigma_v at each particle's cell
+   sigma = field.sigma_at(pos)  # (N, 3) per-axis sigma_v at each particle's cell
    disp = sample_stochastic_displacement(pos, field, dt_rnn=0.05, rng=rng)  # (N, 3)
    new_pos = pos + disp  # in the pipeline: GRU prediction + disp

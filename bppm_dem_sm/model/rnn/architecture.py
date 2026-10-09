@@ -8,6 +8,10 @@ def build_model(frames_in, n_features=4, gru_units=20, dense_units=15, learning_
 
     Architecture: ``Input(frames_in, n_features)`` -> GRU -> Dense(tanh) ->
     Dense(3, linear) predicting next ``(x, y, z)``. Compiled with Adam and MSE.
+    Matches Table 1 of Kishida et al. (2025): with the defaults and 4 input
+    features the layers hold 1560, 315, and 48 parameters, and the input
+    weights use He initialization (the GRU's recurrent weights keep Keras's
+    orthogonal default, which the paper does not specify).
 
     Args:
         frames_in: Temporal window length (input sequence length).
@@ -27,9 +31,9 @@ def build_model(frames_in, n_features=4, gru_units=20, dense_units=15, learning_
     model = tf.keras.Sequential(
         [
             tf.keras.layers.Input(shape=(frames_in, n_features)),
-            tf.keras.layers.GRU(gru_units),
-            tf.keras.layers.Dense(dense_units, activation="tanh"),
-            tf.keras.layers.Dense(3, activation="linear"),
+            tf.keras.layers.GRU(gru_units, kernel_initializer="he_normal"),
+            tf.keras.layers.Dense(dense_units, activation="tanh", kernel_initializer="he_normal"),
+            tf.keras.layers.Dense(3, activation="linear", kernel_initializer="he_normal"),
         ]
     )
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate), loss="mse")

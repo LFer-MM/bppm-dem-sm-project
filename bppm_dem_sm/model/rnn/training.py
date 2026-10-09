@@ -23,7 +23,9 @@ from .architecture import build_model
 def train_and_save(config: ExperimentConfig):
     """Train the GRU surrogate on ``config.train_data_dir``; save it and its loss history.
 
-    Builds a supervised sliding-window dataset, fits the model, writes a
+    Converts the training trajectories to their local mean components
+    (Kishida et al. 2025, Eq. 1) when ``training.local_mean_conversion`` is
+    set, builds a supervised sliding-window dataset, fits the model, writes a
     ``.keras`` artifact to ``config.model_path`` and a sibling
     ``<name>.history.json`` with the per-epoch ``loss``/``val_loss`` arrays.
 
@@ -36,6 +38,9 @@ def train_and_save(config: ExperimentConfig):
     """
     train = config.training
     pos, rad, _ = data_io.load_frames_stacked(config.train_data_dir, config.frame_glob, config.feature_cols)
+    if train.local_mean_conversion:
+        vel = data_io.load_velocities_stacked(config.train_data_dir, config.frame_glob)
+        pos = data_ds.local_mean_positions(pos, vel, config.prediction.dt_step)
     X, y = data_ds.build_supervised_dataset(pos, rad, config.frames_in)
     Xtr, ytr, Xval, yval = data_ds.train_test_split(X, y, train.val_fraction, train.seed)
 

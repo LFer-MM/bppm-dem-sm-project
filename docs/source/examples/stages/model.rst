@@ -30,8 +30,10 @@ Training and saving
 -------------------
 
 :func:`~bppm_dem_sm.model.rnn.training.train_and_save` is the ``do_train``
-stage: it loads ``train_data_dir``, builds the dataset and the network from
-``config.training``, fits, and writes ``model_path`` plus a
+stage: it loads ``train_data_dir``, converts the trajectories to local mean
+components (``x - v * dt_step``, paper Eq. 1; turn off with
+``TrainingOptions(local_mean_conversion=False)``), builds the dataset and
+the network from ``config.training``, fits, and writes ``model_path`` plus a
 ``<name>.history.json`` with the per-epoch ``loss`` / ``val_loss``:
 
 .. code-block:: python

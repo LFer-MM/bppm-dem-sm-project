@@ -87,8 +87,12 @@ windows of ``frames_in`` steps, and split off a validation set.
    )
    # pos: (T, N, 3)   rad: (T, N, 1)   ids: (N,)
 
+   # Eq. 1: train on local mean components x - v * dt_RNN, not raw positions
+   vel = data_io.load_velocities_stacked("data/processed/sic_training_dataset_3s_4s_parquet")
+   pos = data_ds.local_mean_positions(pos, vel, dt_rnn=0.05)
+
    X, y = data_ds.build_supervised_dataset(pos, rad, frames_in=15)
-   # X: ((T - 15) * N, 15, 4) windows of x, y, z, r
-   # y: ((T - 15) * N, 3)     the next x, y, z
+   # X: ((T - 15) * N, 15, 4) windows of local-mean x, y, z, and r
+   # y: ((T - 15) * N, 3)     the next local-mean x, y, z
 
    X_train, y_train, X_val, y_val = data_ds.train_test_split(X, y, val_fraction=0.1, seed=0)

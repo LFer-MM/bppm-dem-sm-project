@@ -54,6 +54,9 @@ ID_COL = "id"
 FEATURE_COLS = ["x", "y", "z", "r"]
 #: GRU regression targets (next-step position).
 TARGET_COLS = ["x", "y", "z"]
+#: Instantaneous DEM particle velocity, the ``v_i`` of Kishida et al. (2025)
+#: Eqs. 1-2.
+VELOCITY_COLS = ["vx", "vy", "vz"]
 
 
 # --- Constants: DEM simulation, shared / backend-agnostic --------------------
@@ -121,6 +124,11 @@ class TrainingOptions:
         seed: RNG seed for the train/validation shuffle.
         gru_units: Hidden size of the GRU layer.
         dense_units: Units in the intermediate Dense layer.
+        local_mean_conversion: If ``True``, train on the local mean component
+            of each trajectory, ``x_i - v_i * Delta t_RNN`` (Kishida et al.
+            2025, Eq. 1, with ``prediction.dt_step`` as Delta t_RNN), rather
+            than on raw positions. Requires :data:`VELOCITY_COLS` in the
+            training frames.
     """
 
     epochs: int = 20
@@ -130,6 +138,7 @@ class TrainingOptions:
     seed: int = 0
     gru_units: int = 20
     dense_units: int = 15
+    local_mean_conversion: bool = True
 
 
 @dataclass

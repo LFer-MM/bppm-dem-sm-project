@@ -12,18 +12,22 @@ import pandas as pd
 from bppm_dem_sm.config import ExperimentConfig, MetricsOptions, PredictionOptions
 
 
-def write_frame(path, ids, xyz, r=None):
-    """Write one parquet frame with ``id``, ``x``, ``y``, ``z`` (and ``r``) columns.
+def write_frame(path, ids, xyz, r=None, v=None):
+    """Write one parquet frame with ``id``, ``x``, ``y``, ``z`` (and ``r``, ``vx/vy/vz``) columns.
 
     Args:
         path: Destination parquet path.
         ids: Particle ids, length ``N``.
         xyz: Positions of shape ``(N, 3)``.
         r: Optional radii, length ``N``; the ``r`` column is omitted if ``None``.
+        v: Optional DEM velocities of shape ``(N, 3)``; the ``vx``, ``vy``,
+            ``vz`` columns are omitted if ``None``.
     """
     columns = {"id": ids, "x": xyz[:, 0], "y": xyz[:, 1], "z": xyz[:, 2]}
     if r is not None:
         columns["r"] = r
+    if v is not None:
+        columns.update(vx=v[:, 0], vy=v[:, 1], vz=v[:, 2])
     pd.DataFrame(columns).to_parquet(path, index=False)
 
 
