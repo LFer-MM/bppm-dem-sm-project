@@ -1,4 +1,4 @@
-# bi-poly-particle-mixing-dem-sub-model
+# bppm-dem-sm
 
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![pytest](https://img.shields.io/badge/tests-pytest-0A9EDC?logo=pytest&logoColor=white)
