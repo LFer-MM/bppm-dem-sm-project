@@ -40,9 +40,9 @@ def _make_predict_config(tmp_path, *, stochastic_enabled, seed=0):
     v = np.zeros((8, 3))
     v[::2, 0] = 1.0
     v[1::2, 0] = -1.0
-    write_frame(train_dir / "frame_00000.parquet", ids, pos0, r)
-    write_frame(train_dir / "frame_00001.parquet", ids, pos0 + v, r)
-    write_frame(train_dir / "frame_00002.parquet", ids, pos0 + 2 * v, r)
+    write_frame(train_dir / "frame_00000.parquet", ids, pos0, r, v=v)
+    write_frame(train_dir / "frame_00001.parquet", ids, pos0 + v, r, v=v)
+    write_frame(train_dir / "frame_00002.parquet", ids, pos0 + 2 * v, r, v=v)
 
     return ExperimentConfig(
         data_dir=data_dir,
@@ -72,16 +72,14 @@ def test_build_velocity_std_field_zero_for_uniform_motion(tmp_path):
     ids = np.arange(20)
     rng = np.random.default_rng(0)
     pos0 = rng.uniform(0, 1, size=(20, 3))
-    velocity = np.array([0.1, 0.0, -0.2])
+    v = np.tile(np.array([0.1, 0.0, -0.2]), (20, 1))
     dt = 0.05
 
-    write_frame(tmp_path / "frame_00000.parquet", ids, pos0)
-    write_frame(tmp_path / "frame_00001.parquet", ids, pos0 + velocity * dt)
-    write_frame(tmp_path / "frame_00002.parquet", ids, pos0 + 2 * velocity * dt)
+    write_frame(tmp_path / "frame_00000.parquet", ids, pos0, v=v)
+    write_frame(tmp_path / "frame_00001.parquet", ids, pos0 + v * dt, v=v)
+    write_frame(tmp_path / "frame_00002.parquet", ids, pos0 + 2 * v * dt, v=v)
 
-    field = sm.build_velocity_std_field(
-        tmp_path, "frame_*.parquet", dt=dt, cell_size=1.0, min_particles_per_cell=5
-    )
+    field = sm.build_velocity_std_field(tmp_path, "frame_*.parquet", cell_size=1.0, min_particles_per_cell=5)
 
     sigmas = field.sigma_at(pos0)
     assert np.allclose(sigmas, 0.0, atol=1e-6)
@@ -94,23 +92,19 @@ def test_build_velocity_std_field_matches_known_variance(tmp_path):
     v = np.zeros((10, 3))
     v[:5, 0] = 1.0
     v[5:, 0] = -1.0
-    dt = 1.0
 
-    write_frame(tmp_path / "frame_00000.parquet", ids, pos0)
-    write_frame(tmp_path / "frame_00001.parquet", ids, pos0 + v * dt)
+    write_frame(tmp_path / "frame_00000.parquet", ids, pos0, v=v)
 
-    field = sm.build_velocity_std_field(
-        tmp_path, "frame_*.parquet", dt=dt, cell_size=10.0, min_particles_per_cell=5
-    )
+    field = sm.build_velocity_std_field(tmp_path, "frame_*.parquet", cell_size=10.0, min_particles_per_cell=5)
 
     # Eq. 2 per axis: x velocities are +/-1 around a zero mean, y and z are 0.
     sigma = field.sigma_at(pos0[:1])[0]
     assert sigma == pytest.approx([1.0, 0.0, 0.0], abs=1e-6)
 
 
-def test_build_velocity_std_field_uses_dem_velocity_columns(tmp_path):
-    # Positions never move, so finite differences would give sigma 0; the
-    # DEM velocity columns carry +/-2 along y, which Eq. 2 must pick up.
+def test_build_velocity_std_field_uses_dem_velocity_not_displacement(tmp_path):
+    # Positions never move, but the DEM velocity columns carry +/-2 along y,
+    # which Eq. 2 must pick up.
     ids = np.arange(10)
     pos0 = np.full((10, 3), 0.1)
     v = np.zeros((10, 3))
@@ -120,9 +114,7 @@ def test_build_velocity_std_field_uses_dem_velocity_columns(tmp_path):
     write_frame(tmp_path / "frame_00000.parquet", ids, pos0, v=v)
     write_frame(tmp_path / "frame_00001.parquet", ids, pos0, v=v)
 
-    field = sm.build_velocity_std_field(
-        tmp_path, "frame_*.parquet", dt=1.0, cell_size=10.0, min_particles_per_cell=5
-    )
+    field = sm.build_velocity_std_field(tmp_path, "frame_*.parquet", cell_size=10.0, min_particles_per_cell=5)
 
     assert field.sigma_at(pos0[:1])[0] == pytest.approx([0.0, 2.0, 0.0], abs=1e-6)
 
@@ -141,14 +133,10 @@ def test_sigma_at_returns_zero_outside_known_cells(tmp_path):
     pos0 = np.zeros((6, 3))
     v = np.zeros((6, 3))
     v[:, 0] = np.array([1.0, -1.0, 2.0, -2.0, 0.5, -0.5])
-    dt = 1.0
 
-    write_frame(tmp_path / "frame_00000.parquet", ids, pos0)
-    write_frame(tmp_path / "frame_00001.parquet", ids, pos0 + v * dt)
+    write_frame(tmp_path / "frame_00000.parquet", ids, pos0, v=v)
 
-    field = sm.build_velocity_std_field(
-        tmp_path, "frame_*.parquet", dt=dt, cell_size=1.0, min_particles_per_cell=6
-    )
+    field = sm.build_velocity_std_field(tmp_path, "frame_*.parquet", cell_size=1.0, min_particles_per_cell=6)
     far_away = np.array([[1000.0, 1000.0, 1000.0]])
     assert np.all(field.sigma_at(far_away)[0] == 0.0)
 
@@ -157,22 +145,17 @@ def test_cell_below_min_particles_excluded(tmp_path):
     ids = np.arange(3)
     pos0 = np.zeros((3, 3))
     v = np.array([[1.0, 0, 0], [-1.0, 0, 0], [2.0, 0, 0]])
-    dt = 1.0
 
-    write_frame(tmp_path / "frame_00000.parquet", ids, pos0)
-    write_frame(tmp_path / "frame_00001.parquet", ids, pos0 + v * dt)
+    write_frame(tmp_path / "frame_00000.parquet", ids, pos0, v=v)
 
-    field = sm.build_velocity_std_field(
-        tmp_path, "frame_*.parquet", dt=dt, cell_size=1.0, min_particles_per_cell=10
-    )
+    field = sm.build_velocity_std_field(tmp_path, "frame_*.parquet", cell_size=1.0, min_particles_per_cell=10)
     assert field.sigma_by_cell == {}
     assert np.all(field.sigma_at(pos0)[0] == 0.0)
 
 
-def test_build_velocity_std_field_requires_two_frames(tmp_path):
-    write_frame(tmp_path / "frame_00000.parquet", np.arange(3), np.zeros((3, 3)))
+def test_build_velocity_std_field_requires_frames(tmp_path):
     with pytest.raises(ValueError):
-        sm.build_velocity_std_field(tmp_path, "frame_*.parquet", dt=0.05, cell_size=1.0)
+        sm.build_velocity_std_field(tmp_path, "frame_*.parquet", cell_size=1.0)
 
 
 def test_sample_stochastic_displacement_zero_sigma_gives_zero_displacement():

@@ -64,18 +64,15 @@ class VelocityStdField:
 def build_velocity_std_field(
     frames_dir,
     frame_glob,
-    dt: float,
     cell_size: float,
     min_particles_per_cell: int = 15,
 ) -> VelocityStdField:
-    """Estimate sigma_v(x) from consecutive reference DEM frames (paper Eq. 2).
+    """Estimate sigma_v(x) from reference DEM frames (paper Eq. 2).
 
-    Uses each particle's instantaneous DEM velocity ``v_i`` (the
-    ``VELOCITY_COLS`` columns) when every frame carries them, as the paper
-    does; otherwise velocities are finite-differenced between consecutive
-    frames over ``dt``, which only approximates ``v_i``. Velocities are binned
-    by position into fixed cubic cells and pooled across frames
-    (spatiotemporal averaging of ``<v_i>``) to compute, per axis,
+    Each particle's instantaneous DEM velocity ``v_i`` (the ``VELOCITY_COLS``
+    columns) is binned by its position in the same frame into fixed cubic
+    cells and pooled across frames (spatiotemporal averaging of ``<v_i>``)
+    to compute, per axis,
     ``sigma_v(x) = sqrt(mean((v_i - <v_i>)^2))`` -- a vector, one component
     per velocity component. Pooling across frames is valid because the
     Eulerian velocity field of a rotating-drum mixer stays quasi-steady even
@@ -89,8 +86,6 @@ def build_velocity_std_field(
         frames_dir: Directory of reference DEM parquet frames, e.g. the same
             short-time window used to train the GRU (``config.train_data_dir``).
         frame_glob: Glob pattern for frame files.
-        dt: Physical time spacing between consecutive frames (seconds);
-            only used by the finite-difference fallback.
         cell_size: Cubic cell edge length in meters.
         min_particles_per_cell: Minimum pooled particle-observations required
             for a cell to receive a non-zero sigma_v.
@@ -99,18 +94,14 @@ def build_velocity_std_field(
         VelocityStdField: Lookup table mapping position -> sigma_v(x).
 
     Raises:
-        ValueError: If fewer than 2 frames are found, or frames do not share
-            the same particle ids in the same order.
+        ValueError: If no frames are found, or frames do not share the same
+            particle ids in the same order.
     """
     paths = data_io.sorted_frame_files(frames_dir, frame_glob)
-    if len(paths) < 2:
-        raise ValueError(
-            f"Need >= 2 reference frames to estimate velocity, found {len(paths)} in {frames_dir}"
-        )
+    if not paths:
+        raise ValueError(f"No reference frames found in {frames_dir}")
 
-    use_dem_velocity = all(data_io.has_velocity_columns(p) for p in paths)
-    cols = [ID_COL] + TARGET_COLS + (VELOCITY_COLS if use_dem_velocity else [])
-    frames = [data_io.load_frame(p, cols) for p in paths]
+    frames = [data_io.load_frame(p, [ID_COL] + TARGET_COLS + VELOCITY_COLS) for p in paths]
     base_ids = frames[0][ID_COL].to_numpy()
     for f in frames[1:]:
         if not np.array_equal(f[ID_COL].to_numpy(), base_ids):
@@ -119,18 +110,11 @@ def build_velocity_std_field(
     positions = [f[TARGET_COLS].to_numpy(np.float64) for f in frames]
     origin = np.min(np.stack(positions), axis=(0, 1))
 
-    if use_dem_velocity:
-        binned_positions = positions
-        velocities = [f[VELOCITY_COLS].to_numpy(np.float64) for f in frames]
-    else:
-        binned_positions = positions[:-1]
-        velocities = [(positions[t + 1] - positions[t]) / dt for t in range(len(positions) - 1)]
-
     cell_idx_stack = np.concatenate(
-        [binning.cell_indices(pos, cell_size, origin) for pos in binned_positions],
+        [binning.cell_indices(pos, cell_size, origin) for pos in positions],
         axis=0,
     )
-    vel_stack = np.concatenate(velocities, axis=0)
+    vel_stack = np.concatenate([f[VELOCITY_COLS].to_numpy(np.float64) for f in frames], axis=0)
 
     sigma_by_cell: dict[tuple[int, int, int], np.ndarray] = {}
     for group in binning.group_by_cell(cell_idx_stack):
@@ -148,7 +132,7 @@ def build_velocity_std_field_from_config(config: ExperimentConfig) -> VelocitySt
 
     Args:
         config: Pipeline settings; uses ``train_data_dir``, ``frame_glob``,
-            ``prediction.dt_step`` (as Delta t_RNN), and ``stochastic.*``.
+            and ``stochastic.*``.
 
     Returns:
         VelocityStdField: Lookup table for :func:`sample_stochastic_displacement`.
@@ -157,7 +141,6 @@ def build_velocity_std_field_from_config(config: ExperimentConfig) -> VelocitySt
     return build_velocity_std_field(
         config.train_data_dir,
         config.frame_glob,
-        dt=config.prediction.dt_step,
         cell_size=sc.velocity_cell_size,
         min_particles_per_cell=sc.velocity_min_particles_per_cell,
     )

@@ -6,9 +6,8 @@ import json
 from pathlib import Path
 
 import numpy as np
-import pytest
 
-from bppm_dem_sm.config import ExperimentConfig, PredictionOptions, TrainingOptions
+from bppm_dem_sm.config import ExperimentConfig, PredictionOptions
 from bppm_dem_sm.model.rnn import training
 
 from helpers import write_frame
@@ -46,7 +45,7 @@ def test_train_and_save_persists_model_and_history_json(tmp_path, monkeypatch):
     train_dir = tmp_path / "train"
     train_dir.mkdir()
     for i in range(3):
-        write_frame(train_dir / f"frame_{i:05d}.parquet", ids, pos, r, v=np.zeros((4, 3)))
+        write_frame(train_dir / f"frame_{i:05d}.parquet", ids, pos, r)
 
     stub_model = _StubModel()
     monkeypatch.setattr(training, "build_model", lambda *a, **k: stub_model)
@@ -93,18 +92,3 @@ def test_train_and_save_trains_on_local_mean_positions(tmp_path, monkeypatch):
     # Target is frame 2's local mean component (Eq. 1): 2 - 2.0 * 0.05.
     assert np.allclose(stub_model.fit_targets, 1.9)
 
-
-def test_train_and_save_requires_velocity_for_local_mean(tmp_path, monkeypatch):
-    train_dir = tmp_path / "train"
-    train_dir.mkdir()
-    for i in range(3):
-        write_frame(train_dir / f"frame_{i:05d}.parquet", np.arange(4), np.zeros((4, 3)), np.full(4, 0.1))
-
-    monkeypatch.setattr(training, "build_model", lambda *a, **k: _StubModel())
-    config = ExperimentConfig(train_data_dir=train_dir, frames_in=2, model_path=tmp_path / "m.keras")
-
-    with pytest.raises(ValueError, match="velocity"):
-        training.train_and_save(config)
-
-    raw = config.with_overrides(training=TrainingOptions(local_mean_conversion=False))
-    training.train_and_save(raw)

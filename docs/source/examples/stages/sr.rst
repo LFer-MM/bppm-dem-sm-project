@@ -31,8 +31,7 @@ same ``stochastic_seed`` gives the same draws.
 Building the sigma_v(x) field
 -----------------------------
 
-From the config -- ``train_data_dir``, ``prediction.dt_step`` as the frame
-spacing, and the ``stochastic`` cell settings:
+From the config -- ``train_data_dir`` and the ``stochastic`` cell settings:
 
 .. code-block:: python
 
@@ -41,7 +40,7 @@ spacing, and the ``stochastic`` cell settings:
    field = build_velocity_std_field_from_config(cfg)
    print(len(field.sigma_by_cell), "cells with a sigma_v")
 
-Or from any directory of consecutive frames that share particle ids:
+Or from any directory of frames that share particle ids:
 
 .. code-block:: python
 
@@ -50,7 +49,6 @@ Or from any directory of consecutive frames that share particle ids:
    field = build_velocity_std_field(
        "data/processed/sic_training_dataset_3s_4s_parquet",
        "frame_*.parquet",
-       dt=0.05,                 # frame spacing; only for the fallback below
        cell_size=0.5588,        # 4 x large-particle diameter
        min_particles_per_cell=15,
    )
@@ -58,10 +56,7 @@ Or from any directory of consecutive frames that share particle ids:
 Each particle's DEM velocity (the ``vx``, ``vy``, ``vz`` columns) is binned
 by position and pooled over all frames per cell, and sigma_v is the
 standard deviation of each velocity component (paper Eq. 2), so it is a
-3-vector per cell. Large and small particles share one field. Frames
-without velocity columns fall back to velocities finite-differenced
-between consecutive frames, which only approximates the DEM velocity.
-Cells with fewer than ``min_particles_per_cell`` observations get
+3-vector per cell. Large and small particles share one field. Cells with fewer than ``min_particles_per_cell`` observations get
 sigma_v = 0, i.e. no added noise.
 
 .. note::

@@ -55,7 +55,7 @@ FEATURE_COLS = ["x", "y", "z", "r"]
 #: GRU regression targets (next-step position).
 TARGET_COLS = ["x", "y", "z"]
 #: Instantaneous DEM particle velocity, the ``v_i`` of Kishida et al. (2025)
-#: Eqs. 1-2.
+#: Eqs. 1-2. Every frame file is expected to carry these columns.
 VELOCITY_COLS = ["vx", "vy", "vz"]
 
 
@@ -127,8 +127,7 @@ class TrainingOptions:
         local_mean_conversion: If ``True``, train on the local mean component
             of each trajectory, ``x_i - v_i * Delta t_RNN`` (Kishida et al.
             2025, Eq. 1, with ``prediction.dt_step`` as Delta t_RNN), rather
-            than on raw positions. Requires :data:`VELOCITY_COLS` in the
-            training frames.
+            than on raw positions.
     """
 
     epochs: int = 20

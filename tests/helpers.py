@@ -13,21 +13,22 @@ from bppm_dem_sm.config import ExperimentConfig, MetricsOptions, PredictionOptio
 
 
 def write_frame(path, ids, xyz, r=None, v=None):
-    """Write one parquet frame with ``id``, ``x``, ``y``, ``z`` (and ``r``, ``vx/vy/vz``) columns.
+    """Write one parquet frame with ``id``, ``x``, ``y``, ``z``, ``vx``, ``vy``, ``vz`` (and ``r``) columns.
 
     Args:
         path: Destination parquet path.
         ids: Particle ids, length ``N``.
         xyz: Positions of shape ``(N, 3)``.
         r: Optional radii, length ``N``; the ``r`` column is omitted if ``None``.
-        v: Optional DEM velocities of shape ``(N, 3)``; the ``vx``, ``vy``,
-            ``vz`` columns are omitted if ``None``.
+        v: DEM velocities of shape ``(N, 3)``; zeros if ``None``. Every frame
+            carries velocity columns, as real DEM exports do.
     """
     columns = {"id": ids, "x": xyz[:, 0], "y": xyz[:, 1], "z": xyz[:, 2]}
     if r is not None:
         columns["r"] = r
-    if v is not None:
-        columns.update(vx=v[:, 0], vy=v[:, 1], vz=v[:, 2])
+    if v is None:
+        v = np.zeros_like(xyz)
+    columns.update(vx=v[:, 0], vy=v[:, 1], vz=v[:, 2])
     pd.DataFrame(columns).to_parquet(path, index=False)
 
 
@@ -56,7 +57,7 @@ def write_frames(frames_dir, n_frames, *, seed=0, start_idx=0, prefix="frame"):
     dt = 0.05
     for step in range(n_frames):
         idx = start_idx + step
-        write_frame(frames_dir / f"{prefix}_{idx:05d}.parquet", ids, pos0 + step * v * dt, r)
+        write_frame(frames_dir / f"{prefix}_{idx:05d}.parquet", ids, pos0 + step * v * dt, r, v=v)
     return ids, r
 
 
