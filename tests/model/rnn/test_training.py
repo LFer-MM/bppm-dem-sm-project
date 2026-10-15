@@ -48,7 +48,7 @@ def test_train_and_save_persists_model_and_history_json(tmp_path, monkeypatch):
         write_frame(train_dir / f"frame_{i:05d}.parquet", ids, pos, r)
 
     stub_model = _StubModel()
-    monkeypatch.setattr(training, "build_model", lambda *a, **k: stub_model)
+    monkeypatch.setattr(training, "build_rnn", lambda *a, **k: stub_model)
 
     config = ExperimentConfig(
         train_data_dir=train_dir,
@@ -79,7 +79,7 @@ def test_train_and_save_trains_on_local_mean_positions(tmp_path, monkeypatch):
         write_frame(train_dir / f"frame_{i:05d}.parquet", ids, np.full((4, 3), float(i)), r, v=v)
 
     stub_model = _StubModel()
-    monkeypatch.setattr(training, "build_model", lambda *a, **k: stub_model)
+    monkeypatch.setattr(training, "build_rnn", lambda *a, **k: stub_model)
 
     config = ExperimentConfig(
         train_data_dir=train_dir,

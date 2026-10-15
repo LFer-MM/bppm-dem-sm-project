@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 
-def build_model(frames_in, n_features=4, gru_units=20, dense_units=15, learning_rate=0.01):
+def build_rnn(frames_in, n_features=4, gru_units=20, dense_units=15, learning_rate=0.01):
     """Build and compile the GRU -> Dense regression model.
 
     Architecture: ``Input(frames_in, n_features)`` -> GRU -> Dense(tanh) ->

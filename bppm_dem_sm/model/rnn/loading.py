@@ -7,7 +7,7 @@ from pathlib import Path
 # --- Public functions --------------------------------------------------------
 
 
-def load_model(path):
+def load_rnn(path):
     """Load a saved Keras model (``.keras``/``.h5``) or legacy SavedModel directory.
 
     Args:

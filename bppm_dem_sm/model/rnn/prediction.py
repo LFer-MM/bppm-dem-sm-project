@@ -40,7 +40,7 @@ def predict_frames(config: ExperimentConfig, model=None) -> pd.DataFrame:
     start, seq_len = pred.start_frame, config.frames_in
 
     if model is None:
-        model = loading.load_model(config.model_path)
+        model = loading.load_rnn(config.model_path)
     print("Model input_shape:", model.input_shape, "output_shape:", model.output_shape)
 
     sr_opts = config.stochastic

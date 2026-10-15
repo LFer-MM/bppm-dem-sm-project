@@ -17,7 +17,7 @@ from pathlib import Path
 from ...config import ExperimentConfig
 from ...data_processing import dataset as data_ds
 from ...data_processing import frames as data_io
-from .architecture import build_model
+from .architecture import build_rnn
 
 
 def train_and_save(config: ExperimentConfig):
@@ -44,7 +44,7 @@ def train_and_save(config: ExperimentConfig):
     X, y = data_ds.build_supervised_dataset(pos, rad, config.frames_in)
     Xtr, ytr, Xval, yval = data_ds.train_test_split(X, y, train.val_fraction, train.seed)
 
-    model = build_model(
+    model = build_rnn(
         config.frames_in,
         n_features=X.shape[-1],
         gru_units=train.gru_units,

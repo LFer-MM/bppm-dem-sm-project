@@ -158,9 +158,9 @@ out.
 model/
 ├── rnn/
 │   ├── __init__.py
-│   ├── architecture.py     # was part of training.py — build_model (GRU → Dense)
+│   ├── architecture.py     # was part of training.py — build_rnn (GRU → Dense)
 │   ├── training.py           # train_and_save
-│   ├── loading.py              # was part of prediction.py — load_model, _resolve_model_path, _SavedModelWrapper
+│   ├── loading.py              # was part of prediction.py — load_rnn, _resolve_model_path, _SavedModelWrapper
 │   └── prediction.py             # predict_frames (sliding window)
 └── sr.py                           # renamed from stochastic_motion.py — SR velocity perturbation, applied after rnn.prediction (Kishida et al. 2025)
 ```
