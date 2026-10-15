@@ -62,6 +62,8 @@ def test_train_and_save_persists_model_and_history_json(tmp_path, monkeypatch):
     assert history.history == {"loss": [1.0, 0.5], "val_loss": [1.1, 0.6]}
     assert (tmp_path / "models" / "test_model.keras").is_file()
 
+    assert (tmp_path / "models" / "test_model.sr.npz").is_file()
+
     history_path = tmp_path / "models" / "test_model.history.json"
     assert history_path.is_file()
     saved = json.loads(history_path.read_text(encoding="utf-8"))

@@ -34,7 +34,9 @@ stage: it loads ``train_data_dir``, converts the trajectories to local mean
 components (``x - v * dt_step``, paper Eq. 1; turn off with
 ``TrainingOptions(local_mean_conversion=False)``), builds the dataset and
 the network from ``config.training``, fits, and writes ``model_path`` plus a
-``<name>.history.json`` with the per-epoch ``loss`` / ``val_loss``:
+``<name>.history.json`` with the per-epoch ``loss`` / ``val_loss``. It also
+fits the SR model on the same frames and saves it as ``<name>.sr.npz`` (see
+:doc:`sr`):
 
 .. code-block:: python
 
@@ -49,6 +51,7 @@ the network from ``config.training``, fits, and writes ``model_path`` plus a
    model, history = train_and_save(cfg)
    # models/rnn_gru_sic_model.keras
    # models/rnn_gru_sic_model.history.json
+   # models/rnn_gru_sic_model.sr.npz
 
 A ``model_path`` without the ``.keras`` suffix is saved with it added.
 

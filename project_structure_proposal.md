@@ -162,7 +162,7 @@ model/
 │   ├── training.py           # train_and_save
 │   ├── loading.py              # was part of prediction.py — load_rnn, _resolve_model_path, _SavedModelWrapper
 │   └── prediction.py             # predict_frames (sliding window)
-└── sr.py                           # renamed from stochastic_motion.py — SR velocity perturbation, applied after rnn.prediction (Kishida et al. 2025)
+└── sr.py                           # renamed from stochastic_motion.py — SRModel (fit_sr, sample, save/load), applied after rnn.prediction (Kishida et al. 2025)
 ```
 
 Everything that names the old module follows: `model/rnn/prediction.py`'s
@@ -171,7 +171,9 @@ Everything that names the old module follows: `model/rnn/prediction.py`'s
 added later) → `model.sr`; and the internal names it exposes (`VelocityStdField`,
 `build_velocity_std_field`, `build_velocity_std_field_from_config`,
 `sample_stochastic_displacement`) are unaffected — only the file/module
-path changes, not the API.
+path changes, not the API. (Later superseded: the SR half is now an
+`SRModel` class with `fit_sr` / `fit_sr_from_config`, `sample`, and
+`save`/`load`, fitted and saved by training next to the GRU.)
 
 `rnn/training.py` also changes behavior, not just location: `train_and_save`
 currently plots the loss curve itself, inline, from the `History` object
@@ -266,8 +268,8 @@ defaults (`config.py`).
 |---|---|---|---|
 | **Simulation** (`yade_dem/run_simulation.py`, selected via `dem_backend="yade"`; `blaze_dem/` planned) | `sag_mill_40ft_m.stl`; material params (steel ρ=7850, rock ρ=2650, Young's/Poisson/friction); charge spec (19 888 rock @ ⌀0.06985 m, 4 696 steel @ ⌀0.1397 m) | Per-timestep particle-state CSVs (`state.save_particle_positions`); optional settled-state snapshot (e.g. `rmic_nopf_settled.csv`) | `data/raw/<run>/frame_*.csv` |
 | **Data Processing** (`run_data_processing.py`) | Raw CSV frames | Parquet frames (`convert.py`); integrity report (`integrity.py`); in-memory `[T,N,3]` position / `[T,N,1]` radius tensors → sliding-window `X:[n,15,4]`, `y:[n,3]` arrays (built later, not persisted) | `data/processed/sic_dataset_20s_dt0p0001_parquet/frame_*.parquet` (+ separate `sic_training_dataset_3s_4s_parquet` for training) |
-| **Model — Training** (`model/rnn/training.py`) | Parquet frames from `train_data_dir` | Saved GRU model; loss-curve history — no plot rendered here anymore | `models/rnn_gru_sic_model.keras` + `models/rnn_gru_sic_model.history.json` |
-| **Model — Prediction** (`model/rnn/prediction.py`) | Parquet frames from `data_dir`; trained model; optional SR `sigma_v(x)` field from `model/sr.py` (estimated from `train_data_dir`) | One `pred_frame_XXXXX.parquet` per predicted step; combined table | `data/interim/rnn_predictions/pred_frames/pred_frame_*.parquet` + `data/interim/rnn_predictions/predictions_all.parquet` |
+| **Model — Training** (`model/rnn/training.py`) | Parquet frames from `train_data_dir` | Saved GRU model; fitted SR model; loss-curve history — no plot rendered here anymore | `models/rnn_gru_sic_model.keras` + `models/rnn_gru_sic_model.sr.npz` + `models/rnn_gru_sic_model.history.json` |
+| **Model — Prediction** (`model/rnn/prediction.py`) | Parquet frames from `data_dir`; trained model; optional saved SR model (`<model>.sr.npz`, fitted by training via `model/sr.py`) | One `pred_frame_XXXXX.parquet` per predicted step; combined table | `data/interim/rnn_predictions/pred_frames/pred_frame_*.parquet` + `data/interim/rnn_predictions/predictions_all.parquet` |
 | **Metrics** | GT parquet frames (`data_dir`) + PRED parquet frames (`pred_frames_dir`) | Lacey mixing-index summary; radial/axial segregation profile; velocity distribution; granular temperature; dimensionless computing-speed — all persisted now, no plot rendered here | `lacey_over_time[_pred].parquet`, `segregation_profile_{radial,axial}[_pred].parquet`, `velocity_speed.json` + `granular_temperature.parquet` (all written into each frames directory); `reports/computing_speed.json` |
 | **Visualization** | `history.json`; the metrics files above; GT/PRED parquet frames — every render call lives here now, see [§6](#6-persist-everywhere-render-only-in-visualization) | Loss-curve figure; 5 GT-vs-surrogate comparison PNGs; two cell-grid frame PNGs (Lacey's 0.44 m grid, SR's 0.5588 m grid — see [§5](#5-config-stays-centralized)); prediction animation (MP4, falls back to GIF without ffmpeg) | `reports/figures/*.png`; `data/interim/figures/cell_grid_frame_{lacey,sr}.png` + `pred_animation.mp4` |
 
@@ -299,7 +301,7 @@ flowchart LR
 
     PROC -->|"model/rnn/prediction.py<br/>predict_frames"| PRED[("data/interim/rnn_predictions/<br/>pred_frame_*.parquet + predictions_all.parquet")]
     MODEL --> PRED
-    STOCH["model/sr.py<br/>sigma_v(x) from train_data_dir"] -.optional SR term.-> PRED
+    STOCH["model/sr.py<br/>SRModel saved by training"] -.optional SR term.-> PRED
 
     PROC --> METRICS["metrics/run_metrics.py"]
     PRED --> METRICS
@@ -560,7 +562,7 @@ a different `cell_size` argument), so it costs one extra function call,
 not a new module. A richer version — coloring each SR cell by its actual
 estimated σᵥ(x) rather than just drawing the grid lines, closer to the
 paper's Fig. 4 contour maps — is a natural follow-up once
-`VelocityStdField.sigma_by_cell` is being computed anyway, but is a bigger
+`SRModel.sigma_by_cell` is being computed anyway, but is a bigger
 change than what was asked here, so it's not part of this proposal.
 
 ### Renaming `PipelineConfig`
