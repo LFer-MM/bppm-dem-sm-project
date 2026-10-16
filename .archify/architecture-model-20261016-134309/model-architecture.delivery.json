@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "1b8b47f3-fe8d-4f65-9ba2-9639582122c1",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/home/pher/MCD/bppm-dem-sm-project/.claude/worktrees/archify-model-diagram/.archify/architecture-model-20261016-134309/candidate.json",
+  "output": "/home/pher/MCD/bppm-dem-sm-project/.claude/worktrees/archify-model-diagram/.archify/architecture-model-20261016-134309/model-architecture.html",
+  "specification": {
+    "sha256": "bf2f6259c7ace28c13b8636eccda9fbf1c1db92b4c440b0d11cfa829a77eb6e8",
+    "bytes": 6588
+  },
+  "artifact": {
+    "sha256": "9e18931534360556b9c1e5b0473d43d2d2987bd662e65266726d51cfa9a44a6e",
+    "bytes": 831128
+  }
+}

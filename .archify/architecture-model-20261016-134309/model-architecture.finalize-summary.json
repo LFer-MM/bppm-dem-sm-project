@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "architecture",
+  "quality": "showcase",
+  "specification": {
+    "path": "/home/pher/MCD/bppm-dem-sm-project/.claude/worktrees/archify-model-diagram/.archify/architecture-model-20261016-134309/candidate.json",
+    "sha256": "bf2f6259c7ace28c13b8636eccda9fbf1c1db92b4c440b0d11cfa829a77eb6e8",
+    "bytes": 6588
+  },
+  "artifact": {
+    "path": "/home/pher/MCD/bppm-dem-sm-project/.claude/worktrees/archify-model-diagram/.archify/architecture-model-20261016-134309/model-architecture.html",
+    "sha256": "9e18931534360556b9c1e5b0473d43d2d2987bd662e65266726d51cfa9a44a6e",
+    "bytes": 831128
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/home/pher/MCD/bppm-dem-sm-project/.claude/worktrees/archify-model-diagram/.archify/architecture-model-20261016-134309/model-architecture.finalize.json",
+    "summaryReceipt": "/home/pher/MCD/bppm-dem-sm-project/.claude/worktrees/archify-model-diagram/.archify/architecture-model-20261016-134309/model-architecture.finalize-summary.json",
+    "browserCheckReceipt": "/home/pher/MCD/bppm-dem-sm-project/.claude/worktrees/archify-model-diagram/.archify/architecture-model-20261016-134309/model-architecture.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.1.0",
+    "availableVersion": "3.1.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-10-16T20:07:46.234Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 3018
+}

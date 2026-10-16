@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "bppm_dem_sm.model: RNNSR (GRU + SR model)",
+    "output": ".archify/architecture-model-20261016-134309/model-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "git@github.com:LFer-MM/bppm-dem-sm-project.git",
+      "link_mode": "local-only",
+      "revision": "652b3dda11525f7b0b88ea8573369554230144b5"
+    }
+  },
+  "components": [
+    {
+      "id": "train-frames", "type": "database", "label": "Training DEM frames",
+      "sublabel": "train_data_dir parquet", "pos": [330, 40], "size": [180, 64],
+      "sources": [{ "path": "bppm_dem_sm/config.py", "line": 312, "end_line": 315 }]
+    },
+    {
+      "id": "pipeline", "type": "external", "label": "experiment_pipeline",
+      "sublabel": "do_train / do_predict", "pos": [40, 213], "size": [180, 64],
+      "sources": [{ "path": "bppm_dem_sm/experiment_pipeline.py", "line": 106, "end_line": 119 }]
+    },
+    {
+      "id": "train", "type": "backend", "label": "train_and_save",
+      "sublabel": "rnn/training.py", "tag": "Step 3: Eq. 1 + windows", "pos": [330, 170], "size": [180, 150],
+      "sources": [
+        { "path": "bppm_dem_sm/model/rnn/training.py", "line": 47, "end_line": 94 },
+        { "path": "bppm_dem_sm/data_processing/dataset.py", "line": 8, "end_line": 45, "label": "local mean + sliding windows" }
+      ]
+    },
+    {
+      "id": "build", "type": "backend", "label": "build_rnn",
+      "sublabel": "GRU20 > Dense15 > Dense3", "tag": "Adam + MSE", "pos": [620, 170], "size": [180, 64],
+      "sources": [{ "path": "bppm_dem_sm/model/rnn/architecture.py", "line": 6, "end_line": 40 }]
+    },
+    {
+      "id": "sr", "type": "backend", "label": "SR model (sr.py)",
+      "sublabel": "fit_sr > SRModel", "tag": "sigma_v(x) grid", "pos": [620, 256], "size": [180, 64],
+      "sources": [
+        { "path": "bppm_dem_sm/model/sr.py", "line": 120, "end_line": 169, "label": "fit_sr, Eq. 2" },
+        { "path": "bppm_dem_sm/model/sr.py", "line": 37, "end_line": 114, "label": "SRModel sample/save/load, Eq. 3" }
+      ]
+    },
+    {
+      "id": "gru-artifact", "type": "database", "label": "Saved GRU",
+      "sublabel": ".keras + .history.json", "tag": "or SavedModel dir", "pos": [330, 400], "size": [180, 64],
+      "sources": [
+        { "path": "bppm_dem_sm/model/rnn/training.py", "line": 79, "end_line": 88 },
+        { "path": "bppm_dem_sm/config.py", "line": 344 }
+      ]
+    },
+    {
+      "id": "sr-artifact", "type": "database", "label": "Saved SR model",
+      "sublabel": "<model stem>.sr.npz", "pos": [620, 400], "size": [180, 64],
+      "sources": [
+        { "path": "bppm_dem_sm/model/rnn/training.py", "line": 90, "end_line": 92 },
+        { "path": "bppm_dem_sm/model/sr.py", "line": 193, "end_line": 202 }
+      ]
+    },
+    {
+      "id": "load", "type": "backend", "label": "load_rnn",
+      "sublabel": "rnn/loading.py", "tag": "SavedModel wrapper", "pos": [330, 550], "size": [180, 64],
+      "sources": [{ "path": "bppm_dem_sm/model/rnn/loading.py", "line": 10, "end_line": 113 }]
+    },
+    {
+      "id": "predict", "type": "backend", "label": "predict_frames",
+      "sublabel": "rnn/prediction.py", "tag": "Step 4: Eq. 4", "pos": [330, 700], "size": [180, 64],
+      "sources": [
+        { "path": "bppm_dem_sm/model/rnn/prediction.py", "line": 54, "end_line": 66, "label": "load GRU and SR model" },
+        { "path": "bppm_dem_sm/model/rnn/prediction.py", "line": 80, "end_line": 115, "label": "predict + v_tilde * dt_step" }
+      ]
+    },
+    {
+      "id": "eval-frames", "type": "database", "label": "Ground-truth frames",
+      "sublabel": "data_dir parquet", "pos": [150, 860], "size": [180, 64],
+      "sources": [{ "path": "bppm_dem_sm/model/rnn/prediction.py", "line": 48, "end_line": 75 }]
+    },
+    {
+      "id": "preds", "type": "database", "label": "Predictions",
+      "sublabel": "pred_frame_*.parquet", "tag": "+ predictions_all", "pos": [530, 860], "size": [180, 64],
+      "sources": [
+        { "path": "bppm_dem_sm/model/rnn/prediction.py", "line": 101, "end_line": 118 },
+        { "path": "bppm_dem_sm/config.py", "line": 169, "end_line": 179 }
+      ]
+    }
+  ],
+  "connections": [
+    { "id": "pipe-train", "from": "pipeline", "to": "train", "label": "do_train", "variant": "emphasis" },
+    { "id": "frames-train", "from": "train-frames", "to": "train", "label": "pos, r, v" },
+    { "id": "train-build", "from": "train", "to": "build", "label": "build + fit" },
+    { "id": "train-sr", "from": "train", "to": "sr", "label": "fit_sr, Eq. 2" },
+    { "id": "train-gru", "from": "train", "to": "gru-artifact", "label": "model.save", "variant": "emphasis" },
+    { "id": "sr-save", "from": "sr", "to": "sr-artifact", "label": "SRModel.save" },
+    { "id": "gru-load", "from": "gru-artifact", "to": "load", "label": "resolve path" },
+    { "id": "load-predict", "from": "load", "to": "predict", "label": "if model=None" },
+    { "id": "pipe-predict", "from": "pipeline", "to": "predict", "label": "do_predict", "variant": "emphasis" },
+    { "id": "sr-predict", "from": "sr-artifact", "to": "predict", "label": "load if SR enabled", "variant": "dashed" },
+    { "id": "eval-predict", "from": "eval-frames", "to": "predict", "label": "seed window" },
+    { "id": "predict-preds", "from": "predict", "to": "preds", "label": "to_parquet", "variant": "emphasis" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan", "title": "Training (Step 3)",
+      "items": [
+        "SR is fitted on raw positions + DEM velocities, before the Eq. 1 local-mean conversion",
+        "SR is fitted and saved even when stochastic.enabled is off, so the saved pair is complete",
+        "GRU windows: frames_in steps of x, y, z, r predict next x, y, z (Kishida et al. 2025, Table 1)"
+      ]
+    },
+    {
+      "dot": "violet", "title": "Prediction (Step 4)",
+      "items": [
+        "x = x_bar_RNN + v_tilde * dt_step, with v_tilde ~ N(0, sigma_v(x)^2) at each particle's current cell",
+        "A missing .sr.npz with SR enabled raises FileNotFoundError",
+        "The pipeline passes a just-trained GRU in memory (skipping load_rnn) but never the SR model"
+      ]
+    },
+    {
+      "dot": "amber", "title": "Window modes and extras",
+      "items": [
+        "Autoregressive: predicted x, y, z is fed back; teacher-forced (default): next frame read from data_dir",
+        "fit_sr_from_config is a standalone helper; nothing in the package calls it",
+        ".history.json is plotted later by visualization.training_curves"
+      ]
+    }
+  ]
+}
