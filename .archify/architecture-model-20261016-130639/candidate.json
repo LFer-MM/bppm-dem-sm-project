@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "bppm_dem_sm.model: GRU surrogate + SR term",
+    "output": ".archify/architecture-model-20261016-130639/model-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "git@github.com:LFer-MM/bppm-dem-sm-project.git",
+      "link_mode": "local-only",
+      "revision": "388d3a200d6ebcce2991e536f1e4ac20069b568c"
+    }
+  },
+  "components": [
+    {
+      "id": "train-frames", "type": "database", "label": "Training DEM frames",
+      "sublabel": "train_data_dir parquet", "pos": [330, 40], "size": [180, 64],
+      "sources": [{ "path": "bppm_dem_sm/config.py", "line": 310, "end_line": 313 }]
+    },
+    {
+      "id": "pipeline", "type": "external", "label": "experiment_pipeline",
+      "sublabel": "do_train / do_predict", "pos": [40, 190], "size": [180, 64],
+      "sources": [{ "path": "bppm_dem_sm/experiment_pipeline.py", "line": 106, "end_line": 119 }]
+    },
+    {
+      "id": "train", "type": "backend", "label": "train_and_save",
+      "sublabel": "rnn/training.py", "tag": "Eq. 1 + windows", "pos": [330, 190], "size": [180, 64],
+      "sources": [
+        { "path": "bppm_dem_sm/model/rnn/training.py", "line": 39, "end_line": 76 },
+        { "path": "bppm_dem_sm/data_processing/dataset.py", "line": 8, "end_line": 45, "label": "local mean + sliding windows" }
+      ]
+    },
+    {
+      "id": "build", "type": "backend", "label": "build_model",
+      "sublabel": "GRU20 > Dense15 > Dense3", "tag": "Adam + MSE", "pos": [620, 190], "size": [180, 64],
+      "sources": [{ "path": "bppm_dem_sm/model/rnn/architecture.py", "line": 6, "end_line": 40 }]
+    },
+    {
+      "id": "artifact", "type": "database", "label": "Saved model",
+      "sublabel": ".keras + .history.json", "tag": "or SavedModel dir", "pos": [330, 340], "size": [180, 64],
+      "sources": [
+        { "path": "bppm_dem_sm/model/rnn/training.py", "line": 65, "end_line": 74 },
+        { "path": "bppm_dem_sm/config.py", "line": 342 }
+      ]
+    },
+    {
+      "id": "load", "type": "backend", "label": "load_model",
+      "sublabel": "rnn/loading.py", "tag": "SavedModel wrapper", "pos": [330, 490], "size": [180, 64],
+      "sources": [{ "path": "bppm_dem_sm/model/rnn/loading.py", "line": 10, "end_line": 113 }]
+    },
+    {
+      "id": "predict", "type": "backend", "label": "predict_frames",
+      "sublabel": "rnn/prediction.py", "tag": "sliding window", "pos": [330, 640], "size": [180, 64],
+      "sources": [{ "path": "bppm_dem_sm/model/rnn/prediction.py", "line": 18, "end_line": 107 }]
+    },
+    {
+      "id": "sr", "type": "backend", "label": "SR term (sr.py)",
+      "sublabel": "VelocityStdField", "tag": "sigma_v(x) grid", "pos": [910, 640], "size": [180, 64],
+      "sources": [
+        { "path": "bppm_dem_sm/model/sr.py", "line": 64, "end_line": 146, "label": "build sigma_v(x), Eq. 2" },
+        { "path": "bppm_dem_sm/model/sr.py", "line": 149, "end_line": 173, "label": "sample displacement, Eqs. 3-4" }
+      ]
+    },
+    {
+      "id": "eval-frames", "type": "database", "label": "Ground-truth frames",
+      "sublabel": "data_dir parquet", "pos": [150, 800], "size": [180, 64],
+      "sources": [{ "path": "bppm_dem_sm/model/rnn/prediction.py", "line": 38, "end_line": 60 }]
+    },
+    {
+      "id": "preds", "type": "database", "label": "Predictions",
+      "sublabel": "pred_frame_*.parquet", "tag": "+ predictions_all", "pos": [530, 800], "size": [180, 64],
+      "sources": [
+        { "path": "bppm_dem_sm/model/rnn/prediction.py", "line": 88, "end_line": 105 },
+        { "path": "bppm_dem_sm/config.py", "line": 169, "end_line": 179 }
+      ]
+    }
+  ],
+  "connections": [
+    { "id": "pipe-train", "from": "pipeline", "to": "train", "label": "do_train", "variant": "emphasis" },
+    { "id": "frames-train", "from": "train-frames", "to": "train", "label": "pos, r, v" },
+    { "id": "train-build", "from": "train", "to": "build", "label": "build + fit" },
+    { "id": "train-artifact", "from": "train", "to": "artifact", "label": "model.save", "variant": "emphasis" },
+    { "id": "artifact-load", "from": "artifact", "to": "load", "label": "resolve path" },
+    { "id": "load-predict", "from": "load", "to": "predict", "label": "if model=None" },
+    { "id": "pipe-predict", "from": "pipeline", "to": "predict", "label": "do_predict", "variant": "emphasis" },
+    { "id": "frames-sr", "from": "train-frames", "to": "sr", "label": "v_i (Eq. 2)", "variant": "dashed" },
+    { "id": "sr-predict", "from": "sr", "to": "predict", "label": "noise if enabled", "variant": "dashed" },
+    { "id": "eval-predict", "from": "eval-frames", "to": "predict", "label": "seed window" },
+    { "id": "predict-preds", "from": "predict", "to": "preds", "label": "to_parquet", "variant": "emphasis" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan", "title": "RNN half (model/rnn)",
+      "items": [
+        "Training converts positions to local mean components (Eq. 1) when local_mean_conversion is set",
+        "Supervised windows: frames_in steps of x, y, z, r predict next x, y, z",
+        "Architecture matches Kishida et al. (2025) Table 1, He-normal input weights"
+      ]
+    },
+    {
+      "dot": "violet", "title": "Prediction modes",
+      "items": [
+        "Autoregressive: each predicted x, y, z is fed back into the window",
+        "Teacher-forced (default): next window frame is read from data_dir",
+        "A model trained in the same run is passed in memory, skipping load_model"
+      ]
+    },
+    {
+      "dot": "amber", "title": "SR half (model/sr.py)",
+      "items": [
+        "sigma_v(x) per cubic cell, pooled across training frames; sparse cells get zero noise",
+        "Noise is looked up at the last known position, scaled by dt_step, added to GRU output",
+        "history.json is plotted later by visualization.training_curves"
+      ]
+    }
+  ]
+}
