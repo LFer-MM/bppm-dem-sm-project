@@ -248,10 +248,12 @@ class StochasticOptions:
     """Stochastic random (SR) velocity perturbation settings.
 
     Applied after the GRU's deterministic prediction, per the extended-RNNSR
-    method of Kishida et al. (2025), Powder Technology 455, 120811: a local
-    (Eulerian) velocity standard deviation sigma_v(x) is estimated once from
-    ``train_data_dir`` on a cubic grid, then sampled per axis and added to
-    each predicted position, scaled by ``prediction.dt_step`` (Delta t_RNN).
+    method of Kishida et al. (2025), Powder Technology 455, 120811: the SR
+    model's local (Eulerian) velocity standard deviation sigma_v(x) is
+    fitted on ``train_data_dir`` on a cubic grid during training and saved
+    next to the GRU; at prediction it is sampled per axis and added to each
+    predicted position, scaled by ``prediction.dt_step`` (Delta t_RNN).
+    ``enabled`` only controls prediction; training always fits the model.
 
     ``velocity_cell_size`` follows the paper's SR-specific formula --
     ``4 x large-particle diameter`` (Sec 2.2.3, Sec 3) -- which is *not* the

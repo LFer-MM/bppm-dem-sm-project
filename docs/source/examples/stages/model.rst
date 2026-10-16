@@ -14,9 +14,9 @@ compiled with Adam and MSE:
 
 .. code-block:: python
 
-   from bppm_dem_sm.model.rnn.architecture import build_model
+   from bppm_dem_sm.model.rnn.architecture import build_rnn
 
-   model = build_model(frames_in=15, n_features=4, gru_units=20, dense_units=15, learning_rate=0.01)
+   model = build_rnn(frames_in=15, n_features=4, gru_units=20, dense_units=15, learning_rate=0.01)
    model.summary()
 
 Use it directly when fitting on your own ``(X, y)``, e.g. from
@@ -34,7 +34,9 @@ stage: it loads ``train_data_dir``, converts the trajectories to local mean
 components (``x - v * dt_step``, paper Eq. 1; turn off with
 ``TrainingOptions(local_mean_conversion=False)``), builds the dataset and
 the network from ``config.training``, fits, and writes ``model_path`` plus a
-``<name>.history.json`` with the per-epoch ``loss`` / ``val_loss``:
+``<name>.history.json`` with the per-epoch ``loss`` / ``val_loss``. It also
+fits the SR model on the same frames and saves it as ``<name>.sr.npz`` (see
+:doc:`sr`):
 
 .. code-block:: python
 
@@ -49,6 +51,7 @@ the network from ``config.training``, fits, and writes ``model_path`` plus a
    model, history = train_and_save(cfg)
    # models/rnn_gru_sic_model.keras
    # models/rnn_gru_sic_model.history.json
+   # models/rnn_gru_sic_model.sr.npz
 
 A ``model_path`` without the ``.keras`` suffix is saved with it added.
 
@@ -60,9 +63,9 @@ directories (wrapped so they expose the same ``predict``):
 
 .. code-block:: python
 
-   from bppm_dem_sm.model.rnn.loading import load_model
+   from bppm_dem_sm.model.rnn.loading import load_rnn
 
-   model = load_model("models/rnn_gru_sic_model.keras")
+   model = load_rnn("models/rnn_gru_sic_model.keras")
    print(model.input_shape, model.output_shape)  # (None, 15, 4) (None, 3)
 
 When the exact file is missing, the alternate suffixes and the bare

@@ -15,8 +15,13 @@ from .. import sr
 from . import loading
 
 
-def predict_frames(config: ExperimentConfig, model=None) -> pd.DataFrame:
+def predict_frames(config: ExperimentConfig, model=None, sr_model=None) -> pd.DataFrame:
     """Slide a window over frames, predict next positions, and save parquets.
+
+    This is the RNNSR's Step 4: the GRU predicts the local mean position
+    ``x_bar`` and, when ``stochastic.enabled`` is set, the SR model's local
+    variability velocity ``v_tilde`` is added as
+    ``x = x_bar + v_tilde * dt_step`` (Kishida et al. 2025, Eq. 4).
 
     Writes one ``pred_frame_XXXXX.parquet`` per step under
     ``config.prediction.pred_frames_dir`` and a combined
@@ -25,6 +30,13 @@ def predict_frames(config: ExperimentConfig, model=None) -> pd.DataFrame:
     Args:
         config: Pipeline settings (data dir, model path, window length, dt, etc.).
         model: Optional pre-loaded model; if ``None``, loads ``config.model_path``.
+        sr_model: Optional fitted :class:`~bppm_dem_sm.model.sr.SRModel`; if
+            ``None`` and SR is enabled, loads the one saved next to
+            ``config.model_path`` by training.
+
+    Raises:
+        FileNotFoundError: If SR is enabled, ``sr_model`` is ``None``, and no
+            saved SR model sits next to ``config.model_path``.
 
     Returns:
         pandas.DataFrame: Combined predictions with ``frame_pred``, ``step``,
@@ -40,14 +52,17 @@ def predict_frames(config: ExperimentConfig, model=None) -> pd.DataFrame:
     start, seq_len = pred.start_frame, config.frames_in
 
     if model is None:
-        model = loading.load_model(config.model_path)
+        model = loading.load_rnn(config.model_path)
     print("Model input_shape:", model.input_shape, "output_shape:", model.output_shape)
 
     sr_opts = config.stochastic
-    velocity_field = None
     rng = None
     if sr_opts.enabled:
-        velocity_field = sr.build_velocity_std_field_from_config(config)
+        if sr_model is None:
+            sr_path = sr.sr_path_for(config.model_path)
+            if not sr_path.is_file():
+                raise FileNotFoundError(f"No SR model at {sr_path}; run training (do_train) to fit and save it")
+            sr_model = sr.SRModel.load(sr_path)
         rng = np.random.default_rng(sr_opts.stochastic_seed)
 
     base_df = data_io.load_frame(frame_files[start], cols_needed)
@@ -70,10 +85,8 @@ def predict_frames(config: ExperimentConfig, model=None) -> pd.DataFrame:
         xyz = yhat[:, :3].astype(np.float32)
 
         if sr_opts.enabled:
-            current_pos = window[-1][:, :3]
-            xyz = xyz + sr.sample_stochastic_displacement(
-                current_pos, velocity_field, pred.dt_step, rng
-            )
+            v_tilde = sr_model.sample(window[-1][:, :3], rng)  # Eq. 3, at the current cell
+            xyz = xyz + v_tilde * pred.dt_step  # Eq. 4
 
         pred_df = pd.DataFrame(
             {
