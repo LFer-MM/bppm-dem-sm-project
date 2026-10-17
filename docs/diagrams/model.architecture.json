@@ -3,7 +3,7 @@
   "diagram_type": "architecture",
   "meta": {
     "title": "bppm_dem_sm.model: RNNSR (GRU + SR model)",
-    "output": ".archify/architecture-model-20261016-134309/model-architecture.html",
+    "output": "docs/diagrams/model-architecture.html",
     "quality_profile": "showcase",
     "locale": "en",
     "repository": {

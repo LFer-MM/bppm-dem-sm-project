@@ -60,6 +60,16 @@ create_environment:
 # PROJECT RULES                                                                 #
 #################################################################################
 
+NODE ?= node
+ARCHIFY ?= $(HOME)/.agents/skills/archify/bin/archify.mjs
+
+## Render architecture diagrams (docs/diagrams/*.architecture.json -> .html)
+.PHONY: diagrams
+diagrams:
+	@for spec in docs/diagrams/*.architecture.json; do \
+		out=$${spec%.architecture.json}-architecture.html; \
+		$(NODE) $(ARCHIFY) finalize architecture $$spec $$out --repo-root . --quality showcase || exit 1; \
+	done
 
 
 #################################################################################

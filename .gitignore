@@ -195,3 +195,9 @@ cython_debug/
 
 # Claude
 CLAUDE.local.md
+# archify run receipts (contain absolute paths) and ad-hoc diagram runs
+docs/diagrams/*.finalize.json
+docs/diagrams/*.finalize-summary.json
+docs/diagrams/*.delivery.json
+docs/diagrams/*.browser-check.json
+.archify/
