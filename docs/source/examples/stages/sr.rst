@@ -4,11 +4,16 @@ Stochastic random (SR) model
 :mod:`bppm_dem_sm.model.sr` implements the SR model, the second half of the
 extended-RNNSR method (Kishida et al., 2025). The GRU predicts each
 particle's local mean motion; the SR model supplies the local velocity
-fluctuation around it. :class:`~bppm_dem_sm.model.sr.SRModel` holds a
+fluctuation around it. :class:`~bppm_dem_sm.model.sr.model.SRModel` holds a
 per-cell velocity standard deviation sigma_v(x), fitted once from reference
 DEM frames (Step 3, Eq. 2), and samples ``v_tilde ~ N(0, sigma_v(x)^2)`` per
 axis (Step 4, Eq. 3). The prediction loop combines the two as
 ``x = x_bar + v_tilde * dt_step`` (Eq. 4).
+
+The subpackage mirrors the GRU's, with names that fit a statistical model
+rather than a network: ``model`` (the lookup table and its draw; there are
+no layers, so no "architecture"), ``fitting`` (a closed-form, one-pass
+estimate, so "fitting" rather than "training"), and ``loading``.
 
 Enabling it in prediction
 -------------------------
@@ -22,7 +27,7 @@ predicted position:
 
    from bppm_dem_sm import ExperimentConfig
    from bppm_dem_sm.config import StochasticOptions
-   from bppm_dem_sm.model.rnn.prediction import predict_frames
+   from bppm_dem_sm.model.prediction import predict_frames
 
    cfg = ExperimentConfig(
        stochastic=StochasticOptions(enabled=True, stochastic_seed=0),
@@ -37,27 +42,27 @@ first, or pass a fitted model as ``predict_frames(cfg, sr_model=...)``.
 Fitting the SR model
 --------------------
 
-From the config -- ``train_data_dir`` and the ``stochastic`` cell settings:
-
-.. code-block:: python
-
-   from bppm_dem_sm.model.sr import fit_sr_from_config, sr_path_for
-
-   sr_model = fit_sr_from_config(cfg)
-   print(len(sr_model.sigma_by_cell), "cells with a sigma_v")
-   sr_model.save(sr_path_for(cfg.model_path))  # what training does
-
-Or from position and velocity arrays of shape ``(T, N, 3)``:
+From position and velocity arrays of shape ``(T, N, 3)``:
 
 .. code-block:: python
 
    from bppm_dem_sm.data_processing import frames as data_io
-   from bppm_dem_sm.model.sr import fit_sr
+   from bppm_dem_sm.model.sr.fitting import fit_sr
 
    frames_dir = "data/processed/sic_training_dataset_3s_4s_parquet"
    pos, _, _ = data_io.load_frames_stacked(frames_dir)
    vel = data_io.load_velocities_stacked(frames_dir)
    sr_model = fit_sr(pos, vel, cell_size=0.5588, min_particles_per_cell=15)  # 4 x large diameter
+   print(len(sr_model.sigma_by_cell), "cells with a sigma_v")
+
+Or as training does, with the ``stochastic`` cell settings from the config,
+saving the result next to ``model_path``:
+
+.. code-block:: python
+
+   from bppm_dem_sm.model.sr.fitting import fit_and_save_sr
+
+   sr_model = fit_and_save_sr(pos, vel, cfg)  # writes <model_path stem>.sr.npz
 
 Each particle's DEM velocity (the ``vx``, ``vy``, ``vz`` columns) is binned
 by its position in the same frame and pooled over all frames per cell, and
@@ -83,9 +88,9 @@ What ``predict_frames`` does at each step, for any ``(N, 3)`` positions:
 
    import numpy as np
    from bppm_dem_sm.data_processing import frames as data_io
-   from bppm_dem_sm.model.sr import SRModel, sr_path_for
+   from bppm_dem_sm.model.sr.loading import load_sr
 
-   sr_model = SRModel.load(sr_path_for("models/rnn_gru_sic_model.keras"))
+   sr_model = load_sr("models/rnn_gru_sic_model.keras")  # reads models/rnn_gru_sic_model.sr.npz
 
    paths = data_io.sorted_frame_files("data/processed/sic_dataset_20s_dt0p0001_parquet")
    df = data_io.load_frame(paths[0], ["id", "x", "y", "z"])  # rows sorted by id

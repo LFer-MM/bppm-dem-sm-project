@@ -1,4 +1,4 @@
-"""Sliding-window frame prediction using a saved GRU surrogate model."""
+"""RNNSR prediction (Step 4): sliding-window GRU prediction plus the SR model's noise."""
 
 from __future__ import annotations
 
@@ -8,11 +8,11 @@ import os
 import numpy as np
 import pandas as pd
 
-from ...config import ID_COL, ExperimentConfig
-from ...data_processing import frames as data_io
-from ...progress import track
-from .. import sr
-from . import loading
+from ..config import ID_COL, ExperimentConfig
+from ..data_processing import frames as data_io
+from ..progress import track
+from .rnn.loading import load_rnn
+from .sr.loading import load_sr
 
 
 def predict_frames(config: ExperimentConfig, model=None, sr_model=None) -> pd.DataFrame:
@@ -30,7 +30,7 @@ def predict_frames(config: ExperimentConfig, model=None, sr_model=None) -> pd.Da
     Args:
         config: Pipeline settings (data dir, model path, window length, dt, etc.).
         model: Optional pre-loaded model; if ``None``, loads ``config.model_path``.
-        sr_model: Optional fitted :class:`~bppm_dem_sm.model.sr.SRModel`; if
+        sr_model: Optional fitted :class:`~bppm_dem_sm.model.sr.model.SRModel`; if
             ``None`` and SR is enabled, loads the one saved next to
             ``config.model_path`` by training.
 
@@ -52,17 +52,14 @@ def predict_frames(config: ExperimentConfig, model=None, sr_model=None) -> pd.Da
     start, seq_len = pred.start_frame, config.frames_in
 
     if model is None:
-        model = loading.load_rnn(config.model_path)
+        model = load_rnn(config.model_path)
     print("Model input_shape:", model.input_shape, "output_shape:", model.output_shape)
 
     sr_opts = config.stochastic
     rng = None
     if sr_opts.enabled:
         if sr_model is None:
-            sr_path = sr.sr_path_for(config.model_path)
-            if not sr_path.is_file():
-                raise FileNotFoundError(f"No SR model at {sr_path}; run training (do_train) to fit and save it")
-            sr_model = sr.SRModel.load(sr_path)
+            sr_model = load_sr(config.model_path)
         rng = np.random.default_rng(sr_opts.stochastic_seed)
 
     base_df = data_io.load_frame(frame_files[start], cols_needed)

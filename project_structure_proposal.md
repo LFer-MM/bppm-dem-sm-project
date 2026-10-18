@@ -130,7 +130,7 @@ function that calls `convert.convert_folder_csv_to_parquet` on
 training/prediction ever touch the data — the same "one call returns
 everything for this stage" shape as `compute_metrics(config)` and
 `generate_visualizations(config)`. `frames.py`/`dataset.py` keep being
-imported piecemeal by `model/rnn/training.py`, `model/rnn/prediction.py`,
+imported piecemeal by `model/training.py`, `model/prediction.py`,
 and `metrics/run_metrics.py` for in-memory array building — that part of
 `data_processing` stays library code, only the CSV→parquet conversion step
 becomes an explicit, gated stage.
@@ -138,42 +138,45 @@ becomes an explicit, gated stage.
 ### `model/`
 This package holds the two components of the paper's RNNSR method: the GRU
 **RNN** surrogate (deterministic prediction) and the **SR** stochastic term
-applied after it. `training.py` currently mixes model *architecture* with
-the *training loop*, and `prediction.py` mixes model *loading* with the
-*sliding-window prediction loop* — split each along that seam. Since all
-four RNN modules are tightly related but SR is a distinct component applied
-*on top of* the RNN's output, group the RNN files under their own
-subpackage rather than prefixing filenames (`rnn_architecture.py`, etc.) —
-matches how `simulation/`, `metrics/`, and `visualization/` are already
-subpackages, and keeps `model/` importable as "the surrogate," with `rnn`
-as one clearly-named part of it (`from bppm_dem_sm.model.rnn import
-training`, `from bppm_dem_sm.model import sr`). `stochastic_motion.py` is
-renamed to `sr.py` to match: it's the SR half of "RNNSR" the same way `rnn/`
-is the RNN half, and the paper itself, `ExperimentConfig`
-(`StochasticOptions`), and the metrics/plots all already call it "SR" /
-"stochastic," never "stochastic motion" — the module name was the odd one
-out.
+applied after it. Each half is its own subpackage, split by concern, and the
+two steps that need both halves sit at the top of `model/`:
+
+- **Training (Step 3)** trains the GRU *and* fits the SR model on the same
+  short-time frames, so `model/training.py` loads those frames once and
+  hands them to `rnn/training.py` and `sr/fitting.py`.
+- **Prediction (Step 4)** runs the GRU and adds the SR model's noise
+  (Eq. 4), so `model/prediction.py` loads the saved pair via
+  `rnn/loading.py` and `sr/loading.py`.
+
+Neither combined step lives inside `rnn/`, which would hide SR logic in GRU
+files. The SR files are named for what the SR model is, a statistical model
+rather than a network: `model.py`, not `architecture.py` (a per-cell sigma_v
+lookup table with a Gaussian draw has no layers), and `fitting.py`, not
+`training.py` (sigma_v is a closed-form, one-pass estimate with no loss,
+optimizer, or epochs).
 
 ```
 model/
+├── training.py           # train_and_save: Step 3, trains the GRU and fits the SR on the same frames
+├── prediction.py         # predict_frames: Step 4, sliding-window GRU prediction + SR noise
 ├── rnn/
 │   ├── __init__.py
-│   ├── architecture.py     # was part of training.py — build_rnn (GRU → Dense)
-│   ├── training.py           # train_and_save
-│   ├── loading.py              # was part of prediction.py — load_rnn, _resolve_model_path, _SavedModelWrapper
-│   └── prediction.py             # predict_frames (sliding window)
-└── sr.py                           # renamed from stochastic_motion.py — SRModel (fit_sr, sample, save/load), applied after rnn.prediction (Kishida et al. 2025)
+│   ├── architecture.py   # build_rnn (GRU → Dense)
+│   ├── training.py       # train_and_save_rnn: Eq. 1, windows, fit, save .keras + .history.json
+│   └── loading.py        # load_rnn, _resolve_model_path, _SavedModelWrapper
+└── sr/
+    ├── __init__.py       # re-exports SRModel
+    ├── model.py          # SRModel: sigma_v grid, sigma_at, sample (Eq. 3), .npz save/load
+    ├── fitting.py        # fit_sr (Eq. 2), fit_and_save_sr
+    └── loading.py        # sr_path_for, load_sr
 ```
 
-Everything that names the old module follows: `model/rnn/prediction.py`'s
-`from . import stochastic_motion` → `from .. import sr`;
-`experiment_pipeline.py`'s import of `model.stochastic_motion` (if any is
-added later) → `model.sr`; and the internal names it exposes (`VelocityStdField`,
-`build_velocity_std_field`, `build_velocity_std_field_from_config`,
-`sample_stochastic_displacement`) are unaffected — only the file/module
-path changes, not the API. (Later superseded: the SR half is now an
+(History: the RNN files first moved under `rnn/` with `prediction.py`
+inside it, and `stochastic_motion.py` became a single `sr.py` holding an
 `SRModel` class with `fit_sr` / `fit_sr_from_config`, `sample`, and
-`save`/`load`, fitted and saved by training next to the GRU.)
+`save`/`load`. Training and prediction were then lifted out of `rnn/`
+because both combine the two halves, `sr.py` was split into the `sr/`
+subpackage above, and the unused `fit_sr_from_config` was dropped.)
 
 `rnn/training.py` also changes behavior, not just location: `train_and_save`
 currently plots the loss curve itself, inline, from the `History` object
@@ -268,8 +271,8 @@ defaults (`config.py`).
 |---|---|---|---|
 | **Simulation** (`yade_dem/run_simulation.py`, selected via `dem_backend="yade"`; `blaze_dem/` planned) | `sag_mill_40ft_m.stl`; material params (steel ρ=7850, rock ρ=2650, Young's/Poisson/friction); charge spec (19 888 rock @ ⌀0.06985 m, 4 696 steel @ ⌀0.1397 m) | Per-timestep particle-state CSVs (`state.save_particle_positions`); optional settled-state snapshot (e.g. `rmic_nopf_settled.csv`) | `data/raw/<run>/frame_*.csv` |
 | **Data Processing** (`run_data_processing.py`) | Raw CSV frames | Parquet frames (`convert.py`); integrity report (`integrity.py`); in-memory `[T,N,3]` position / `[T,N,1]` radius tensors → sliding-window `X:[n,15,4]`, `y:[n,3]` arrays (built later, not persisted) | `data/processed/sic_dataset_20s_dt0p0001_parquet/frame_*.parquet` (+ separate `sic_training_dataset_3s_4s_parquet` for training) |
-| **Model — Training** (`model/rnn/training.py`) | Parquet frames from `train_data_dir` | Saved GRU model; fitted SR model; loss-curve history — no plot rendered here anymore | `models/rnn_gru_sic_model.keras` + `models/rnn_gru_sic_model.sr.npz` + `models/rnn_gru_sic_model.history.json` |
-| **Model — Prediction** (`model/rnn/prediction.py`) | Parquet frames from `data_dir`; trained model; optional saved SR model (`<model>.sr.npz`, fitted by training via `model/sr.py`) | One `pred_frame_XXXXX.parquet` per predicted step; combined table | `data/interim/rnn_predictions/pred_frames/pred_frame_*.parquet` + `data/interim/rnn_predictions/predictions_all.parquet` |
+| **Model — Training** (`model/training.py` → `rnn/training.py` + `sr/fitting.py`) | Parquet frames from `train_data_dir` | Saved GRU model; fitted SR model; loss-curve history — no plot rendered here anymore | `models/rnn_gru_sic_model.keras` + `models/rnn_gru_sic_model.sr.npz` + `models/rnn_gru_sic_model.history.json` |
+| **Model — Prediction** (`model/prediction.py`) | Parquet frames from `data_dir`; trained model; optional saved SR model (`<model>.sr.npz`, fitted by training via `model/sr/fitting.py`) | One `pred_frame_XXXXX.parquet` per predicted step; combined table | `data/interim/rnn_predictions/pred_frames/pred_frame_*.parquet` + `data/interim/rnn_predictions/predictions_all.parquet` |
 | **Metrics** | GT parquet frames (`data_dir`) + PRED parquet frames (`pred_frames_dir`) | Lacey mixing-index summary; radial/axial segregation profile; velocity distribution; granular temperature; dimensionless computing-speed — all persisted now, no plot rendered here | `lacey_over_time[_pred].parquet`, `segregation_profile_{radial,axial}[_pred].parquet`, `velocity_speed.json` + `granular_temperature.parquet` (all written into each frames directory); `reports/computing_speed.json` |
 | **Visualization** | `history.json`; the metrics files above; GT/PRED parquet frames — every render call lives here now, see [§6](#6-persist-everywhere-render-only-in-visualization) | Loss-curve figure; 5 GT-vs-surrogate comparison PNGs; two cell-grid frame PNGs (Lacey's 0.44 m grid, SR's 0.5588 m grid — see [§5](#5-config-stays-centralized)); prediction animation (MP4, falls back to GIF without ffmpeg) | `reports/figures/*.png`; `data/interim/figures/cell_grid_frame_{lacey,sr}.png` + `pred_animation.mp4` |
 
@@ -294,14 +297,14 @@ flowchart LR
 
     PROC -->|"frames.py + dataset.py<br/>build_supervised_dataset"| ARR[["X: [n,15,4], y: [n,3]<br/>in-memory arrays"]]
 
-    ARR --> TRAIN["model/rnn/training.py<br/>train_and_save"]
+    ARR --> TRAIN["model/training.py<br/>train_and_save"]
     TRAIN --> MODEL[("models/rnn_gru_sic_model.keras")]
     TRAIN --> HISTFILE[("models/rnn_gru_sic_model<br/>.history.json")]
     HISTFILE --> VIZ
 
-    PROC -->|"model/rnn/prediction.py<br/>predict_frames"| PRED[("data/interim/rnn_predictions/<br/>pred_frame_*.parquet + predictions_all.parquet")]
+    PROC -->|"model/prediction.py<br/>predict_frames"| PRED[("data/interim/rnn_predictions/<br/>pred_frame_*.parquet + predictions_all.parquet")]
     MODEL --> PRED
-    STOCH["model/sr.py<br/>SRModel saved by training"] -.optional SR term.-> PRED
+    STOCH["model/sr/<br/>SRModel fitted and saved by training"] -.optional SR term.-> PRED
 
     PROC --> METRICS["metrics/run_metrics.py"]
     PRED --> METRICS
@@ -360,7 +363,7 @@ compounded now by `dem_backend` choosing *which* simulation module runs
 - **Different interpreter (YADE backend).** `yade_dem/run_simulation.py`
   runs under YADE's patched Python, not this package's own venv —
   `experiment_pipeline.py` can't `import` it the way it imports
-  `model.rnn.training` or `metrics.run_metrics`. With `dem_backend="yade"`,
+  `model.training` or `metrics.run_metrics`. With `dem_backend="yade"`,
   `do_simulate` has to go through
   `simulation.launcher.launch_simulation()`, which subprocesses out to the
   `yade` executable, same as `cli.py`'s `dem-sim` subcommand does today.

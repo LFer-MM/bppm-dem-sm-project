@@ -27,7 +27,7 @@ import time
 from .config import ExperimentConfig
 from .data_processing import run_data_processing
 from .metrics import computing_speed, run_metrics
-from .model.rnn import prediction, training
+from .model import prediction, training
 from .progress import complete, plan, stage
 from .simulation import launcher
 from .tf_quiet import silence_tensorflow

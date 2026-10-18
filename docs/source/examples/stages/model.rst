@@ -1,10 +1,18 @@
 Surrogate model
 ===============
 
-:mod:`bppm_dem_sm.model.rnn` builds, trains, loads, and runs the GRU that
-predicts each particle's next ``(x, y, z)`` from its last ``frames_in``
-steps of ``(x, y, z, r)``. TensorFlow is imported only when one of these
-functions is called.
+The surrogate has two halves, each a subpackage split by concern:
+
+- :mod:`bppm_dem_sm.model.rnn` -- the GRU that predicts each particle's
+  next ``(x, y, z)`` from its last ``frames_in`` steps of ``(x, y, z, r)``:
+  ``architecture``, ``training``, ``loading``.
+- :mod:`bppm_dem_sm.model.sr` -- the stochastic random (SR) model:
+  ``model``, ``fitting``, ``loading``; see :doc:`sr`.
+
+The two steps that use both halves sit at the top of the package:
+:mod:`bppm_dem_sm.model.training` (``do_train``) and
+:mod:`bppm_dem_sm.model.prediction` (``do_predict``). TensorFlow is imported
+only when a GRU function is called.
 
 Building the network
 --------------------
@@ -29,20 +37,23 @@ Use it directly when fitting on your own ``(X, y)``, e.g. from
 Training and saving
 -------------------
 
-:func:`~bppm_dem_sm.model.rnn.training.train_and_save` is the ``do_train``
-stage: it loads ``train_data_dir``, converts the trajectories to local mean
-components (``x - v * dt_step``, paper Eq. 1; turn off with
-``TrainingOptions(local_mean_conversion=False)``), builds the dataset and
-the network from ``config.training``, fits, and writes ``model_path`` plus a
-``<name>.history.json`` with the per-epoch ``loss`` / ``val_loss``. It also
-fits the SR model on the same frames and saves it as ``<name>.sr.npz`` (see
-:doc:`sr`):
+:func:`~bppm_dem_sm.model.training.train_and_save` is the ``do_train``
+stage. It loads ``train_data_dir`` once and hands the frames to both halves:
+
+- :func:`~bppm_dem_sm.model.rnn.training.train_and_save_rnn` converts the
+  trajectories to local mean components (``x - v * dt_step``, paper Eq. 1;
+  turn off with ``TrainingOptions(local_mean_conversion=False)``), builds
+  the dataset and the network from ``config.training``, fits, and writes
+  ``model_path`` plus a ``<name>.history.json`` with the per-epoch
+  ``loss`` / ``val_loss``.
+- :func:`~bppm_dem_sm.model.sr.fitting.fit_and_save_sr` fits the SR model
+  on the raw frames and saves it as ``<name>.sr.npz`` (see :doc:`sr`).
 
 .. code-block:: python
 
    from pathlib import Path
    from bppm_dem_sm import ExperimentConfig, TrainingOptions
-   from bppm_dem_sm.model.rnn.training import train_and_save
+   from bppm_dem_sm.model.training import train_and_save
 
    cfg = ExperimentConfig(
        model_path=Path("models/rnn_gru_sic_model.keras"),
@@ -74,7 +85,7 @@ directory name are tried before raising ``FileNotFoundError``.
 Predicting frames
 -----------------
 
-:func:`~bppm_dem_sm.model.rnn.prediction.predict_frames` is the
+:func:`~bppm_dem_sm.model.prediction.predict_frames` is the
 ``do_predict`` stage. It seeds a window with ``frames_in`` ground-truth
 frames starting at ``prediction.start_frame``, then predicts one frame per
 step. It writes ``pred_frame_XXXXX.parquet`` files under
@@ -84,7 +95,7 @@ step. It writes ``pred_frame_XXXXX.parquet`` files under
 .. code-block:: python
 
    from bppm_dem_sm import ExperimentConfig, PredictionOptions
-   from bppm_dem_sm.model.rnn.prediction import predict_frames
+   from bppm_dem_sm.model.prediction import predict_frames
 
    cfg = ExperimentConfig(prediction=PredictionOptions(start_frame=66))
    preds = predict_frames(cfg)  # loads cfg.model_path

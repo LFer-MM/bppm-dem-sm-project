@@ -1,7 +1,7 @@
 """Orchestrates the Data Processing stage: raw CSVs -> parquet + integrity check.
 
 ``frames.py``/``dataset.py`` stay library code, imported piecemeal by
-``model.rnn.training``, ``model.rnn.prediction``, and
+``model.training``, ``model.prediction``, and
 ``metrics.run_metrics`` for in-memory array building -- only the
 CSV-to-parquet conversion step becomes an explicit, gated stage here,
 matching the "one call returns everything for this stage" shape of

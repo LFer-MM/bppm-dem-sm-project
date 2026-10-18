@@ -75,6 +75,14 @@ Model training and prediction
 .. automodule:: bppm_dem_sm.model
    :no-members:
 
+.. automodule:: bppm_dem_sm.model.training
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.model.prediction
+   :members:
+   :show-inheritance:
+
 .. automodule:: bppm_dem_sm.model.rnn
    :no-members:
 
@@ -90,11 +98,18 @@ Model training and prediction
    :members:
    :show-inheritance:
 
-.. automodule:: bppm_dem_sm.model.rnn.prediction
+.. automodule:: bppm_dem_sm.model.sr
+   :no-members:
+
+.. automodule:: bppm_dem_sm.model.sr.model
    :members:
    :show-inheritance:
 
-.. automodule:: bppm_dem_sm.model.sr
+.. automodule:: bppm_dem_sm.model.sr.fitting
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.model.sr.loading
    :members:
    :show-inheritance:
 

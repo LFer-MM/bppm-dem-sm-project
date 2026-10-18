@@ -8,9 +8,10 @@ Organized by pipeline stage:
   ``simulation.launcher``, which shells out to the backend's executable
   instead of importing it.
 - :mod:`bppm_dem_sm.data_processing` -- raw CSV -> training-ready parquet.
-- :mod:`bppm_dem_sm.model` -- the surrogate: :mod:`bppm_dem_sm.model.rnn`
-  (build/train/predict) plus the stochastic-random (SR) term
-  (:mod:`bppm_dem_sm.model.sr`).
+- :mod:`bppm_dem_sm.model` -- the surrogate: the GRU
+  (:mod:`bppm_dem_sm.model.rnn`) and the stochastic-random (SR) model
+  (:mod:`bppm_dem_sm.model.sr`), combined by ``model.training`` and
+  ``model.prediction``.
 - :mod:`bppm_dem_sm.metrics` -- post-hoc computation (Lacey index,
   segregation profile, velocity/granular temperature, computing speed).
 - :mod:`bppm_dem_sm.visualization` -- all plotting/animation, including the
