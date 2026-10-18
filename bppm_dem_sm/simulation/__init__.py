@@ -6,8 +6,9 @@ placeholder -- every function raises ``NotImplementedError``). Which one runs
 is :class:`bppm_dem_sm.config.ExperimentConfig`'s ``dem_backend`` field.
 
 Everything inside a backend subpackage runs inside that engine's own
-(possibly embedded/patched) Python interpreter, or shells out to it
-(``launcher``); nothing in this ``simulation`` package is importable from the
-plain TensorFlow/pandas venv side except ``launcher``, which never imports a
-DEM engine's own Python API itself.
+(possibly embedded/patched) Python interpreter. The top-level modules are
+stdlib-only and import on both sides: ``scenario`` (the JSON-backed run
+definition and its sanity checks), ``mill_geometry`` (parametric shell and
+lifter triangles), and ``launcher``, which shells out to the engine's
+executable and never imports its Python API.
 """

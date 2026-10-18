@@ -1,0 +1,31 @@
+{
+  "name": "smoke_test",
+  "seed": 1,
+  "mill": {
+    "source": "parametric",
+    "diameter_m": 2.0,
+    "depth_m": 0.2,
+    "speed_rpm": 22.0,
+    "n_shell_segments": 48,
+    "n_lifters": 8,
+    "lifter_height_m": 0.06,
+    "lifter_base_width_m": 0.08,
+    "lifter_top_width_m": 0.04,
+    "end_walls": "frictionless"
+  },
+  "species": [
+    {"name": "rock", "material": "rock", "radius_m": 0.03, "count": 300, "color": [1, 0, 0]},
+    {"name": "ball", "material": "steel", "radius_m": 0.05, "count": 60, "color": [0, 0, 1]}
+  ],
+  "solver": {"young_scale": 0.01},
+  "fill": {"box_height_m": 0.3, "settle_steps": 1500},
+  "settle": {"unbalanced_force": 0.05, "check_every": 500, "max_steps": 30000},
+  "spinup": {
+    "min_revolutions": 1.0,
+    "max_revolutions": 3.0,
+    "window_revolutions": 0.5,
+    "angle_tol_deg": 3.0,
+    "power_rel_tol": 0.15
+  },
+  "record": {"duration_s": 1.0, "frame_interval_s": 0.1, "monitor_interval_s": 0.05}
+}

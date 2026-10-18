@@ -200,7 +200,9 @@ def test_build_parser_dem_sim_defaults():
     args = parser.parse_args(["dem-sim"])
     assert args.command == "dem-sim"
     assert args.script is None
-    assert args.yade_executable == "yade"
+    assert args.yade_executable is None
+    assert args.scenario is None
+    assert args.gui is False
     assert args.dem_backend == "yade"
 
 

@@ -20,11 +20,12 @@ import argparse
 from collections.abc import Sequence
 from dataclasses import fields
 from pathlib import Path
+import sys
 from typing import Any, get_type_hints
 
 from .config import DEM_BACKENDS, ExperimentConfig, _option_group_types
-from .experiment_pipeline import run_experiment_pipeline
 from .simulation import launcher
+from .simulation.scenario import STAGES
 
 # --- Constants ---------------------------------------------------------------
 
@@ -216,7 +217,7 @@ def _add_ml_pipeline_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def _add_dem_sim_arguments(parser: argparse.ArgumentParser) -> None:
-    """Add the ``dem-sim`` subcommand's flags (backend + script + executable)."""
+    """Add the ``dem-sim`` subcommand's flags (backend, script, executable, scenario, stages)."""
     parser.add_argument(
         "--dem-backend",
         choices=DEM_BACKENDS,
@@ -234,9 +235,47 @@ def _add_dem_sim_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--yade-executable",
         type=str,
-        default="yade",
+        default=None,
         metavar="NAME",
-        help="YADE executable name or path to look up on PATH (default: 'yade').",
+        help="YADE executable name or path (default: first of 'yade', 'yadedaily' on PATH).",
+    )
+    parser.add_argument(
+        "--scenario",
+        type=Path,
+        default=None,
+        metavar="PATH",
+        help="Scenario JSON (see configs/simulation/); default: built-in defaults.",
+    )
+    parser.add_argument(
+        "--run-dir",
+        type=Path,
+        default=None,
+        metavar="PATH",
+        help="Output directory (default: data/raw/yade_runs/<scenario name>).",
+    )
+    parser.add_argument(
+        "--threads",
+        type=int,
+        default=None,
+        metavar="N",
+        help="OpenMP threads for YADE (default: scenario solver.threads, else YADE's default).",
+    )
+    parser.add_argument(
+        "--from-stage",
+        choices=STAGES,
+        default=None,
+        help="Resume from this stage using the previous stage's checkpoint in --run-dir.",
+    )
+    parser.add_argument(
+        "--to-stage",
+        choices=STAGES,
+        default=None,
+        help="Stop after this stage (default: record).",
+    )
+    parser.add_argument(
+        "--gui",
+        action="store_true",
+        help="Open the YADE Qt viewer instead of running headless.",
     )
 
 
@@ -256,12 +295,24 @@ def _leaf_override_names() -> list[str]:
 def _run_dem_sim(args: argparse.Namespace) -> int:
     """Handle the ``dem-sim`` subcommand: launch the DEM backend, return its exit code."""
     try:
+        extra = []
+        if args.from_stage:
+            extra += ["--from-stage", args.from_stage]
+        if args.to_stage:
+            extra += ["--to-stage", args.to_stage]
+        if args.gui:
+            extra.append("--gui")
         result = launcher.launch_simulation(
             script=args.script,
             yade_executable=args.yade_executable,
+            extra_args=extra,
             backend=args.dem_backend,
+            scenario=args.scenario,
+            run_dir=args.run_dir,
+            threads=args.threads,
+            headless=not args.gui,
         )
-    except (FileNotFoundError, NotImplementedError) as exc:
+    except (FileNotFoundError, NotImplementedError, ValueError) as exc:
         print(str(exc))
         return 1
     return result.returncode
@@ -273,8 +324,22 @@ def _run_ml_pipeline(args: argparse.Namespace) -> int:
 
     silence_tensorflow()
     config = config_from_args(args)
-    run_experiment_pipeline(config)
+    # Attribute lookup (not a bare name) so the lazy module __getattr__ below applies.
+    sys.modules[__name__].run_experiment_pipeline(config)
     return 0
+
+
+def __getattr__(name):
+    """Import ``run_experiment_pipeline`` on first access (PEP 562).
+
+    The pipeline pulls in pandas and TensorFlow; importing it lazily keeps
+    ``dem-sim`` usable on a machine that only has YADE.
+    """
+    if name == "run_experiment_pipeline":
+        from .experiment_pipeline import run_experiment_pipeline
+
+        return run_experiment_pipeline
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 # --- Script entry point ------------------------------------------------------

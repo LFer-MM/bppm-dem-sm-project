@@ -175,6 +175,14 @@ DEM simulation
    :members:
    :show-inheritance:
 
+.. automodule:: bppm_dem_sm.simulation.scenario
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.simulation.mill_geometry
+   :members:
+   :show-inheritance:
+
 YADE backend
 ~~~~~~~~~~~~
 
@@ -210,6 +218,10 @@ YADE backend
    :show-inheritance:
 
 .. automodule:: bppm_dem_sm.simulation.yade_dem.diagnostics
+   :members:
+   :show-inheritance:
+
+.. automodule:: bppm_dem_sm.simulation.yade_dem.monitor
    :members:
    :show-inheritance:
 

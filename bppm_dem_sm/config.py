@@ -81,8 +81,10 @@ BALL_COUNT = 4696
 #: (``material_large="steel"``).
 BALL_DIAM_M = 0.1397
 
-#: Per-material DEM properties (density, Young's modulus, Poisson ratio,
-#: friction angle) plus the label the DEM backend registers each material under.
+#: Per-material DEM properties (density in kg/m^3, Young's modulus in Pa,
+#: Poisson ratio, friction angle in radians -- ``atan(0.5)`` is a friction
+#: coefficient of 0.5) plus the label the DEM backend registers each material
+#: under.
 MATERIALS = {
     "steel": {
         "density": 7850,
@@ -319,6 +321,13 @@ class ExperimentConfig:
         frames_in: Input window length (frames per GRU sequence).
         dem_backend: DEM backend launched by ``do_simulate``; one of
             :data:`DEM_BACKENDS`.
+        dem_scenario: Scenario JSON for ``do_simulate`` (see
+            :class:`~bppm_dem_sm.simulation.scenario.SimulationScenario`);
+            ``None`` uses the scenario defaults.
+        dem_run_dir: Output directory for ``do_simulate``; ``None`` uses
+            ``data/raw/yade_runs/<scenario name>``. Frames land in its
+            ``frames/`` subdirectory -- point ``raw_data_dir`` there for
+            ``do_process``.
         do_simulate: Run the DEM simulation stage.
         do_process: Run the raw-CSV-to-parquet stage.
         do_train: Run the training stage.
@@ -344,8 +353,10 @@ class ExperimentConfig:
     model_path: Path = MODELS_DIR / f"{DEFAULT_MODEL_NAME}.keras"
     frames_in: int = 15
 
-    # DEM backend selection (do_simulate only)
+    # DEM backend selection and run (do_simulate only)
     dem_backend: str = "yade"
+    dem_scenario: Path | None = None
+    dem_run_dir: Path | None = None
 
     # Stage toggles, in end-to-end run order
     do_simulate: bool = False

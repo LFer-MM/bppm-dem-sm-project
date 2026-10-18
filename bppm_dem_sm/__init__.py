@@ -23,6 +23,11 @@ Plus top-level plumbing: ``config``, ``experiment_pipeline``, ``cli``,
 The ``bppm-dem-sm`` CLI (:mod:`bppm_dem_sm.cli`) exposes two subcommands:
 ``dem-sim`` (launches a DEM simulation as a subprocess) and ``ml-pipeline``
 (runs :func:`~bppm_dem_sm.experiment_pipeline.run_experiment_pipeline`).
+
+``run_experiment_pipeline`` is imported lazily on first access: importing it
+pulls in pandas and TensorFlow, which YADE's own interpreter does not have.
+Keeping it lazy lets ``yade_dem`` scripts import ``bppm_dem_sm.config`` and
+``bppm_dem_sm.simulation`` under ``yade``.
 """
 
 from .config import (
@@ -32,7 +37,8 @@ from .config import (
     TrainingOptions,
     VisualizationOptions,
 )
-from .experiment_pipeline import run_experiment_pipeline
+
+# --- Constants ---------------------------------------------------------------
 
 __all__ = [
     "ExperimentConfig",
@@ -42,3 +48,15 @@ __all__ = [
     "VisualizationOptions",
     "run_experiment_pipeline",
 ]
+
+
+# --- Private helper functions ------------------------------------------------
+
+
+def __getattr__(name):
+    """Import ``run_experiment_pipeline`` on first access (PEP 562)."""
+    if name == "run_experiment_pipeline":
+        from .experiment_pipeline import run_experiment_pipeline
+
+        return run_experiment_pipeline
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

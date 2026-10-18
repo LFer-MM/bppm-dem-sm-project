@@ -10,8 +10,7 @@ from __future__ import annotations
 
 from math import pi
 
-from yade._polyhedra_utils import PWaveTimeStep
-from yade.utils import unbalancedForce
+from yade.utils import PWaveTimeStep, unbalancedForce
 from yade.wrapper import (
     Bo1_Facet_Aabb,
     Bo1_Sphere_Aabb,
@@ -53,7 +52,7 @@ def initialize_engines(contact_model, contact_model_params, rotation_engine=Fals
         contact_model: ``"cundall_strack"`` or ``"hertz_mindlin"``.
         contact_model_params: For Hertz-Mindlin, must include a
             ``"restitution"`` MatchMaker (see
-            :func:`bppm_dem_sm.config.build_yade_material_interactions`).
+            :func:`~bppm_dem_sm.simulation.yade_dem.materials.restitution_matchmaker`).
         rotation_engine: If ``True``, append a ``RotationEngine`` labeled
             ``rotation_engine`` using ``stl.SAG_MILL_SLICE_BODY_GROUP``.
     """

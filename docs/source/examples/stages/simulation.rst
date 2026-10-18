@@ -1,37 +1,105 @@
 DEM simulation
 ==============
 
-The DEM scenario runs under YADE's own Python interpreter, which cannot be
+The DEM run happens under YADE's own Python interpreter, which cannot be
 imported into this package's environment.
 :func:`~bppm_dem_sm.simulation.launcher.launch_simulation` therefore starts
 it as a subprocess; this is what ``bppm-dem-sm dem-sim`` and
-``do_simulate`` call.
+``do_simulate`` call. ``dem-sim`` does not import pandas or TensorFlow, so it
+works on a machine that only has YADE (``yade`` or the ``yadedaily`` build).
 
-Launching the packaged scenario
--------------------------------
+Scenarios
+---------
+
+A run is described by one JSON file, loaded into a
+:class:`~bppm_dem_sm.simulation.scenario.SimulationScenario`: mill geometry
+and speed, the two particle species, materials and restitution, contact
+law, time step, and the settings of each stage. Keys left out keep their
+defaults (which come from :mod:`bppm_dem_sm.config`). Three scenarios ship in
+``configs/simulation/``:
+
+``smoke_test.json``
+   A 2 m mill with 360 soft particles; runs every stage in under a minute.
+   Use it to check the pipeline, not the physics.
+``sag_slice_stl.json``
+   The 11.9 m STL mill slice with the bidisperse rock/steel charge of the
+   existing ``sic_dataset`` (11,581 rock, 3,195 steel balls).
+``sag_slice_lifters.json``
+   Same charge in a parametric mill with 64 lifters and frictionless slice
+   end walls.
+
+Check a scenario before spending DEM time on it:
 
 .. code-block:: python
 
-   from bppm_dem_sm.simulation.launcher import find_yade_executable, launch_simulation
+   from bppm_dem_sm.simulation.scenario import load_scenario
 
-   if find_yade_executable() is None:
-       raise SystemExit("Install YADE and put it on PATH first.")
+   s = load_scenario("configs/simulation/sag_slice_lifters.json")
+   print(s.checks())    # critical speed, fill level J, Rayleigh dt, lifter gap, ...
+   print(s.warnings())  # e.g. dt above the Rayleigh step, speed outside 60-85% critical
 
-   result = launch_simulation(backend="yade")
+Stages
+------
+
+``run_simulation.py`` runs five stages and writes a checkpoint after each:
+
+1. ``build`` -- materials, mill (STL or parametric shell with lifters), end
+   walls, Hertz-Mindlin engines, and ``dt = dt_safety x`` the Rayleigh step.
+2. ``fill`` -- the charge is poured in chord-box batches (damped).
+3. ``settle`` -- damped settling until the unbalanced force is small.
+4. ``spinup`` -- undamped rotation from rest until the charge
+   centre-of-mass angle and the drive power stop changing between
+   consecutive windows (steady state).
+5. ``record`` -- frame CSVs every ``record.frame_interval_s`` for
+   ``record.duration_s``, starting at steady state.
+
+Running
+-------
+
+.. code-block:: bash
+
+   bppm-dem-sm dem-sim --scenario configs/simulation/sag_slice_lifters.json \
+       --run-dir data/raw/yade_runs/sag_slice_lifters --threads 16
+
+   # Resume from the settle checkpoint (e.g. after changing spin-up settings):
+   bppm-dem-sm dem-sim --run-dir data/raw/yade_runs/sag_slice_lifters --from-stage spinup
+
+   # Watch it in the YADE viewer:
+   bppm-dem-sm dem-sim --scenario configs/simulation/smoke_test.json --gui
+
+From Python:
+
+.. code-block:: python
+
+   from bppm_dem_sm.simulation.launcher import launch_simulation
+
+   result = launch_simulation(
+       scenario="configs/simulation/smoke_test.json",
+       run_dir="data/raw/yade_runs/smoke_test",
+       threads=4,
+   )
    print(result.returncode)  # nonzero exit codes are returned, not raised
 
-Other scripts, executables, and arguments
------------------------------------------
+``FileNotFoundError`` is raised when neither ``yade`` nor ``yadedaily`` is on
+``PATH``; an invalid scenario raises ``ValueError`` before YADE starts.
 
-.. code-block:: python
+Outputs
+-------
 
-   launch_simulation(
-       script="path/to/my_scenario.py",  # default: simulation/yade_dem/run_simulation.py
-       yade_executable="yade-2024.02a",  # name on PATH or a full path
-       extra_args=["-j", "4"],           # passed to the executable after the script path
-   )
+Everything lands in the run directory:
 
-``FileNotFoundError`` is raised when the executable is not on ``PATH``.
+``manifest.json``
+   The full scenario, derived checks and warnings, YADE version, ``dt``,
+   threads, and per stage: wall time, simulated time span, iterations and
+   outcome (inventory, settle balance, revolutions to steady state, frames).
+``mill_log.csv``
+   One row per ``record.monitor_interval_s``: charge angle (all, small,
+   large), kinetic energy, drive torque and power, largest overlap.
+``frames/frame_00000.csv`` ...
+   ``id, x, y, z, r, m, vx, vy, vz`` -- the input of
+   :doc:`data_processing`. ``frames_index.csv`` gives each frame's exact time.
+``checkpoints/<stage>.yade.gz``
+   YADE scenes to resume from or open in the viewer.
 
 As a pipeline stage
 -------------------
@@ -41,14 +109,14 @@ As a pipeline stage
    from bppm_dem_sm import run_experiment_pipeline
 
    results = run_experiment_pipeline(
-       do_simulate=True, do_predict=False, do_metrics=False, do_visualization=False
+       do_simulate=True,
+       dem_scenario="configs/simulation/sag_slice_lifters.json",
+       dem_run_dir="data/raw/yade_runs/sag_slice_lifters",
+       do_predict=False, do_metrics=False, do_visualization=False,
    )
    print(results["dem_simulation"].returncode)
 
-Particle counts, diameters, materials, and mill geometry are module
-constants in :mod:`bppm_dem_sm.config` (``ROCK_COUNT``, ``BALL_COUNT``,
-``MILL_DIAMETER_M``, ``SAGMILL_STL_PATH``, ...), not ``ExperimentConfig``
-fields: edit them there.
+Point ``raw_data_dir`` at the run's ``frames/`` directory for ``do_process``.
 
 Backends
 --------

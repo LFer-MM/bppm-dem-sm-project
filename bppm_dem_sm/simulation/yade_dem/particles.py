@@ -10,6 +10,14 @@ from yade.wrapper import O
 
 from . import stl
 
+# --- Constants ---------------------------------------------------------------
+
+# Solid fraction requested from SpherePack.makeCloud per ingress batch.
+_CLOUD_FRACTION = 0.30
+
+
+# --- Public functions --------------------------------------------------------
+
 
 def load_rock_particles(rock_diam_m, rock_count):
     """Spawn rock spheres in four vertical regions of the mill slice.
@@ -110,7 +118,7 @@ def load_all_particles(particle_diam_m, particle_count):
 
 def ingress_random(diameter, depth, r_small, r_large, n_small, n_large, box_height,
                    material_small, material_large, color_small, color_large,
-                   settle_steps=10000, padding=0.1, verbose=True):
+                   settle_steps=10000, padding=0.1, verbose=True, seed=None):
     """Ingress bidisperse particles in random mixed batches via chord boxes.
 
     Each batch packs spheres at ``r_large``, then randomly shrinks a subset to
@@ -132,7 +140,10 @@ def ingress_random(diameter, depth, r_small, r_large, n_small, n_large, box_heig
         padding: Clearance for :func:`bppm_dem_sm.simulation.yade_dem.stl.get_surface_y`
             on later batches.
         verbose: If ``True``, print batch progress.
+        seed: RNG seed for placement and species assignment; ``None`` draws
+            a fresh one each run.
     """
+    rng = random.Random(seed)
     remaining_small, remaining_large = n_small, n_large
     batch_idx = 0
 
@@ -144,24 +155,31 @@ def ingress_random(diameter, depth, r_small, r_large, n_small, n_large, box_heig
 
         box_vol = box["width"] * box["height"] * box["depth"]
         vol_large = (4 / 3) * math.pi * r_large ** 3
-        batch_n = min(total_remaining, max(1, int(0.60 * box_vol / vol_large)))
-
-        frac_small = remaining_small / total_remaining
-        n_s = min(remaining_small, round(batch_n * frac_small))
-        n_l = min(remaining_large, batch_n - n_s)
+        # A random cloud rarely exceeds ~30% solids; makeCloud stops early beyond that.
+        batch_n = min(total_remaining, max(1, int(_CLOUD_FRACTION * box_vol / vol_large)))
 
         sp = pack.SpherePack()
         sp.makeCloud(minCorner=box["min_corner"], maxCorner=box["max_corner"],
-                     rMean=r_large, rRelFuzz=0.0, num=n_s + n_l, periodic=False)
+                     rMean=r_large, rRelFuzz=0.0, num=batch_n, periodic=False,
+                     seed=rng.randrange(2**31))
         new_ids = sp.toSimulation(material=material_large, color=color_large, wire=False)
 
-        ids_to_shrink = set(random.sample(list(new_ids), n_s))
+        # Split by what makeCloud actually placed, not by what was requested.
+        frac_small = remaining_small / total_remaining
+        n_s = min(remaining_small, round(len(new_ids) * frac_small))
+        n_l = min(remaining_large, len(new_ids) - n_s)
+
+        ids_to_shrink = set(rng.sample(list(new_ids), n_s))
+        for bid in [i for i in new_ids if i not in ids_to_shrink][n_l:]:
+            O.bodies.erase(bid)
+        new_ids = [i for i in new_ids if O.bodies[i] is not None]
         for bid in new_ids:
             b = O.bodies[bid]
             if bid in ids_to_shrink:
                 b.shape.radius = r_small
                 b.material = O.materials[material_small]
                 b.shape.color = Vector3(*color_small)
+                _reset_sphere_mass(b)
             else:
                 b.shape.color = Vector3(*color_large)
 
@@ -177,7 +195,7 @@ def ingress_random(diameter, depth, r_small, r_large, n_small, n_large, box_heig
 
 def ingress_segregated(diameter, depth, r_small, r_large, n_small, n_large, box_height,
                        material_small, material_large, color_small, color_large,
-                       settle_steps=10000, padding=0.1, verbose=True):
+                       settle_steps=10000, padding=0.1, verbose=True, seed=None):
     """Ingress all small particles first, then all large.
 
     Same chord-box batching as :func:`ingress_random`, but species are poured
@@ -199,7 +217,10 @@ def ingress_segregated(diameter, depth, r_small, r_large, n_small, n_large, box_
         padding: Clearance for :func:`bppm_dem_sm.simulation.yade_dem.stl.get_surface_y`
             on later batches.
         verbose: If ``True``, print batch progress.
+        seed: RNG seed for placement and species assignment; ``None`` draws
+            a fresh one each run.
     """
+    rng = random.Random(seed)
     for size_label, r, n_target, material, color in (
         ("SMALL", r_small, n_small, material_small, color_small),
         ("LARGE", r_large, n_large, material_large, color_large),
@@ -215,11 +236,12 @@ def ingress_segregated(diameter, depth, r_small, r_large, n_small, n_large, box_
 
             box_vol = box["width"] * box["height"] * box["depth"]
             vol_sphere = (4 / 3) * math.pi * r ** 3
-            batch_n = min(remaining, max(1, int(0.60 * box_vol / vol_sphere)))
+            batch_n = min(remaining, max(1, int(_CLOUD_FRACTION * box_vol / vol_sphere)))
 
             sp = pack.SpherePack()
             sp.makeCloud(minCorner=box["min_corner"], maxCorner=box["max_corner"],
-                         rMean=r, rRelFuzz=0.0, num=batch_n, periodic=False)
+                         rMean=r, rRelFuzz=0.0, num=batch_n, periodic=False,
+                         seed=rng.randrange(2**31))
             new_ids = sp.toSimulation(material=material, wire=False)
             for bid in new_ids:
                 O.bodies[bid].shape.color = Vector3(*color)
@@ -231,3 +253,21 @@ def ingress_segregated(diameter, depth, r_small, r_large, n_small, n_large, box_
 
         if verbose:
             print(f"[{size_label}] done after {batch_idx} batches.")
+
+
+# --- Private helper functions ------------------------------------------------
+
+
+def _reset_sphere_mass(b):
+    """Recompute mass and inertia of sphere body ``b`` from its radius and material density.
+
+    Needed after changing ``b.shape.radius`` or ``b.material``: YADE sets mass
+    and inertia only when the body is created.
+
+    Args:
+        b: YADE sphere body.
+    """
+    r = b.shape.radius
+    mass = b.material.density * 4.0 / 3.0 * math.pi * r**3
+    b.state.mass = mass
+    b.state.inertia = Vector3(1, 1, 1) * (0.4 * mass * r**2)

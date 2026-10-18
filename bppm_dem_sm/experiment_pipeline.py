@@ -96,7 +96,11 @@ def run_experiment_pipeline(config: ExperimentConfig | None = None, **overrides)
     if config.do_simulate:
         step += 1
         stage(step, n_stages, "Simulation")
-        results["dem_simulation"] = launcher.launch_simulation(backend=config.dem_backend)
+        results["dem_simulation"] = launcher.launch_simulation(
+            backend=config.dem_backend,
+            scenario=config.dem_scenario,
+            run_dir=config.dem_run_dir,
+        )
 
     if config.do_process:
         step += 1

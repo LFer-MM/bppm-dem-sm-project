@@ -1,0 +1,17 @@
+{
+  "name": "sag_slice_stl",
+  "seed": 0,
+  "mill": {
+    "source": "stl",
+    "stl_path": "sag_mill_40ft_m.stl",
+    "diameter_m": 11.9,
+    "depth_m": 0.375,
+    "speed_rpm": 9.0,
+    "end_walls": "liner"
+  },
+  "species": [
+    {"name": "rock", "material": "rock", "radius_m": 0.0381, "count": 11581, "color": [1, 0, 0]},
+    {"name": "ball", "material": "steel", "radius_m": 0.06985, "count": 3195, "color": [0, 0, 1]}
+  ],
+  "record": {"duration_s": 20.0, "frame_interval_s": 0.05, "monitor_interval_s": 0.05}
+}
