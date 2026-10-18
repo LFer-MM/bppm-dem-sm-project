@@ -68,6 +68,7 @@ ARCHIFY ?= $(HOME)/.agents/skills/archify/bin/archify.mjs
 diagrams:
 	@for spec in docs/diagrams/*.architecture.json; do \
 		out=$${spec%.architecture.json}-architecture.html; \
+		rm -f $${out%.html}.*.json; \
 		$(NODE) $(ARCHIFY) finalize architecture $$spec $$out --repo-root . --quality showcase || exit 1; \
 	done
 
