@@ -151,7 +151,7 @@ class SettleOptions:
     damping: float = 0.2
     unbalanced_force: float = 0.01
     check_every: int = 1000
-    max_steps: int = 2_000_000
+    max_steps: int = 200_000
 
 
 @dataclass
