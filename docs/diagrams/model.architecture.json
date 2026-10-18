@@ -9,131 +9,487 @@
     "repository": {
       "url": "git@github.com:LFer-MM/bppm-dem-sm-project.git",
       "link_mode": "local-only",
-      "revision": "5a4d41d728ed05a5c831fd4ecad2d3718c907a23"
+      "revision": "060154601be9db011cca23f6d9542166277707d6"
     }
   },
   "components": [
     {
-      "id": "build", "type": "backend", "label": "build_rnn",
-      "sublabel": "rnn/architecture.py", "tag": "GRU20 > Dense15 > Dense3", "pos": [40, 40], "size": [180, 64],
-      "sources": [{ "path": "bppm_dem_sm/model/rnn/architecture.py", "line": 6, "end_line": 40 }]
-    },
-    {
-      "id": "train-frames", "type": "database", "label": "Training DEM frames",
-      "sublabel": "train_data_dir parquet", "pos": [360, 40], "size": [180, 64],
-      "sources": [{ "path": "bppm_dem_sm/config.py", "line": 312, "end_line": 315 }]
-    },
-    {
-      "id": "sr-model", "type": "backend", "label": "SRModel",
-      "sublabel": "sr/model.py", "tag": "sigma_v grid, Eq. 3 draw", "pos": [680, 40], "size": [180, 64],
-      "sources": [{ "path": "bppm_dem_sm/model/sr/model.py", "line": 21, "end_line": 98 }]
-    },
-    {
-      "id": "rnn-train", "type": "backend", "label": "train_and_save_rnn",
-      "sublabel": "rnn/training.py", "tag": "Eq. 1 + windows", "pos": [40, 190], "size": [180, 64],
+      "id": "build",
+      "type": "backend",
+      "label": "RNNModel",
+      "sublabel": "rnn/model.py",
+      "tag": "GRU20 > Dense15 > Dense3",
+      "pos": [
+        40,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ],
       "sources": [
-        { "path": "bppm_dem_sm/model/rnn/training.py", "line": 22, "end_line": 77 },
-        { "path": "bppm_dem_sm/data_processing/dataset.py", "line": 8, "end_line": 45, "label": "local mean + sliding windows" }
+        {
+          "path": "bppm_dem_sm/model/rnn/model.py",
+          "line": 18,
+          "end_line": 125,
+          "label": "build, predict, save/load"
+        },
+        {
+          "path": "bppm_dem_sm/model/rnn/model.py",
+          "line": 131,
+          "end_line": 175,
+          "label": "legacy SavedModel adapter"
+        }
       ]
     },
     {
-      "id": "training", "type": "backend", "label": "train_and_save",
-      "sublabel": "model/training.py", "tag": "Step 3", "pos": [360, 190], "size": [180, 64],
-      "sources": [{ "path": "bppm_dem_sm/model/training.py", "line": 18, "end_line": 38 }]
-    },
-    {
-      "id": "sr-fit", "type": "backend", "label": "fit_and_save_sr",
-      "sublabel": "sr/fitting.py", "tag": "Eq. 2, closed form", "pos": [680, 190], "size": [180, 64],
+      "id": "train-frames",
+      "type": "database",
+      "label": "Training DEM frames",
+      "sublabel": "train_data_dir parquet",
+      "pos": [
+        360,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ],
       "sources": [
-        { "path": "bppm_dem_sm/model/sr/fitting.py", "line": 17, "end_line": 66, "label": "fit_sr, Eq. 2" },
-        { "path": "bppm_dem_sm/model/sr/fitting.py", "line": 69, "end_line": 90 }
+        {
+          "path": "bppm_dem_sm/config.py",
+          "line": 312,
+          "end_line": 315
+        }
       ]
     },
     {
-      "id": "gru-artifact", "type": "database", "label": "Saved GRU",
-      "sublabel": ".keras + .history.json", "pos": [40, 340], "size": [180, 64],
+      "id": "sr-model",
+      "type": "backend",
+      "label": "SRModel",
+      "sublabel": "sr/model.py",
+      "tag": "sigma_v grid, Eq. 3 draw",
+      "pos": [
+        680,
+        40
+      ],
+      "size": [
+        180,
+        64
+      ],
       "sources": [
-        { "path": "bppm_dem_sm/model/rnn/training.py", "line": 66, "end_line": 75 },
-        { "path": "bppm_dem_sm/config.py", "line": 344 }
+        {
+          "path": "bppm_dem_sm/model/sr/model.py",
+          "line": 21,
+          "end_line": 98
+        }
       ]
     },
     {
-      "id": "pipeline", "type": "external", "label": "experiment_pipeline",
-      "sublabel": "do_train / do_predict", "pos": [360, 340], "size": [180, 64],
-      "sources": [{ "path": "bppm_dem_sm/experiment_pipeline.py", "line": 106, "end_line": 119 }]
-    },
-    {
-      "id": "sr-artifact", "type": "database", "label": "Saved SR model",
-      "sublabel": "<model stem>.sr.npz", "pos": [680, 340], "size": [180, 64],
+      "id": "rnn-train",
+      "type": "backend",
+      "label": "train_and_save_rnn",
+      "sublabel": "rnn/training.py",
+      "tag": "Eq. 1 + windows",
+      "pos": [
+        40,
+        190
+      ],
+      "size": [
+        180,
+        64
+      ],
       "sources": [
-        { "path": "bppm_dem_sm/model/sr/fitting.py", "line": 87, "end_line": 88 },
-        { "path": "bppm_dem_sm/model/sr/loading.py", "line": 15, "end_line": 24 }
+        {
+          "path": "bppm_dem_sm/model/rnn/training.py",
+          "line": 22,
+          "end_line": 77
+        },
+        {
+          "path": "bppm_dem_sm/data_processing/dataset.py",
+          "line": 8,
+          "end_line": 45,
+          "label": "local mean + sliding windows"
+        }
       ]
     },
     {
-      "id": "load-rnn", "type": "backend", "label": "load_rnn",
-      "sublabel": "rnn/loading.py", "tag": "SavedModel wrapper", "pos": [40, 490], "size": [180, 64],
-      "sources": [{ "path": "bppm_dem_sm/model/rnn/loading.py", "line": 10, "end_line": 113 }]
-    },
-    {
-      "id": "prediction", "type": "backend", "label": "predict_frames",
-      "sublabel": "model/prediction.py", "tag": "Step 4: Eq. 4", "pos": [360, 490], "size": [180, 64],
+      "id": "training",
+      "type": "backend",
+      "label": "train_and_save",
+      "sublabel": "model/training.py",
+      "tag": "Step 3",
+      "pos": [
+        360,
+        190
+      ],
+      "size": [
+        180,
+        64
+      ],
       "sources": [
-        { "path": "bppm_dem_sm/model/prediction.py", "line": 54, "end_line": 63, "label": "load GRU and SR model" },
-        { "path": "bppm_dem_sm/model/prediction.py", "line": 80, "end_line": 115, "label": "predict + v_tilde * dt_step" }
+        {
+          "path": "bppm_dem_sm/model/training.py",
+          "line": 18,
+          "end_line": 38
+        }
       ]
     },
     {
-      "id": "load-sr", "type": "backend", "label": "load_sr",
-      "sublabel": "sr/loading.py", "pos": [680, 490], "size": [180, 64],
-      "sources": [{ "path": "bppm_dem_sm/model/sr/loading.py", "line": 27, "end_line": 42 }]
-    },
-    {
-      "id": "eval-frames", "type": "database", "label": "Ground-truth frames",
-      "sublabel": "data_dir parquet", "pos": [200, 650], "size": [180, 64],
-      "sources": [{ "path": "bppm_dem_sm/model/prediction.py", "line": 48, "end_line": 72 }]
-    },
-    {
-      "id": "preds", "type": "database", "label": "Predictions",
-      "sublabel": "pred_frame_*.parquet", "tag": "+ predictions_all", "pos": [520, 650], "size": [180, 64],
+      "id": "sr-fit",
+      "type": "backend",
+      "label": "fit_and_save_sr",
+      "sublabel": "sr/fitting.py",
+      "tag": "Eq. 2, closed form",
+      "pos": [
+        680,
+        190
+      ],
+      "size": [
+        180,
+        64
+      ],
       "sources": [
-        { "path": "bppm_dem_sm/model/prediction.py", "line": 97, "end_line": 115 },
-        { "path": "bppm_dem_sm/config.py", "line": 169, "end_line": 179 }
+        {
+          "path": "bppm_dem_sm/model/sr/fitting.py",
+          "line": 17,
+          "end_line": 66,
+          "label": "fit_sr, Eq. 2"
+        },
+        {
+          "path": "bppm_dem_sm/model/sr/fitting.py",
+          "line": 69,
+          "end_line": 90
+        }
+      ]
+    },
+    {
+      "id": "gru-artifact",
+      "type": "database",
+      "label": "Saved GRU",
+      "sublabel": ".keras + .history.json",
+      "pos": [
+        40,
+        340
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "sources": [
+        {
+          "path": "bppm_dem_sm/model/rnn/training.py",
+          "line": 67,
+          "end_line": 75
+        },
+        {
+          "path": "bppm_dem_sm/config.py",
+          "line": 344
+        }
+      ]
+    },
+    {
+      "id": "pipeline",
+      "type": "external",
+      "label": "experiment_pipeline",
+      "sublabel": "do_train / do_predict",
+      "pos": [
+        360,
+        340
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "sources": [
+        {
+          "path": "bppm_dem_sm/experiment_pipeline.py",
+          "line": 106,
+          "end_line": 119
+        }
+      ]
+    },
+    {
+      "id": "sr-artifact",
+      "type": "database",
+      "label": "Saved SR model",
+      "sublabel": "<model stem>.sr.npz",
+      "pos": [
+        680,
+        340
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "sources": [
+        {
+          "path": "bppm_dem_sm/model/sr/fitting.py",
+          "line": 87,
+          "end_line": 88
+        },
+        {
+          "path": "bppm_dem_sm/model/sr/loading.py",
+          "line": 15,
+          "end_line": 24
+        }
+      ]
+    },
+    {
+      "id": "load-rnn",
+      "type": "backend",
+      "label": "load_rnn",
+      "sublabel": "rnn/loading.py",
+      "tag": "suffix fallback",
+      "pos": [
+        40,
+        490
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "sources": [
+        {
+          "path": "bppm_dem_sm/model/rnn/loading.py",
+          "line": 18,
+          "end_line": 61
+        }
+      ]
+    },
+    {
+      "id": "prediction",
+      "type": "backend",
+      "label": "predict_frames",
+      "sublabel": "model/prediction.py",
+      "tag": "Step 4: Eq. 4",
+      "pos": [
+        360,
+        490
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "sources": [
+        {
+          "path": "bppm_dem_sm/model/prediction.py",
+          "line": 55,
+          "end_line": 64,
+          "label": "load GRU and SR model"
+        },
+        {
+          "path": "bppm_dem_sm/model/prediction.py",
+          "line": 78,
+          "end_line": 115,
+          "label": "predict + v_tilde * dt_step"
+        }
+      ]
+    },
+    {
+      "id": "load-sr",
+      "type": "backend",
+      "label": "load_sr",
+      "sublabel": "sr/loading.py",
+      "pos": [
+        680,
+        490
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "sources": [
+        {
+          "path": "bppm_dem_sm/model/sr/loading.py",
+          "line": 27,
+          "end_line": 42
+        }
+      ]
+    },
+    {
+      "id": "eval-frames",
+      "type": "database",
+      "label": "Ground-truth frames",
+      "sublabel": "data_dir parquet",
+      "pos": [
+        200,
+        650
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "sources": [
+        {
+          "path": "bppm_dem_sm/model/prediction.py",
+          "line": 49,
+          "end_line": 73
+        }
+      ]
+    },
+    {
+      "id": "preds",
+      "type": "database",
+      "label": "Predictions",
+      "sublabel": "pred_frame_*.parquet",
+      "tag": "+ predictions_all",
+      "pos": [
+        520,
+        650
+      ],
+      "size": [
+        180,
+        64
+      ],
+      "sources": [
+        {
+          "path": "bppm_dem_sm/model/prediction.py",
+          "line": 89,
+          "end_line": 115
+        },
+        {
+          "path": "bppm_dem_sm/config.py",
+          "line": 169,
+          "end_line": 179
+        }
       ]
     }
   ],
   "boundaries": [
-    { "kind": "region", "label": "GRU half: model/rnn/", "wraps": ["build", "rnn-train", "gru-artifact", "load-rnn"] },
-    { "kind": "region", "label": "SR half: model/sr/", "wraps": ["sr-model", "sr-fit", "sr-artifact", "load-sr"] }
+    {
+      "kind": "region",
+      "label": "GRU half: model/rnn/",
+      "wraps": [
+        "build",
+        "rnn-train",
+        "gru-artifact",
+        "load-rnn"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "SR half: model/sr/",
+      "wraps": [
+        "sr-model",
+        "sr-fit",
+        "sr-artifact",
+        "load-sr"
+      ]
+    }
   ],
   "connections": [
-    { "id": "frames-training", "from": "train-frames", "to": "training", "label": "load once" },
-    { "id": "pipe-training", "from": "pipeline", "to": "training", "label": "do_train", "variant": "emphasis" },
-    { "id": "training-rnn", "from": "training", "to": "rnn-train", "label": "pos, rad, vel" },
-    { "id": "training-sr", "from": "training", "to": "sr-fit", "label": "pos, vel" },
-    { "id": "rnn-build", "from": "rnn-train", "to": "build", "label": "build + fit" },
-    { "id": "sr-builds-model", "from": "sr-fit", "to": "sr-model", "label": "fit_sr" },
-    { "id": "rnn-save", "from": "rnn-train", "to": "gru-artifact", "label": "model.save", "variant": "emphasis" },
-    { "id": "sr-save", "from": "sr-fit", "to": "sr-artifact", "label": "SRModel.save", "variant": "emphasis" },
-    { "id": "gru-load", "from": "gru-artifact", "to": "load-rnn", "label": "resolve path" },
-    { "id": "sr-load", "from": "sr-artifact", "to": "load-sr", "label": "SRModel.load" },
-    { "id": "pipe-prediction", "from": "pipeline", "to": "prediction", "label": "do_predict", "variant": "emphasis" },
-    { "id": "rnn-to-prediction", "from": "load-rnn", "to": "prediction", "label": "if model=None" },
-    { "id": "sr-to-prediction", "from": "load-sr", "to": "prediction", "label": "if SR enabled", "variant": "dashed" },
-    { "id": "eval-prediction", "from": "eval-frames", "to": "prediction", "label": "seed window" },
-    { "id": "prediction-preds", "from": "prediction", "to": "preds", "label": "to_parquet", "variant": "emphasis" }
+    {
+      "id": "frames-training",
+      "from": "train-frames",
+      "to": "training",
+      "label": "load once"
+    },
+    {
+      "id": "pipe-training",
+      "from": "pipeline",
+      "to": "training",
+      "label": "do_train",
+      "variant": "emphasis"
+    },
+    {
+      "id": "training-rnn",
+      "from": "training",
+      "to": "rnn-train",
+      "label": "pos, rad, vel"
+    },
+    {
+      "id": "training-sr",
+      "from": "training",
+      "to": "sr-fit",
+      "label": "pos, vel"
+    },
+    {
+      "id": "rnn-build",
+      "from": "rnn-train",
+      "to": "build",
+      "label": "build + fit"
+    },
+    {
+      "id": "sr-builds-model",
+      "from": "sr-fit",
+      "to": "sr-model",
+      "label": "fit_sr"
+    },
+    {
+      "id": "rnn-save",
+      "from": "rnn-train",
+      "to": "gru-artifact",
+      "label": "model.save",
+      "variant": "emphasis"
+    },
+    {
+      "id": "sr-save",
+      "from": "sr-fit",
+      "to": "sr-artifact",
+      "label": "SRModel.save",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gru-load",
+      "from": "gru-artifact",
+      "to": "load-rnn",
+      "label": "RNNModel.load"
+    },
+    {
+      "id": "sr-load",
+      "from": "sr-artifact",
+      "to": "load-sr",
+      "label": "SRModel.load"
+    },
+    {
+      "id": "pipe-prediction",
+      "from": "pipeline",
+      "to": "prediction",
+      "label": "do_predict",
+      "variant": "emphasis"
+    },
+    {
+      "id": "rnn-to-prediction",
+      "from": "load-rnn",
+      "to": "prediction",
+      "label": "if model=None"
+    },
+    {
+      "id": "sr-to-prediction",
+      "from": "load-sr",
+      "to": "prediction",
+      "label": "if SR enabled",
+      "variant": "dashed"
+    },
+    {
+      "id": "eval-prediction",
+      "from": "eval-frames",
+      "to": "prediction",
+      "label": "seed window"
+    },
+    {
+      "id": "prediction-preds",
+      "from": "prediction",
+      "to": "preds",
+      "label": "to_parquet",
+      "variant": "emphasis"
+    }
   ],
   "cards": [
     {
-      "dot": "cyan", "title": "Layout",
+      "dot": "cyan",
+      "title": "Layout",
       "items": [
-        "Each half owns its own concerns: rnn/ has architecture, training, loading; sr/ has model, fitting, loading",
+        "Both halves have the same shape: a model class (RNNModel, SRModel), the step that produces it, and loading",
+        "SR uses fitting.py instead of training.py: sigma_v is a one-pass estimate, not gradient training",
         "Steps that combine both halves sit at model/: training.py (Step 3) and prediction.py (Step 4)",
         "Saved files are drawn with the half that writes and reads them; they live under models/, not in the package"
       ]
     },
     {
-      "dot": "violet", "title": "Training (Step 3)",
+      "dot": "violet",
+      "title": "Training (Step 3)",
       "items": [
         "Frames are loaded once; the SR model gets raw positions, the GRU their Eq. 1 local mean components",
         "SR is fitted, not trained: sigma_v per cell is a one-pass estimate with no loss or epochs",
@@ -141,7 +497,8 @@
       ]
     },
     {
-      "dot": "amber", "title": "Prediction (Step 4)",
+      "dot": "amber",
+      "title": "Prediction (Step 4)",
       "items": [
         "x = x_bar_RNN + v_tilde * dt_step, with v_tilde ~ N(0, sigma_v(x)^2) at each particle's current cell",
         "The pipeline passes a just-trained GRU in memory (skipping load_rnn) but never the SR model",
