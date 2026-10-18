@@ -1,86 +1,34 @@
-"""Loading a saved GRU surrogate model, including legacy SavedModel exports."""
+"""Locating and loading a saved GRU, including legacy SavedModel exports.
+
+Reading the artifact itself is :meth:`~bppm_dem_sm.model.rnn.model.RNNModel.load`;
+this module owns which path to read, trying alternate suffixes, and the
+error when none exists -- as :mod:`bppm_dem_sm.model.sr.loading` does for
+the SR model.
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 
+from .model import RNNModel
+
 # --- Public functions --------------------------------------------------------
 
 
-def load_rnn(path):
-    """Load a saved Keras model (``.keras``/``.h5``) or legacy SavedModel directory.
+def load_rnn(path) -> RNNModel:
+    """Load a saved GRU from a ``.keras``/``.h5`` file or legacy SavedModel directory.
 
     Args:
-        path: Path to a ``.keras``/``.h5`` file or SavedModel directory.
+        path: Path to a ``.keras``/``.h5`` file or SavedModel directory;
+            alternate suffixes are tried when it does not exist as given.
 
     Returns:
-        keras.Model: Loaded model, or a ``_SavedModelWrapper`` for a legacy
-        SavedModel directory; both expose ``predict``.
+        RNNModel: The loaded model.
+
+    Raises:
+        FileNotFoundError: If no Keras file or SavedModel directory is found.
     """
-    from ...tf_quiet import silence_tensorflow
-
-    silence_tensorflow()
-    import keras
-
-    resolved = _resolve_model_path(Path(path))
-    if resolved.is_dir():
-        return _SavedModelWrapper(resolved)
-    return keras.models.load_model(str(resolved))
-
-
-# --- Private classes ---------------------------------------------------------
-
-
-class _SavedModelWrapper:
-    """Thin adapter for legacy TensorFlow SavedModel exports (Keras 3 cannot load these directly).
-
-    Exposes a Keras-like ``predict`` API and ``input_shape`` / ``output_shape``
-    attributes so the prediction loop can treat SavedModel and ``.keras``
-    artifacts uniformly.
-    """
-
-    def __init__(self, path: Path):
-        """Load a SavedModel directory and bind the ``serving_default`` signature.
-
-        Args:
-            path: Directory containing ``saved_model.pb`` (and assets/variables).
-        """
-        from ...tf_quiet import silence_tensorflow
-
-        silence_tensorflow()
-        import tensorflow as tf
-
-        fn = tf.saved_model.load(str(path)).signatures["serving_default"]
-        _, input_spec = fn.structured_input_signature
-        output_spec = fn.structured_outputs
-        self._input_key = next(iter(input_spec))
-        self._output_key = next(iter(output_spec))
-        self._fn = fn
-        self.input_shape = tuple(input_spec[self._input_key].shape.as_list())
-        self.output_shape = tuple(output_spec[self._output_key].shape.as_list())
-
-    def predict(self, x, batch_size=32, verbose=0):
-        """Run batched inference through the SavedModel signature.
-
-        Args:
-            x: Input array of shape matching ``input_shape`` (typically
-                ``(N, frames_in, n_features)``).
-            batch_size: Number of particles (rows) per forward pass.
-            verbose: Unused; kept for Keras ``model.predict`` compatibility.
-
-        Returns:
-            numpy.ndarray: Concatenated model outputs along axis 0.
-        """
-        import numpy as np
-
-        parts = []
-        for start in range(0, x.shape[0], batch_size):
-            batch = x[start : start + batch_size]
-            out = self._fn(**{self._input_key: batch})
-            if isinstance(out, dict):
-                out = out[self._output_key]
-            parts.append(out.numpy())
-        return np.concatenate(parts, axis=0)
+    return RNNModel.load(_resolve_model_path(Path(path)))
 
 
 # --- Private helper functions ------------------------------------------------

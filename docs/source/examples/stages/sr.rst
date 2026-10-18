@@ -10,10 +10,12 @@ DEM frames (Step 3, Eq. 2), and samples ``v_tilde ~ N(0, sigma_v(x)^2)`` per
 axis (Step 4, Eq. 3). The prediction loop combines the two as
 ``x = x_bar + v_tilde * dt_step`` (Eq. 4).
 
-The subpackage mirrors the GRU's, with names that fit a statistical model
-rather than a network: ``model`` (the lookup table and its draw; there are
-no layers, so no "architecture"), ``fitting`` (a closed-form, one-pass
-estimate, so "fitting" rather than "training"), and ``loading``.
+The subpackage mirrors the GRU's ``model`` / ``training`` / ``loading``,
+with one name changed to fit a statistical model: ``fitting`` instead of
+``training``, because sigma_v is a closed-form, one-pass estimate with no
+loss, optimizer, or epochs. ``SRModel`` itself is a lookup table with a
+Gaussian draw, not a network, and plays the same role as ``RNNModel``: hold
+the fitted model, sample (``predict`` for the GRU), and save/load.
 
 Enabling it in prediction
 -------------------------

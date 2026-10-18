@@ -149,21 +149,25 @@ two steps that need both halves sit at the top of `model/`:
   `rnn/loading.py` and `sr/loading.py`.
 
 Neither combined step lives inside `rnn/`, which would hide SR logic in GRU
-files. The SR files are named for what the SR model is, a statistical model
-rather than a network: `model.py`, not `architecture.py` (a per-cell sigma_v
-lookup table with a Gaussian draw has no layers), and `fitting.py`, not
-`training.py` (sigma_v is a closed-form, one-pass estimate with no loss,
-optimizer, or epochs).
+files. Both halves share the same shape: a `model.py` class that holds the
+fitted model, predicts or samples, and saves/loads (`RNNModel`, `SRModel`),
+plus a step that produces it and a `loading.py` that resolves the saved
+path. The one naming difference is deliberate: the SR step is `fitting.py`,
+not `training.py`, because sigma_v is a closed-form, one-pass estimate with
+no loss, optimizer, or epochs. `RNNModel` *wraps* the Keras network rather
+than subclassing `keras.Model`: subclassing would import TensorFlow at
+module import time and make `.keras` files depend on a registered custom
+class.
 
 ```
 model/
 ├── training.py           # train_and_save: Step 3, trains the GRU and fits the SR on the same frames
 ├── prediction.py         # predict_frames: Step 4, sliding-window GRU prediction + SR noise
 ├── rnn/
-│   ├── __init__.py
-│   ├── architecture.py   # build_rnn (GRU → Dense)
+│   ├── __init__.py       # re-exports RNNModel
+│   ├── model.py          # RNNModel: build (GRU → Dense), predict, save/load; legacy SavedModel adapter
 │   ├── training.py       # train_and_save_rnn: Eq. 1, windows, fit, save .keras + .history.json
-│   └── loading.py        # load_rnn, _resolve_model_path, _SavedModelWrapper
+│   └── loading.py        # load_rnn, _resolve_model_path
 └── sr/
     ├── __init__.py       # re-exports SRModel
     ├── model.py          # SRModel: sigma_v grid, sigma_at, sample (Eq. 3), .npz save/load
@@ -176,7 +180,10 @@ inside it, and `stochastic_motion.py` became a single `sr.py` holding an
 `SRModel` class with `fit_sr` / `fit_sr_from_config`, `sample`, and
 `save`/`load`. Training and prediction were then lifted out of `rnn/`
 because both combine the two halves, `sr.py` was split into the `sr/`
-subpackage above, and the unused `fit_sr_from_config` was dropped.)
+subpackage above, and the unused `fit_sr_from_config` was dropped.
+Finally `rnn/architecture.py`'s `build_rnn` became `RNNModel.build` in
+`rnn/model.py`, absorbing the SavedModel adapter from `loading.py`, so both
+halves expose one model class.)
 
 `rnn/training.py` also changes behavior, not just location: `train_and_save`
 currently plots the loss curve itself, inline, from the `History` object

@@ -9,6 +9,7 @@ import pytest
 
 from bppm_dem_sm.config import ExperimentConfig, StochasticOptions
 from bppm_dem_sm.model import training
+from bppm_dem_sm.model.rnn import RNNModel
 from bppm_dem_sm.model.rnn import training as rnn_training
 from bppm_dem_sm.model.sr import SRModel
 
@@ -23,8 +24,8 @@ class _StubHistory:
         self.history = history
 
 
-class _StubModel:
-    """Keras-model stand-in: fixed loss history, empty file on ``save``."""
+class _StubNetwork:
+    """Keras-network stand-in: fixed loss history, empty file on ``save``."""
     def summary(self):
         pass
 
@@ -45,13 +46,13 @@ def test_train_and_save_persists_gru_history_and_sr(tmp_path, monkeypatch):
     for i in range(3):
         write_frame(train_dir / f"frame_{i:05d}.parquet", ids, np.zeros((4, 3)), np.full(4, 0.1))
 
-    stub_model = _StubModel()
-    monkeypatch.setattr(rnn_training, "build_rnn", lambda *a, **k: stub_model)
+    stub = _StubNetwork()
+    monkeypatch.setattr(rnn_training.RNNModel, "build", lambda *a, **k: RNNModel(stub))
 
     config = ExperimentConfig(train_data_dir=train_dir, frames_in=2, model_path=tmp_path / "models" / "m.keras")
     model, history = training.train_and_save(config)
 
-    assert model is stub_model
+    assert model.network is stub
     assert history.history == {"loss": [1.0], "val_loss": [1.1]}
     for name in ("m.keras", "m.history.json", "m.sr.npz"):
         assert (tmp_path / "models" / name).is_file()
@@ -70,7 +71,7 @@ def test_train_and_save_fits_sr_on_dem_velocity_not_displacement(tmp_path, monke
     for i in range(3):
         write_frame(train_dir / f"frame_{i:05d}.parquet", ids, pos0, np.full(10, 0.5), v=v)
 
-    monkeypatch.setattr(rnn_training, "build_rnn", lambda *a, **k: _StubModel())
+    monkeypatch.setattr(rnn_training.RNNModel, "build", lambda *a, **k: RNNModel(_StubNetwork()))
 
     config = ExperimentConfig(
         train_data_dir=train_dir,

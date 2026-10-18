@@ -108,7 +108,8 @@ The return value has one key per stage that ran, plus ``config``:
      - ``{"data_dir": Path, "integrity_report": DataFrame}``.
    * - ``model`` / ``history``
      - ``do_train``
-     - Trained Keras model and its ``History``.
+     - Trained :class:`~bppm_dem_sm.model.rnn.model.RNNModel` (Keras network
+       at ``.network``) and its Keras ``History``.
    * - ``predictions``
      - ``do_predict``
      - ``DataFrame`` with ``frame_pred``, ``step``, ``id``, ``x``, ``y``,

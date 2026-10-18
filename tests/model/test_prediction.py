@@ -8,6 +8,7 @@ import pytest
 from bppm_dem_sm.config import ExperimentConfig, PredictionOptions, StochasticOptions
 from bppm_dem_sm.data_processing import frames as data_io
 from bppm_dem_sm.model import prediction
+from bppm_dem_sm.model.rnn import RNNModel
 from bppm_dem_sm.model.sr import SRModel
 from bppm_dem_sm.model.sr.fitting import fit_and_save_sr
 
@@ -16,8 +17,8 @@ from helpers import write_frame
 # --- Helpers -----------------------------------------------------------------
 
 
-class _IdentityModel:
-    """Stub GRU stand-in: 'predicts' the last input frame's (x, y, z) unchanged."""
+class _IdentityNetwork:
+    """Stub GRU network: 'predicts' the last input frame's (x, y, z) unchanged."""
 
     input_shape = (None, 2, 4)
     output_shape = (None, 3)
@@ -77,6 +78,11 @@ def _make_predict_config(tmp_path, *, stochastic_enabled, seed=0, save_sr=True):
     return config
 
 
+def _identity_rnn():
+    """Return an RNN model whose prediction is the last input frame's position."""
+    return RNNModel(_IdentityNetwork())
+
+
 def _single_cell_model(sigma):
     """Return an SR model whose only cell, (0, 0, 0), has the given sigma vector."""
     return SRModel(cell_size=1.0, origin=np.zeros(3), sigma_by_cell={(0, 0, 0): np.asarray(sigma)})
@@ -103,13 +109,13 @@ def test_experiment_config_roundtrip_with_stochastic():
 
 def test_predict_frames_leaves_positions_unchanged_when_disabled(tmp_path):
     config = _make_predict_config(tmp_path, stochastic_enabled=False, save_sr=False)
-    out = prediction.predict_frames(config, model=_IdentityModel())
+    out = prediction.predict_frames(config, model=_identity_rnn())
     assert np.allclose(out[["x", "y", "z"]].to_numpy(), 0.0)
 
 
 def test_predict_frames_perturbs_positions_after_gru_when_enabled(tmp_path):
     config = _make_predict_config(tmp_path, stochastic_enabled=True, seed=123)
-    out = prediction.predict_frames(config, model=_IdentityModel())
+    out = prediction.predict_frames(config, model=_identity_rnn())
     assert not np.allclose(out[["x", "y", "z"]].to_numpy(), 0.0)
 
 
@@ -119,7 +125,7 @@ def test_predict_frames_adds_v_tilde_times_dt(tmp_path):
     model = _single_cell_model(np.full(3, 2.0))
     model.cell_size = 100.0
 
-    out = prediction.predict_frames(config, model=_IdentityModel(), sr_model=model)
+    out = prediction.predict_frames(config, model=_identity_rnn(), sr_model=model)
 
     expected = model.sample(np.zeros((8, 3)), np.random.default_rng(5)) * 0.05
     assert np.allclose(out[["x", "y", "z"]].to_numpy(), expected)
@@ -128,14 +134,14 @@ def test_predict_frames_adds_v_tilde_times_dt(tmp_path):
 def test_predict_frames_requires_saved_sr_when_enabled(tmp_path):
     config = _make_predict_config(tmp_path, stochastic_enabled=True, save_sr=False)
     with pytest.raises(FileNotFoundError, match="do_train"):
-        prediction.predict_frames(config, model=_IdentityModel())
+        prediction.predict_frames(config, model=_identity_rnn())
 
 
 def test_predict_frames_stochastic_reproducible_with_same_seed(tmp_path):
     config1 = _make_predict_config(tmp_path / "a", stochastic_enabled=True, seed=99)
-    out1 = prediction.predict_frames(config1, model=_IdentityModel())
+    out1 = prediction.predict_frames(config1, model=_identity_rnn())
 
     config2 = _make_predict_config(tmp_path / "b", stochastic_enabled=True, seed=99)
-    out2 = prediction.predict_frames(config2, model=_IdentityModel())
+    out2 = prediction.predict_frames(config2, model=_identity_rnn())
 
     assert np.allclose(out1[["x", "y", "z"]].to_numpy(), out2[["x", "y", "z"]].to_numpy())

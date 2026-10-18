@@ -27,7 +27,8 @@ def train_and_save(config: ExperimentConfig):
         config: Pipeline settings (train data dir, epochs, batch size, etc.).
 
     Returns:
-        tuple: ``(model, history)`` -- the trained Keras model and its
+        tuple: ``(model, history)`` -- the trained
+        :class:`~bppm_dem_sm.model.rnn.model.RNNModel` and the Keras
         ``History`` object.
     """
     pos, rad, _ = data_io.load_frames_stacked(config.train_data_dir, config.frame_glob, config.feature_cols)

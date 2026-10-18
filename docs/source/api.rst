@@ -86,7 +86,7 @@ Model training and prediction
 .. automodule:: bppm_dem_sm.model.rnn
    :no-members:
 
-.. automodule:: bppm_dem_sm.model.rnn.architecture
+.. automodule:: bppm_dem_sm.model.rnn.model
    :members:
    :show-inheritance:
 

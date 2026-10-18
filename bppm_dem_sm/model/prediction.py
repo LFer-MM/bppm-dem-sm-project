@@ -29,7 +29,8 @@ def predict_frames(config: ExperimentConfig, model=None, sr_model=None) -> pd.Da
 
     Args:
         config: Pipeline settings (data dir, model path, window length, dt, etc.).
-        model: Optional pre-loaded model; if ``None``, loads ``config.model_path``.
+        model: Optional pre-loaded :class:`~bppm_dem_sm.model.rnn.model.RNNModel`;
+            if ``None``, loads ``config.model_path``.
         sr_model: Optional fitted :class:`~bppm_dem_sm.model.sr.model.SRModel`; if
             ``None`` and SR is enabled, loads the one saved next to
             ``config.model_path`` by training.
@@ -78,8 +79,7 @@ def predict_frames(config: ExperimentConfig, model=None, sr_model=None) -> pd.Da
         target_frame_idx = start + seq_len + step
         x_in = np.stack(window, axis=1)  # (N, seq_len, F)
 
-        yhat = model.predict(x_in, batch_size=pred.predict_batch_size, verbose=0)
-        xyz = yhat[:, :3].astype(np.float32)
+        xyz = model.predict(x_in, batch_size=pred.predict_batch_size)
 
         if sr_opts.enabled:
             v_tilde = sr_model.sample(window[-1][:, :3], rng)  # Eq. 3, at the current cell

@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 
 from bppm_dem_sm.config import ExperimentConfig, PredictionOptions
-from bppm_dem_sm.model.rnn import training
+from bppm_dem_sm.model.rnn import RNNModel, training
 
 # --- Helpers -----------------------------------------------------------------
 
@@ -19,8 +19,8 @@ class _StubHistory:
         self.history = history
 
 
-class _StubModel:
-    """Keras-model stand-in: fixed loss history, empty file on ``save``."""
+class _StubNetwork:
+    """Keras-network stand-in: fixed loss history, empty file on ``save``."""
     def summary(self):
         pass
 
@@ -40,14 +40,14 @@ def test_train_and_save_rnn_persists_model_and_history_json(tmp_path, monkeypatc
     rad = np.full((3, 4, 1), 0.1)
     vel = np.zeros((3, 4, 3))
 
-    stub_model = _StubModel()
-    monkeypatch.setattr(training, "build_rnn", lambda *a, **k: stub_model)
+    stub = _StubNetwork()
+    monkeypatch.setattr(training.RNNModel, "build", lambda *a, **k: RNNModel(stub))
 
     config = ExperimentConfig(frames_in=2, model_path=tmp_path / "models" / "test_model.keras")
 
     model, history = training.train_and_save_rnn(pos, rad, vel, config)
 
-    assert model is stub_model
+    assert model.network is stub
     assert history.history == {"loss": [1.0, 0.5], "val_loss": [1.1, 0.6]}
     assert (tmp_path / "models" / "test_model.keras").is_file()
 
@@ -62,8 +62,8 @@ def test_train_and_save_rnn_trains_on_local_mean_positions(tmp_path, monkeypatch
     rad = np.full((3, 4, 1), 0.1)
     vel = np.full((3, 4, 3), 2.0)
 
-    stub_model = _StubModel()
-    monkeypatch.setattr(training, "build_rnn", lambda *a, **k: stub_model)
+    stub = _StubNetwork()
+    monkeypatch.setattr(training.RNNModel, "build", lambda *a, **k: RNNModel(stub))
 
     config = ExperimentConfig(
         frames_in=2,
@@ -73,4 +73,4 @@ def test_train_and_save_rnn_trains_on_local_mean_positions(tmp_path, monkeypatch
     training.train_and_save_rnn(pos, rad, vel, config)
 
     # Target is frame 2's local mean component (Eq. 1): 2 - 2.0 * 0.05.
-    assert np.allclose(stub_model.fit_targets, 1.9)
+    assert np.allclose(stub.fit_targets, 1.9)

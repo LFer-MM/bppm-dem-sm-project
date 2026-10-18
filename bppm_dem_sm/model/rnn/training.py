@@ -16,7 +16,7 @@ from pathlib import Path
 
 from ...config import ExperimentConfig
 from ...data_processing import dataset as data_ds
-from .architecture import build_rnn
+from .model import RNNModel
 
 
 def train_and_save_rnn(pos, rad, vel, config: ExperimentConfig):
@@ -36,7 +36,8 @@ def train_and_save_rnn(pos, rad, vel, config: ExperimentConfig):
         config: Pipeline settings (model path, epochs, batch size, etc.).
 
     Returns:
-        tuple: ``(model, history)`` -- the trained Keras model and its
+        tuple: ``(model, history)`` -- the trained
+        :class:`~bppm_dem_sm.model.rnn.model.RNNModel` and the Keras
         ``History`` object.
     """
     train = config.training
@@ -45,17 +46,17 @@ def train_and_save_rnn(pos, rad, vel, config: ExperimentConfig):
     X, y = data_ds.build_supervised_dataset(pos, rad, config.frames_in)
     Xtr, ytr, Xval, yval = data_ds.train_test_split(X, y, train.val_fraction, train.seed)
 
-    model = build_rnn(
+    model = RNNModel.build(
         config.frames_in,
         n_features=X.shape[-1],
         gru_units=train.gru_units,
         dense_units=train.dense_units,
         learning_rate=train.learning_rate,
     )
-    model.summary()
+    model.network.summary()
 
     print("Fitting GRU surrogate...")
-    history = model.fit(
+    history = model.network.fit(
         Xtr, ytr,
         validation_data=(Xval, yval),
         epochs=train.epochs,
@@ -66,8 +67,7 @@ def train_and_save_rnn(pos, rad, vel, config: ExperimentConfig):
     save_path = Path(config.model_path)
     if save_path.suffix != ".keras":
         save_path = save_path.with_suffix(".keras")
-    save_path.parent.mkdir(parents=True, exist_ok=True)
-    model.save(str(save_path))
+    model.save(save_path)
     print(f"Saved model to: {save_path}")
 
     history_path = save_path.with_suffix(".history.json")

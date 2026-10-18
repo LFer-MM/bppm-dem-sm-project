@@ -2,7 +2,7 @@
 
 Each half is its own subpackage, split by concern:
 
-- :mod:`bppm_dem_sm.model.rnn` -- the GRU: architecture, training, loading.
+- :mod:`bppm_dem_sm.model.rnn` -- the GRU: model, training, loading.
 - :mod:`bppm_dem_sm.model.sr` -- the SR model: model, fitting, loading.
 
 The two steps that combine both halves live at this level:

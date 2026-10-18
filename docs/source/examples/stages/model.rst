@@ -5,34 +5,40 @@ The surrogate has two halves, each a subpackage split by concern:
 
 - :mod:`bppm_dem_sm.model.rnn` -- the GRU that predicts each particle's
   next ``(x, y, z)`` from its last ``frames_in`` steps of ``(x, y, z, r)``:
-  ``architecture``, ``training``, ``loading``.
+  ``model``, ``training``, ``loading``.
 - :mod:`bppm_dem_sm.model.sr` -- the stochastic random (SR) model:
   ``model``, ``fitting``, ``loading``; see :doc:`sr`.
 
 The two steps that use both halves sit at the top of the package:
 :mod:`bppm_dem_sm.model.training` (``do_train``) and
 :mod:`bppm_dem_sm.model.prediction` (``do_predict``). TensorFlow is imported
-only when a GRU function is called.
+only when a GRU method is called.
 
 Building the network
 --------------------
 
+:class:`~bppm_dem_sm.model.rnn.model.RNNModel` is the GRU's counterpart to
+:class:`~bppm_dem_sm.model.sr.model.SRModel`: one object with ``build``,
+``predict``, and ``save``/``load``. It wraps the Keras network (it does not
+subclass it), so saved files stay plain ``.keras`` models.
+``RNNModel.build`` creates
 ``Input(frames_in, n_features) -> GRU -> Dense(tanh) -> Dense(3)``,
 compiled with Adam and MSE:
 
 .. code-block:: python
 
-   from bppm_dem_sm.model.rnn.architecture import build_rnn
+   from bppm_dem_sm.model.rnn import RNNModel
 
-   model = build_rnn(frames_in=15, n_features=4, gru_units=20, dense_units=15, learning_rate=0.01)
-   model.summary()
+   model = RNNModel.build(frames_in=15, n_features=4, gru_units=20, dense_units=15, learning_rate=0.01)
+   model.network.summary()
 
-Use it directly when fitting on your own ``(X, y)``, e.g. from
-:doc:`data_processing`:
+``model.network`` is the Keras model itself, for anything Keras-specific,
+such as fitting on your own ``(X, y)``, e.g. from :doc:`data_processing`:
 
 .. code-block:: python
 
-   model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=5, batch_size=500)
+   model.network.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=5, batch_size=500)
+   xyz = model.predict(X_val)  # (N, 3) float32 next positions
 
 Training and saving
 -------------------
@@ -70,7 +76,8 @@ Loading a saved model
 ---------------------
 
 Accepts ``.keras`` and ``.h5`` files, and legacy TensorFlow SavedModel
-directories (wrapped so they expose the same ``predict``):
+directories (behind a predict-only adapter, so ``model.network`` has no
+``summary``/``fit`` there); either way you get an ``RNNModel``:
 
 .. code-block:: python
 
