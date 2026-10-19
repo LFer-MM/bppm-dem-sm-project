@@ -80,8 +80,8 @@ the intermediate volumes.)
 
 "The charge reproduces SAG_B, the reference mill: Jb = 17 %, Jc = 26 % (plant
 data); SAG_A and SAG_C are evidence that these fillings are typical (Jb
-15.2-18.5 %, Jc 24.9-35.1 % across the three mills). Steel
-balls and 2.75 in rock (2:1, the ratio used by Kishida et al. 2025). Particle
+15.2-18.5 %, Jc 24.9-35.1 % across the three mills). The charge uses 5.5 in
+steel balls and 2.75 in rock (2:1, the ratio used by Kishida et al. 2025). Particle
 numbers follow N = phi J V / v with the packing fraction phi measured in the
 simulated slice (0.5617), since wall effects in a 0.375 m slice make it lower
 than bulk binary packings (0.58-0.62, Shi & Zhang 2008)."
