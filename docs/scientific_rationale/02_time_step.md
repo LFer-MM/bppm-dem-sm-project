@@ -118,8 +118,8 @@ The critical-step formulas are **not** the basis of the decision: they bound
 | t_c = 2 / omega_max (generic stability limit, undamped) | Stability bound | Boemer & Ponthot 2017 §2.2.3, PDF p5 (citing their ref. [30]) | **Yes** |
 | P-wave step. **YADE's definition: dt = r / sqrt(E / rho)**, with E directly. PPT slides 9-11 use E_eff = E / (1 - nu^2), which gives a step 3-4 % smaller than YADE's | Stability bound | YADE docs 2021 (3rd ed., the latest official edition): §2.1 "DEM formulation", "Stability considerations -- Critical timestep", Eqs. (2.12)-(2.13), printed p. 72 (PDF p79); `yade.utils.SpherePWaveTimeStep` entry, printed p. 838 (PDF p845), whose example (r = 1e-3 m, rho = 2400, E = 30e9 -> 2.83e-7 s) confirms plain E | **Yes** (`4NJP35ET`) |
 | Rayleigh step dt_R = (pi R / beta) sqrt(rho / G), beta = 0.8766 + 0.163 nu | Stability bound commonly used for Hertz-Mindlin | Li et al. 2005, end of §2, Eqs. (8)-(10), j.221 (PDF p3): beta from the exact Rayleigh-wave equation (9), approximated by Eq. (10) with **0.163** (later papers print 0.1631); R = average particle radius. Same formula in Nan et al. 2022, Eq. (71), manuscript p18, credited to Raji (1999) | **Yes** (`BN556RC8`, `M78ZRT88`) |
-| Hertz impact duration t_c = 2.87 (m*^2 / (R* E*^2 v))^(1/5) = 2.94 delta_max / v | Steps per collision (the governing criterion) | Johnson 1985, §11.4 "Elastic impact", (a) "Collinear impact of spheres", **Eq. (11.24)**, book p. 353 (PDF p363) | **Yes** (`LECT8BKG`) |
-| Hertz maximum overlap delta_max = (15 m* v^2 / (16 E* R*^0.5))^(2/5) | Peak overlap ([03](03_stiffness_young_modulus.md)) | Johnson 1985, **Eq. (11.22)**, book p. 353 (PDF p363); force law P = (4/3) R^(1/2) E* delta^(3/2) and the definitions 1/R = 1/R1 + 1/R2, 1/E* = (1-nu1^2)/E1 + (1-nu2^2)/E2, 1/m = 1/m1 + 1/m2 in **Eq. (11.20)**, book p. 352 (PDF p362), from Eq. (4.23) of Ch. 4 | **Yes** (`LECT8BKG`) |
+| Hertz impact duration t_c = 2.87 (m*^2 / (R* E*^2 v))^(1/5) = 2.94 delta_max / v | Steps per collision (the governing criterion) | Johnson 1985, §11.4 "Elastic impact", (a) "Collinear impact of spheres", **Eq. (11.24)**, book p. 353 (PDF p363) | **Yes** (`PDKNRX4P`) |
+| Hertz maximum overlap delta_max = (15 m* v^2 / (16 E* R*^0.5))^(2/5) | Peak overlap ([03](03_stiffness_young_modulus.md)) | Johnson 1985, **Eq. (11.22)**, book p. 353 (PDF p363); force law P = (4/3) R^(1/2) E* delta^(3/2) and the definitions 1/R = 1/R1 + 1/R2, 1/E* = (1-nu1^2)/E1 + (1-nu2^2)/E2, 1/m = 1/m1 + 1/m2 in **Eq. (11.20)**, book p. 352 (PDF p362), from Eq. (4.23) of Ch. 4 | **Yes** (`PDKNRX4P`) |
 | Linear-spring contact time / maximum overlap | Used by the mill papers (linear models) | Govender 2015 §1.5 Eq. (7), PDF p6; Boemer & Ponthot 2017 Eqs. (8)-(9), PDF p8 | Yes (but for the linear, not the Hertz, model) |
 
 Internal check of the Hertz coefficients (independent of any source): with
@@ -236,7 +236,5 @@ interval at which frames are stored for the surrogate model (Kishida et al.
 - Restitution recovery and energy balance (see [16](16_validation_checks.md)).
 - ~~Add the formula sources to Zotero~~ -- done 2026-10-19; all formula
   locations verified (see the
-  [README](README.md#references-added-on-2026-10-19-verified-in-the-pdfs)).
-  Remaining housekeeping: give the Johnson PDF a parent record in Zotero.
-- Correct PPT slides 9-11: YADE's `PWaveTimeStep` uses E, not
+  [README](README.md#references-added-on-2026-10-19-verified-in-the-pdfs)).- Correct PPT slides 9-11: YADE's `PWaveTimeStep` uses E, not
   E / (1 - nu^2).

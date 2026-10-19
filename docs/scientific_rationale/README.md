@@ -81,7 +81,7 @@ the printed page ("j.").
 | **Shigley** | R.G. Budynas, J.K. Nisbett, *Diseno en ingenieria mecanica de Shigley*, 8th ed. (Spanish), McGraw-Hill Interamericana, 2008, ISBN 978-970-10-6404-7 (translation of *Shigley's Mechanical Engineering Design*, 8th ed., 2008) | -- | `2WRCXH99` / `4RP3VQXB` (also `V3V5BMNV`, English edition, no file) | inside-cover table = PDF p3 |
 | **Shi & Zhang 2008** | Y. Shi, Y. Zhang, *Simulation of random packing of spherical particles with different size distributions*, Appl. Phys. A 92 (2008) 621-626 | 10.1007/s00339-008-4547-6 | `DWL7JH3T` / `ZNTAYS7X` | j. = PDF p + 620 |
 | **Brouwers 2024** | H.J.H. Brouwers, *Random packing fraction of binary similar particles: Onsager's excluded volume model revisited*, Physics-Uspekhi 67(5) (2024) 510-529 | 10.3367/UFNe.2023.11.039606 | `SFYYQ45R` / `TS9GXXKP` | The PDF is the **arXiv:2209.09873v5 preprint** (27 Jun 2024): page numbers are arXiv pages |
-| **Johnson 1985** | K.L. Johnson, *Contact Mechanics*, Cambridge University Press, 1985 (digital ed. 2012) | 10.1017/CBO9781139171731 | -- / `LECT8BKG` (**standalone PDF without a parent record**, see below) | book p = PDF p - 10 (scanned, no text layer) |
+| **Johnson 1985** | K.L. Johnson, *Contact Mechanics*, 1st ed., Cambridge University Press, 1985 (digital ed. 2012), ISBN 978-0-521-34796-9 | 10.1017/CBO9781139171731 | `PDKNRX4P` / `LECT8BKG` | book p = PDF p - 10 (scanned, no text layer) |
 | **Li et al. 2005** | Y. Li, Y. Xu, C. Thornton, *A comparison of discrete element simulations and experiments for 'sandpiles' composed of spherical particles*, Powder Technol. 160(3) (2005) 219-228 | 10.1016/j.powtec.2005.09.002 | `BN556RC8` / `6CHXZ76U` | j. = PDF p + 218 |
 | **Nan et al. 2022** | W. Nan, W.P. Goh, M.T. Rahman, *Elasto-plastic and adhesive contact: an improved linear model and its application*, Powder Technol. 407 (2022) 117634 | 10.1016/j.powtec.2022.117634 | `M78ZRT88` / `MEHLVFKI` | The PDF is the **author manuscript** (49 pages, same text as arXiv:2202.09520): page numbers are manuscript pages |
 | **McLaskey & Glaser 2010** | G.C. McLaskey, S.D. Glaser, *Hertzian impact: Experimental study of the force pulse and resulting stress waves*, J. Acoust. Soc. Am. 128(3) (2010) 1087-1096 | 10.1121/1.3466847 | `J45IS7SQ` / `PWTRWT5T` | j. = PDF p + 1086 |
@@ -102,10 +102,8 @@ Govender et al. 2016 (Blaze-DEMGPU framework, SoftwareX 5 (2016) 62-66,
 | YADE docs 2021 | P-wave critical step used by YADE | Ch. 2 "Yade for users", §2.1 "DEM formulation", "Stability considerations -- Critical timestep", Eqs. (2.12)-(2.13), printed p. 72 (PDF p79); `yade.utils.SpherePWaveTimeStep(radius, density, young)`: "Delta t_c = r / sqrt(E / rho)", printed p. 838 (PDF p845), example `SpherePWaveTimeStep(1e-3, 2400, 30e9)` = 2.83e-7 s (confirms plain E) |
 | McLaskey & Glaser 2010 | Secondary pointer to Johnson | Reference list, PDF p10: "Johnson, K. (1985). Contact Mechanics (Cambridge University Press, Cambridge), pp. 351-369"; derivation pointer in section "B. The source function and Hertzian impact", PDF p3 (j.1089) |
 
-**Zotero housekeeping:** the Johnson PDF (`LECT8BKG`) is a standalone
-attachment with no bibliographic record. Create a parent item from the DOI
-(Add Item by Identifier: `10.1017/CBO9781139171731`) and drag the PDF onto
-it, so the reference exports with author, title and publisher.
+The Johnson PDF (`LECT8BKG`) is attached to the book record `PDKNRX4P`
+(created from the DOI via Crossref; verified 2026-10-19).
 
 ## Citation problems found in the PPT
 
