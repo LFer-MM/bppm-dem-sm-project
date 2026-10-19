@@ -116,10 +116,10 @@ The critical-step formulas are **not** the basis of the decision: they bound
 | Formula | Role here | Source | In Zotero? |
 |---|---|---|---|
 | t_c = 2 / omega_max (generic stability limit, undamped) | Stability bound | Boemer & Ponthot 2017 §2.2.3, PDF p5 (citing their ref. [30]) | **Yes** |
-| P-wave step. **YADE's definition: dt = r / sqrt(E / rho)** with E directly (`SpherePWaveTimeStep` docstring; `PWaveTimeStep` does the same over all bodies). PPT slides 9-11 use E_eff = E / (1 - nu^2), which gives a step 3-4 % smaller than YADE's | Stability bound | Smilauer et al., *Yade documentation*, 3rd ed. (2021), DOI 10.5281/zenodo.5705394 (open); PPT ref. [8] is the 2nd ed. (2015), DOI 10.5281/zenodo.34073 (open). Online API docs: yade-dem.org/doc/yade.utils.html | **No -- add (free PDF)** |
-| Rayleigh step dt_R = pi r sqrt(rho / G) / (0.1631 nu + 0.8766) | Stability bound commonly used for Hertz-Mindlin | Usually attributed to Y. Li, Y. Xu, C. Thornton, *A comparison of discrete element simulations and experiments for 'sandpiles' composed of spherical particles*, Powder Technol. 160 (2005) 219-228, DOI 10.1016/j.powtec.2005.09.002 (subscription; formula **not yet read in the original**). Verified open-access statement: W. Nan, W.P. Goh, M.T. Rahman, *Elasto-plastic and adhesive contact: an improved linear model and its application*, Powder Technol. 407 (2022) 117634, DOI 10.1016/j.powtec.2022.117634 (arXiv:2202.09520), Eq. (71), which credits Raji (1999, PhD thesis, Newcastle) | **No -- add Li et al. 2005 (and Nan et al. 2022 as open copy)** |
-| Hertz impact duration t_c = 2.87 (m*^2 / (R* E*^2 v))^(1/5), from t_c = 2.94 delta_max / v | Steps per collision (the governing criterion) | K.L. Johnson, *Contact Mechanics*, Cambridge University Press (1985; digital ed. 2012), DOI 10.1017/CBO9781139171731, Ch. 11 "Dynamic effects and impact", pp. 340-373 (chapter range from Cambridge Core); impact of spheres within pp. 351-369 (as cited by McLaskey & Glaser, J. Acoust. Soc. Am. 128 (2010)); exact equation numbers to be checked in the book | **No -- add Johnson 1985** |
-| Hertz maximum overlap delta_max = (15 m* v^2 / (16 E* R*^0.5))^(2/5) | Peak overlap ([03](03_stiffness_young_modulus.md)) | Same chapter of Johnson 1985; Hertz force law F = (4/3) E* R*^(1/2) delta^(3/2) in Ch. 4 "Normal contact of elastic solids -- Hertz theory", pp. 84-106 | **No** |
+| P-wave step. **YADE's definition: dt = r / sqrt(E / rho)**, with E directly. PPT slides 9-11 use E_eff = E / (1 - nu^2), which gives a step 3-4 % smaller than YADE's | Stability bound | YADE docs 2021 (3rd ed., the latest official edition): §2.1 "DEM formulation", "Stability considerations -- Critical timestep", Eqs. (2.12)-(2.13), printed p. 72 (PDF p79); `yade.utils.SpherePWaveTimeStep` entry, printed p. 838 (PDF p845), whose example (r = 1e-3 m, rho = 2400, E = 30e9 -> 2.83e-7 s) confirms plain E | **Yes** (`4NJP35ET`) |
+| Rayleigh step dt_R = (pi R / beta) sqrt(rho / G), beta = 0.8766 + 0.163 nu | Stability bound commonly used for Hertz-Mindlin | Li et al. 2005, end of §2, Eqs. (8)-(10), j.221 (PDF p3): beta from the exact Rayleigh-wave equation (9), approximated by Eq. (10) with **0.163** (later papers print 0.1631); R = average particle radius. Same formula in Nan et al. 2022, Eq. (71), manuscript p18, credited to Raji (1999) | **Yes** (`BN556RC8`, `M78ZRT88`) |
+| Hertz impact duration t_c = 2.87 (m*^2 / (R* E*^2 v))^(1/5) = 2.94 delta_max / v | Steps per collision (the governing criterion) | Johnson 1985, §11.4 "Elastic impact", (a) "Collinear impact of spheres", **Eq. (11.24)**, book p. 353 (PDF p363) | **Yes** (`LECT8BKG`) |
+| Hertz maximum overlap delta_max = (15 m* v^2 / (16 E* R*^0.5))^(2/5) | Peak overlap ([03](03_stiffness_young_modulus.md)) | Johnson 1985, **Eq. (11.22)**, book p. 353 (PDF p363); force law P = (4/3) R^(1/2) E* delta^(3/2) and the definitions 1/R = 1/R1 + 1/R2, 1/E* = (1-nu1^2)/E1 + (1-nu2^2)/E2, 1/m = 1/m1 + 1/m2 in **Eq. (11.20)**, book p. 352 (PDF p362), from Eq. (4.23) of Ch. 4 | **Yes** (`LECT8BKG`) |
 | Linear-spring contact time / maximum overlap | Used by the mill papers (linear models) | Govender 2015 §1.5 Eq. (7), PDF p6; Boemer & Ponthot 2017 Eqs. (8)-(9), PDF p8 | Yes (but for the linear, not the Hertz, model) |
 
 Internal check of the Hertz coefficients (independent of any source): with
@@ -129,16 +129,21 @@ t_c = 2.94 delta_max / v; substituting, 2.94 x (15/16)^(2/5) = 2.87. Other
 coefficients seen in the literature (2.94, 3.21) are the same law written with
 a different stiffness constant.
 
-Until these references are in Zotero and checked, the Hertz numbers in this
-file and in [03](03_stiffness_young_modulus.md) rest on textbook formulas whose
-exact equation location has not been verified.
+All formulas used in this file and in [03](03_stiffness_young_modulus.md)
+are now located in a source held in Zotero (verified 2026-10-19). Nan et al.
+2022 (manuscript p18) add that the Rayleigh step "only provides the maximum
+limit of the time step" and recommend Delta t = 0.01-0.1 Delta T_R to
+resolve the details of their elasto-plastic adhesive contact (e.g. the
+pull-off stage, their Fig. 1). That model has no adhesion here, so the
+range is context rather than a criterion; dt = 2.5e-5 s is 0.14 Delta T_R,
+and the governing check remains the steps-per-collision criterion (E2).
 
 ### Critical step with the slide-12 moduli
 
 | Estimate | Steel (r = 0.06985) | Rock (r = 0.034925) |
 |---|---|---|
 | PPT formula r sqrt(rho (1 - nu^2) / E) | 3.25e-5 s | 3.25e-5 s |
-| Rayleigh pi r sqrt(rho / G) / (0.1631 nu + 0.8766), G = E / (2 (1 + nu)) | 1.86e-4 s | 1.82e-4 s |
+| Rayleigh pi r sqrt(rho / G) / (0.8766 + 0.163 nu) (Li et al. 2005, Eq. 10), G = E / (2 (1 + nu)) | 1.86e-4 s | 1.82e-4 s |
 
 By the PPT's own formula, **dt = 1e-4 s is 3.1x the critical step** of the
 material set chosen on slide 12. (Slide 9's 1e-4 target was paired with the
@@ -229,10 +234,9 @@ interval at which frames are stored for the surrogate model (Kishida et al.
 - dt-halving test: run 2.5e-5 vs 1.25e-5 s for 2 revolutions; toe, shoulder
   and power must agree within the run-to-run scatter.
 - Restitution recovery and energy balance (see [16](16_validation_checks.md)).
-- **Add the formula sources to Zotero** (identified 2026-10-18, listed in the
-  [README](README.md#references-to-add-to-zotero)): YADE documentation 3rd ed.
-  (P-wave step), Li, Xu & Thornton 2005 (Rayleigh step; Nan et al. 2022 as
-  open-access confirmation), Johnson 1985 Ch. 11 (Hertz impact). Then verify
-  the exact equation locations and update this table.
+- ~~Add the formula sources to Zotero~~ -- done 2026-10-19; all formula
+  locations verified (see the
+  [README](README.md#references-added-on-2026-10-19-verified-in-the-pdfs)).
+  Remaining housekeeping: give the Johnson PDF a parent record in Zotero.
 - Correct PPT slides 9-11: YADE's `PWaveTimeStep` uses E, not
   E / (1 - nu^2).

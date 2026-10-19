@@ -80,8 +80,9 @@ diameter. The papers quote overlap relative to the **diameter**.
 ## Analysis
 
 Estimated **peak** overlaps for elastic Hertz impacts with the slide-12 set
-(delta_max = (15 m* v^2 / (16 E* R*^0.5))^(2/5), relative to the smaller
-diameter):
+(delta_max = (15 m* v^2 / (16 E* R*^0.5))^(2/5), Johnson 1985 Eq. (11.22),
+book p. 353, with E*, R*, m* as defined in Eq. (11.20), p. 352; relative to
+the smaller diameter):
 
 | Pair | 1 m/s | 5 m/s | 8 m/s | 12 m/s | **15.2 m/s (worst case)** |
 |---|---|---|---|---|---|
