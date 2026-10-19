@@ -4,7 +4,9 @@
 
 **9 rpm** (SAG_B), i.e. **72.8 % of critical speed**. Rotation direction:
 counter-clockwise seen from +Z (positive angular velocity in YADE), so the
-charge rises on the +X side.
+charge rises on the +X side. Angles are measured counter-clockwise from the
+3 o'clock position (+X); fixed 2026-10-18, see [15](15_calibration_targets.md).
+The liner is symmetric, so the orientation is a free choice in simulation.
 
 ## Evidence
 

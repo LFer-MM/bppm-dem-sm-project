@@ -29,14 +29,14 @@ file; "j." is the printed journal page. Slide numbers refer to
 | 05 | [05_friction.md](05_friction.md) | Calibrate; baseline mu = 0.5, pair-wise and liner friction as calibration variables |
 | 06 | [06_rolling_resistance.md](06_rolling_resistance.md) | Add rolling resistance for rock (spheres stand in for angular ore); calibrate |
 | 07 | [07_restitution.md](07_restitution.md) | e = 0.3 / 0.5 / 0.8 (rock-rock / rock-steel / steel-steel) |
-| 08 | [08_density.md](08_density.md) | 7850 / 2650 kg/m^3; not a calibration variable |
+| 08 | [08_density.md](08_density.md) | 7850 / 2650 kg/m^3 (literature; no plant measurement); not calibrated; sensitivity 2650 vs 2850 |
 | 09 | [09_poisson_ratio.md](09_poisson_ratio.md) | 0.292 steel, 0.25 rock |
 | 10 | [10_mill_geometry.md](10_mill_geometry.md) | STL slice, 30 lifters, D = 11.8375 m, 0.375 m depth; test end-wall friction |
 | 11 | [11_mill_speed.md](11_mill_speed.md) | 9 rpm = 72.8 % of critical |
 | 12 | [12_charge_fill_and_particles.md](12_charge_fill_and_particles.md) | Jb = 17 %, Jc = 26 %, 2:1 sizes, counts from measured in-slice packing |
-| 13 | [13_initial_conditions.md](13_initial_conditions.md) | SIC / RMIC at rest, damped settle, velocities zeroed; SIC orientation to decide |
+| 13 | [13_initial_conditions.md](13_initial_conditions.md) | SIC / RMIC at rest, damped settle, velocities zeroed; SIC = rock bottom, balls top |
 | 14 | [14_dataset_runs_and_recording.md](14_dataset_runs_and_recording.md) | Record from rest; durations in revolutions; training window after measured quasi-steady state |
-| 15 | [15_calibration_targets.md](15_calibration_targets.md) | Toe / shoulder (plant convention) and, if available, power |
+| 15 | [15_calibration_targets.md](15_calibration_targets.md) | Calibrate toe 215 / shoulder 24.6 deg on SAG_B (0 deg at 3 o'clock, CCW), validate on SAG_A / SAG_C; power as consistency check |
 | 16 | [16_validation_checks.md](16_validation_checks.md) | Acceptance tests every run must pass |
 
 ## Source registry

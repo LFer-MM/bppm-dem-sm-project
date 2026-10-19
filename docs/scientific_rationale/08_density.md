@@ -5,9 +5,13 @@
 | Material | Density |
 |---|---|
 | Steel (balls) | **7850 kg/m^3** |
-| Rock (ore) | **2650 kg/m^3**, or the measured ore SG of the plant if available |
+| Rock (ore) | **2650 kg/m^3** (literature value; no plant measurement available -- confirmed 2026-10-18) |
 
-Densities are **physical inputs, not calibration variables**.
+These are the `density` values of the YADE `FrictMat` materials.
+Densities are **physical inputs, not calibration variables**. Because the ore
+value comes from the literature rather than from SAG_B, it is backed by a
+one-off sensitivity run (2650 vs. 2850 kg/m^3, the Los Bronces value of
+Govender 2015) instead of a measurement.
 
 ## Evidence
 
@@ -53,4 +57,6 @@ calibration is carried by friction and rolling resistance."
 
 ## Open items
 
-- Obtain the measured ore SG of SAG_B if possible.
+- Sensitivity run: rock density 2650 vs. 2850 kg/m^3 at the calibrated
+  parameters, 3 revolutions; toe, shoulder and power must stay within the
+  replicate scatter. If they do not, density becomes a stated limitation.

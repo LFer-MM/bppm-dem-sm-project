@@ -16,6 +16,8 @@ written to the run manifest so each dataset can be defended individually.
 | V9 | dt sensitivity (once) | dt vs dt/2: toe, shoulder, power within run-to-run scatter | [02](02_time_step.md) |
 | V10 | Stiffness sensitivity (once) | E x 0.5 and E x 2: toe, shoulder, power within scatter | Boemer abstract and §3.1.2; [03](03_stiffness_young_modulus.md) |
 | V11 | End-wall sensitivity (once) | Liner-friction vs frictionless end walls | [10](10_mill_geometry.md) |
+| V11b | Ore-density sensitivity (once) | 2650 vs 2850 kg/m^3: toe, shoulder, power within scatter | [08](08_density.md) |
+| V11c | Independent validation (once) | Calibrated parameters frozen; SAG_A and SAG_C toe / shoulder at their own Jb / Jc / speed | Boemer & Ponthot Table 1, PDF p3 (calibrate on case 1, validate on 2-4); [15](15_calibration_targets.md) |
 | V12 | Replicate scatter | Spread of toe / shoulder / Lacey curves over seeds reported | Owen & Cleary Table 5 / §4.1 (4 centre-point replicates, PDF p4) |
 
 ## Notes
