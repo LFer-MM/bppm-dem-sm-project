@@ -36,7 +36,7 @@ file; "j." is the printed journal page. Slide numbers refer to
 | 12 | [12_charge_fill_and_particles.md](12_charge_fill_and_particles.md) | Jb = 17 %, Jc = 26 %, 2:1 sizes, counts from measured in-slice packing |
 | 13 | [13_initial_conditions.md](13_initial_conditions.md) | SIC / RMIC at rest, damped settle, velocities zeroed; SIC = rock bottom, balls top |
 | 14 | [14_dataset_runs_and_recording.md](14_dataset_runs_and_recording.md) | Record from rest; durations in revolutions; training window after measured quasi-steady state |
-| 15 | [15_calibration_targets.md](15_calibration_targets.md) | Calibrate toe 215 / shoulder 24.6 deg on SAG_B (0 deg at 3 o'clock, CCW), validate on SAG_A / SAG_C; power as consistency check |
+| 15 | [15_calibration_targets.md](15_calibration_targets.md) | Match SAG_B bulk toe 215 / shoulder 24.6 deg (0 deg at 3 o'clock, CCW); three mills show it is typical; power only for energy balance / sanity check |
 | 16 | [16_validation_checks.md](16_validation_checks.md) | Acceptance tests every run must pass |
 
 ## Source registry
