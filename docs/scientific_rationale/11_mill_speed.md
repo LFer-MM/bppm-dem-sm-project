@@ -2,7 +2,9 @@
 
 ## Decision
 
-**9 rpm** (SAG_B), i.e. **72.8 % of critical speed**. Rotation direction:
+**9 rpm**, the median speed of **SAG_B, the reference mill**, i.e.
+**72.8 % of critical speed**. SAG_A and SAG_C are evidence that this value is
+typical: across the three mills the usual range is 8.6-10 rpm (slide 4). Rotation direction:
 counter-clockwise seen from +Z (positive angular velocity in YADE), so the
 charge rises on the +X side. Angles are measured counter-clockwise from the
 3 o'clock position (+X); fixed 2026-10-18, see [15](15_calibration_targets.md).
@@ -50,7 +52,9 @@ surrogate method is transferable, but time scales must be compared in
 
 ## Verdict and how to defend it
 
-"The mill turns at 9 rpm, the median operating speed of SAG_B (slide 4),
-which is 72.8 % of the critical speed of the 11.84 m mill -- the same regime
+"The mill turns at 9 rpm, the median operating speed of SAG_B, the reference
+mill; SAG_A and SAG_C are evidence that this value is typical, as the three
+mills normally operate between 8.6 and 10 rpm (slide 4). 9 rpm is 72.8 % of
+the critical speed of the 11.84 m mill -- the same regime
 as the SAG DEM studies of Owen & Cleary (75 %) and Govender et al. (10 rpm,
 ~75 %)."

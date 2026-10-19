@@ -9,12 +9,13 @@ Z in YADE). The charge rises on the right: shoulder in the first quadrant
 (~25 deg), toe in the third quadrant (~215 deg). Liner designs are
 symmetric, so this orientation is a free choice in simulation.
 
-**Role of the three plant mills.** SAG_A, SAG_B and SAG_C have slightly
-different designs and dimensions. They are used to show that the selected
-operating point is **representative of normal SAG operation** (speed, fill,
-toe and shoulder ranges), not as independent validation cases. One mill,
-**SAG_B**, is selected as the reference, and the simulation is compared to
-it.
+**Role of the three plant mills.** **SAG_B is the reference**: its operating
+point sets the simulation and its charge-shape angles are the targets the
+simulation is compared to. **SAG_A and SAG_C are evidence that the selected
+values are typical**: their designs and dimensions differ slightly, so they
+are not simulated or used as validation cases, but their box plots show that
+SAG_B's speed, fill, toe and shoulder sit inside the normal operating ranges
+of SAG mills.
 
 **Calibration target (SAG_B, at SAG_B's operating point Jb 17 %, Jc 26 %,
 9 rpm):**
@@ -35,9 +36,10 @@ equivalent to Owen & Cleary's visual bulk toe / shoulder (§4.1). The liner
 contact-force distribution (Owen & Cleary §4.3) is a cross-check, not the
 primary measure, because it mainly detects the impact toe.
 
-**Power:** not a calibration target. Computed in YADE for the energy balance
-([16](16_validation_checks.md), V4) and, if plant data is available, used
-only as an order-of-magnitude sanity check (see analysis).
+**Power:** not a calibration target and no plant power data is used
+(decided 2026-10-18). Power is computed in YADE only for the internal energy
+balance ([16](16_validation_checks.md), V4). The analysis below records why
+plant power would not be a determining target.
 
 ## Evidence
 
@@ -116,34 +118,28 @@ for three reasons:
 3. **Different designs.** With slightly different mills, cross-mill power
    ratios do not cancel the systematic factors either.
 
-What power **is** good for:
-
-- **Energy balance inside the simulation** (V4): supplied energy (from the
-  YADE contact torque) vs. collisional dissipation. This needs no plant data
-  and is a strong numerical-quality check.
-- **Order-of-magnitude sanity check** against SAG_B, if available: an error
-  of 30 %+ would reveal gross mistakes (wrong fill, density, residual
-  artificial damping) that toe / shoulder might not expose. For this, SAG_B's
-  average power and belly length are enough; data from all three mills adds
-  little.
+What power **is** used for: the **energy balance inside the simulation**
+(V4) -- supplied energy (from the YADE contact torque) vs. collisional
+dissipation. This needs no plant data and is a strong numerical-quality
+check. Plant power would at most have offered an order-of-magnitude sanity
+check; it is not pursued.
 
 ## Verdict and how to defend it
 
-"The operating point (9 rpm, Jb 17 %, Jc 26 %) and charge-shape targets were
-taken from SAG_B; the box plots of three operating SAG mills show these values
-are typical of normal operation (speed 8.6-10 rpm, bulk toe 206-215 deg,
-shoulder 24.6-38.2 deg). Contact parameters were calibrated so the simulated
+"SAG_B is the reference mill: the operating point (9 rpm, Jb 17 %, Jc 26 %)
+and the charge-shape targets were taken from it. SAG_A and SAG_C are evidence
+that the selected values are typical: their operating data place SAG_B's
+values within the normal ranges of SAG operation (speed 8.6-10 rpm, bulk toe
+206-215 deg, shoulder 24.6-38.2 deg). Contact parameters were calibrated so the simulated
 steady-state bulk toe and shoulder, read from the position-density contour
 (Boemer & Ponthot 2017, §2.3), fall within the SAG_B interquartile ranges
 (215 deg, 24.6 deg; counter-clockwise from 3 o'clock). These targets lie in
 or at the edge of the ranges of Owen & Cleary's SAG simulations in the same
-convention. Power was used for the internal energy balance and as an
-order-of-magnitude check only, since it is insensitive to the contact
-parameters (Boemer & Ponthot 2017, §3.1.4)."
+convention. Power was not used as a calibration target, since it is
+insensitive to the contact parameters (Boemer & Ponthot 2017, §3.1.4); it
+was used only to check the internal energy balance of the simulations."
 
 ## Open items
 
-- If easy to obtain: SAG_B average power (net / at pinion if possible) and
-  belly length for the sanity check. Not required for calibration.
 - Implement bulk toe / shoulder extraction from the time-averaged position
   density (plus the liner-force cross-check).

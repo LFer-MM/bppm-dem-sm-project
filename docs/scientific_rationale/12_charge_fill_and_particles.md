@@ -4,8 +4,8 @@
 
 | Quantity | Value | Basis |
 |---|---|---|
-| Ball filling Jb (bulk) | **17 %** | SAG_B plant data (slide 2) |
-| Total filling Jc (bulk) | **26 %** | SAG_B plant data (slide 2) |
+| Ball filling Jb (bulk) | **17 %** | SAG_B, the reference mill (slide 2); SAG_A / SAG_C show it is typical (15.2-18.5 %) |
+| Total filling Jc (bulk) | **26 %** | SAG_B, the reference mill (slide 2); SAG_A / SAG_C show it is typical (24.9-35.1 %) |
 | Rock bulk volume | Jc - Jb = **9 %** | modelling convention (see analysis) |
 | Ball diameter | **0.1397 m** (5.5 in) | plant practice (slide 5) |
 | Rock diameter | **0.06985 m** (2.75 in) | 2:1 size ratio (slide 6) |
@@ -78,7 +78,9 @@ the intermediate volumes.)
 
 ## Verdict and how to defend it
 
-"The charge reproduces SAG_B: Jb = 17 %, Jc = 26 % (plant data), 5.5 in steel
+"The charge reproduces SAG_B, the reference mill: Jb = 17 %, Jc = 26 % (plant
+data); SAG_A and SAG_C are evidence that these fillings are typical (Jb
+15.2-18.5 %, Jc 24.9-35.1 % across the three mills). Steel
 balls and 2.75 in rock (2:1, the ratio used by Kishida et al. 2025). Particle
 numbers follow N = phi J V / v with the packing fraction phi measured in the
 simulated slice (0.5617), since wall effects in a 0.375 m slice make it lower
