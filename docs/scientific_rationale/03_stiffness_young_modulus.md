@@ -9,9 +9,36 @@ Use the reduced moduli of PPT slide 12:
 | Steel (balls, lifters, shell) | 207 GPa | **33.16 GPa** | 6.2x |
 | Rock | 55 GPa | **2.868 GPa** | 19x |
 
-Acceptance: mean contact overlap <= ~0.5 % and 99th percentile <= ~2 % of the
-smaller particle **diameter** during steady rotation; macroscopic results
-(toe, shoulder, power) unchanged when E is halved or doubled.
+Confirmed 2026-10-18 together with dt = 2.5e-5 s (option A in
+[02](02_time_step.md)).
+
+Acceptance (all relative to the smaller particle **diameter**):
+
+- **mean** overlap <= 0.5 % (the strictest average in the literature,
+  Cleary & Morrison 2016);
+- **maximum** overlap < 10 % (Boemer & Ponthot's sensitivity limit); the
+  predicted worst case is 3.3 %;
+- macroscopic results (toe, shoulder, power) unchanged when E is halved or
+  doubled.
+
+## Overlap criteria in the literature
+
+| Source | Criterion | Kind | Relative to | Where |
+|---|---|---|---|---|
+| Cleary 2001 | "Typically, average overlaps of 0.1-1.0% are desirable" (hence kn = 8e6 N/m) | average, practice | not stated (diameter in the same group's later papers) | §2, PDF p4 / j.82 |
+| Cleary & Morrison 2016 | "Typically, average overlaps of 0.1-0.5% are adequate to ensure a balance between computing speed and realistic predictions" | average, practice | not stated | §2, PDF p3 / j.77 |
+| Owen & Cleary 2015 | kn chosen "to give an average overlap of the order of 0.8% of the average particle diameter" | average, used value | average diameter | §3, PDF p3 / j.21 |
+| Boemer & Ponthot 2017 | Limit "the average overlap ... to a value between 0.1 and 1 % with respect to the diameter of the ball ... maybe 10 % would still lead to satisfying results" | average, practice | ball diameter | §3.1.2, PDF p8 / j.60 |
+| Boemer & Ponthot 2017 | Results "relatively insensitive to the normal stiffness provided that the maximum overlap percentage ... is smaller than about 10 %" | **maximum, measured sensitivity** | diameter | §4, PDF p13 / j.65 |
+| Boemer & Ponthot 2017 | Method: maximum overlap from the analytic collision (Eqs. 8-9) at the worst-case impact speed v_r = sqrt(2 g D) (free fall across the mill) | method | -- | §3.1.2, PDF p8 / j.60 |
+| Govender 2015 | "Typical DEM simulations use a spring stiffness and time-step that limits the maximum penetration depth to d_max ~ 0.05 r where r is the radius of the smallest particle" (= 2.5 % of its diameter); lifter contacts accepted only for penetration < 5 % of the radius (Algorithm 1) | maximum, practice | smallest radius | §1.5, PDF p6 / j.157; Algorithm 1, PDF p5 / j.156 |
+| Kishida 2025, Thakur 2016 | No overlap criterion stated | -- | -- | -- |
+
+Two kinds of number appear: **average** overlaps (practice, 0.1-1 %, the
+strictest being 0.1-0.5 %) and **maximum** overlaps (Govender's typical
+practice 2.5 % of the diameter; Boemer's tested sensitivity limit ~10 %).
+Only Boemer's 10 % is an actual sensitivity result; the others are
+customary values.
 
 ## Evidence
 
@@ -56,32 +83,47 @@ Estimated **peak** overlaps for elastic Hertz impacts with the slide-12 set
 (delta_max = (15 m* v^2 / (16 E* R*^0.5))^(2/5), relative to the smaller
 diameter):
 
-| Pair | 1 m/s | 5 m/s | 8 m/s | 12 m/s |
-|---|---|---|---|---|
-| steel-steel | 0.21 % | 0.78 % | 1.13 % | 1.56 % |
-| steel-rock | 0.36 % | 1.30 % | 1.89 % | 2.61 % |
-| rock-rock | 0.37 % | 1.35 % | 1.97 % | 2.72 % |
+| Pair | 1 m/s | 5 m/s | 8 m/s | 12 m/s | **15.2 m/s (worst case)** |
+|---|---|---|---|---|---|
+| steel-steel | 0.21 % | 0.78 % | 1.13 % | 1.56 % | **1.89 %** |
+| steel-rock | 0.36 % | 1.30 % | 1.89 % | 2.61 % | **3.16 %** |
+| rock-rock | 0.37 % | 1.35 % | 1.97 % | 2.72 % | **3.30 %** |
 
-Peaks for the rare fastest impacts are 1-3 %, below Boemer's ~10 % limit.
-Mean overlaps in the enduring contacts of the bulk charge are far smaller
-(slide 10's settled-bed check: 0.54 % of the diameter even for the much
-softer 3.5e9 / 3e8 set). So the slide-12 set should meet the 0.1-1 % mean
-overlap criterion of Boemer and Owen's 0.8 %. This must be measured, not
-assumed (see open items).
+The worst case follows Boemer's method: v_r = sqrt(2 g D) =
+sqrt(2 x 9.81 x 11.8375) = 15.2 m/s, a particle falling from the top of the
+mill to the bottom. Real impacts are slower (the old dataset's fastest
+particle moved at 12.6 m/s).
 
-The slide-8 target "< 0.1 %" is stricter than any source in the library; the
-literature range is 0.1-1 % (mean) with up to ~10 % (max) tolerated.
+Against the criteria:
+
+- **Maximum overlap.** Worst case 1.9-3.3 %: well below Boemer's ~10 %
+  sensitivity limit. The rock contacts exceed Govender's *customary* 0.05 r
+  (2.5 % of the diameter) only for impacts above ~12 m/s, which are rare. To
+  meet 2.5 % even at 15.2 m/s, E would have to double (overlap scales as
+  E^-0.4) and dt shrink by a further ~25 %; not justified by any sensitivity
+  evidence.
+- **Average overlap.** Average overlaps come from the enduring contacts of the
+  bulk charge, loaded by gravity rather than impacts, and are far smaller than
+  impact peaks (slide 10's settled-bed check gave 0.54 % of the diameter even
+  for the 9-11x softer 3.5e9 / 3e8 set). The slide-12 set is therefore
+  expected to sit inside 0.1-0.5 %, the strictest average range (Cleary &
+  Morrison). This must be measured, not assumed (see open items).
+
+The slide-8 target "< 0.1 %" is below the lower end of every average range
+in the library (0.1-0.5 % to 0.1-1 %); it should be replaced by these ranges.
 
 ## Verdict and how to defend it
 
 "Young's moduli are reduced from their physical values (steel 207 GPa,
 Shigley; El Teniente andesite 55 GPa, Vergara et al.) to 33.16 and 2.868 GPa.
 In mill DEM the stiffness is a numerical parameter (Cleary & Morrison 2016,
-§2), chosen to keep the average overlap around 0.1-1 % of the diameter
-(Boemer & Ponthot 2017, §3.1.2; Owen & Cleary 2015 use ~0.8 %). Charge motion
-and power are insensitive to stiffness while the maximum overlap stays below
-~10 % (Boemer & Ponthot 2017, §4). Measured overlaps (mean X %, P99 Y %) are
-within these limits."
+§2), chosen to keep the average overlap within the customary 0.1-1 % of the
+diameter (Cleary 2001, §2; Boemer & Ponthot 2017, §3.1.2), and within the
+stricter 0.1-0.5 % of Cleary & Morrison (2016, §2); Owen & Cleary (2015) use
+~0.8 %. The maximum overlap, estimated with Boemer & Ponthot's worst-case
+impact speed sqrt(2 g D) = 15.2 m/s, is 3.3 %, well below the ~10 % up to
+which charge motion and power are insensitive to stiffness (Boemer & Ponthot
+2017, §4). Measured overlaps (mean X %, max Y %) are within these limits."
 
 Replace the Thakur citation for this argument: Thakur 2016 concerns stiffness
 scaling with particle size in coarse-grained DEM, not softening for dt.

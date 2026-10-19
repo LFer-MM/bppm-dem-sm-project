@@ -3,12 +3,18 @@
 ## Decision
 
 **dt = 2.5e-5 s** with the slide-12 moduli (E_steel = 33.16 GPa,
-E_rock = 2.868 GPa). Acceptance rule: at least ~20 integration steps per
-collision for the fast impacts that occur in the mill (v ~ 8-12 m/s), and an
-energy balance within a few percent (see [16](16_validation_checks.md)).
+E_rock = 2.868 GPa) -- **option A, decided 2026-10-18**. Acceptance rule:
+>= 15-25 integration steps per collision up to the worst-case impact speed
+sqrt(2 g D) = 15.2 m/s (17-20 steps with this dt), and an energy balance
+within a few percent (see [16](16_validation_checks.md)).
 
-dt = 1e-4 s is only acceptable if the moduli are reduced ~32x further
-(option B below), which pushes peak overlaps to ~4-10 % of the diameter.
+Options considered (contact time and peak overlap both scale as E^-0.4):
+
+| Option | dt | E steel / rock | Peak overlap at 15.2 m/s | Cost vs 1e-4 | Status |
+|---|---|---|---|---|---|
+| **A** | 2.5e-5 s | 33.16 / 2.868 GPa (slide 12) | 1.9-3.3 % | 4x | **chosen** |
+| C | 5e-5 s | 5.86 / 0.507 GPa (slide 12 / 5.66) | 3.8-6.6 % | 2x | fallback if compute is short |
+| B | 1e-4 s | 1.04 / 0.090 GPa (slide 12 / 32) | 7.6-13 % | 1x | rejected: exceeds Boemer's ~10 % limit |
 
 ## Evidence
 
@@ -65,6 +71,17 @@ Hertz elastic impact duration t_c = 2.87 (m*^2 / (R* E*^2 v))^(1/5):
 | steel-rock | 8 | 4.9e-4 | 4.9 | 12.1 | 19.4 |
 | steel-rock | 12 | 4.5e-4 | 4.5 | 11.2 | 17.9 |
 | rock-rock | 8 | 5.1e-4 | 5.1 | 12.7 | 20.3 |
+| steel-steel | **15.2** (worst case) | 5.1e-4 | 5.1 | 12.8 | **20.5** |
+| steel-rock | **15.2** | 4.3e-4 | 4.3 | 10.7 | **17.1** |
+| rock-rock | **15.2** | 4.5e-4 | 4.5 | 11.1 | **17.8** |
+
+The worst case uses Boemer & Ponthot's choice of impact speed (§3.1.2,
+PDF p8): free fall across the mill, sqrt(2 g D) = 15.2 m/s for D = 11.84 m.
+Even there dt = 2.5e-5 s gives 17-20.5 steps, inside Cleary's 15-25. The
+contacts below 20 steps are the rock ones, whose low restitution (0.3-0.5)
+needs the fewest steps: Boemer notes "more time steps per collision are
+usually required when the coefficient of restitution is important" (§2.2.3,
+PDF p5).
 
 Impact speeds of 8-12 m/s occur: the shell moves at 5.58 m/s at 9 rpm and the
 old dataset shows particle speeds up to 12.6 m/s (frame 399). At 1e-4 s a
@@ -81,10 +98,12 @@ dt_max = d_max / (R omega) with R = 5.92 m, omega = 0.942 rad/s:
 
 t_c and peak overlap both scale as E^(-2/5). Making 1e-4 s give the same
 ~20 steps needs t_c x4, i.e. E / 32 (E_steel ~ 1.0 GPa, E_rock ~ 0.09 GPa).
-Peak overlaps then grow x4: ~4.5 % (steel-steel, 8 m/s) to ~10 % (rock pairs,
-12 m/s) of the smaller diameter. Boemer (§4, PDF p13) finds results
-insensitive "provided that the maximum overlap percentage ... is smaller than
-about 10 %", so option B is at the edge of what is defensible.
+Peak overlaps then grow x4: ~4.5 % (steel-steel, 8 m/s) to ~11 % (rock pairs,
+12 m/s), and 7.6-13 % at the 15.2 m/s worst case, of the smaller diameter.
+Boemer (§4, PDF p13) finds results insensitive "provided that the maximum
+overlap percentage ... is smaller than about 10 %", so option B exceeds the
+only measured sensitivity limit and is rejected. All overlap criteria in the
+literature are compared in [03](03_stiffness_young_modulus.md).
 
 ### Cost
 
