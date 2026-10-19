@@ -107,6 +107,26 @@ changes run time.
 
 ## Analysis
 
+### Formulas used and the status of their sources
+
+The critical-step formulas are **not** the basis of the decision: they bound
+*stability*, while the papers size dt by *accuracy*, which is stricter
+(E1). They are reported only to show the stability bound is respected.
+
+| Formula | Role here | Source | In Zotero? |
+|---|---|---|---|
+| t_c = 2 / omega_max (generic stability limit, undamped) | Stability bound | Boemer & Ponthot 2017 §2.2.3, PDF p5 (citing their ref. [30]) | **Yes** |
+| P-wave step dt = r sqrt(rho / E_eff), E_eff = E / (1 - nu^2) (YADE `PWaveTimeStep`; PPT slides 9-11) | Stability bound (PPT's own) | YADE documentation, Smilauer et al. (PPT ref. [8]) | **No -- add the YADE documentation** |
+| Rayleigh step dt_R = pi r sqrt(rho / G) / (0.1631 nu + 0.8766) | Stability bound commonly used for Hertz-Mindlin | Standard in the DEM literature; no paper in the library states it | **No -- find and add a source** |
+| Hertz impact duration t_c = 2.87 (m*^2 / (R* E*^2 v))^(1/5) | Steps per collision (the governing criterion) | Hertz impact theory (e.g. K.L. Johnson, *Contact Mechanics*) | **No -- add a contact-mechanics source** |
+| Hertz maximum overlap delta_max = (15 m* v^2 / (16 E* R*^0.5))^(2/5) | Peak overlap ([03](03_stiffness_young_modulus.md)) | Same as above | **No** |
+| Linear-spring contact time / maximum overlap | Used by the mill papers (linear models) | Govender 2015 §1.5 Eq. (7), PDF p6; Boemer & Ponthot 2017 Eqs. (8)-(9), PDF p8 | Yes (but for the linear, not the Hertz, model) |
+
+Until the missing sources are in Zotero, the Hertz numbers in this file and in
+[03](03_stiffness_young_modulus.md) rest on textbook formulas without a
+citable reference in the library. The candidate references named above must
+be located and checked before they are cited.
+
 ### Critical step with the slide-12 moduli
 
 | Estimate | Steel (r = 0.06985) | Rock (r = 0.034925) |
@@ -117,6 +137,10 @@ changes run time.
 By the PPT's own formula, **dt = 1e-4 s is 3.1x the critical step** of the
 material set chosen on slide 12. (Slide 9's 1e-4 target was paired with the
 much softer 3.5e9 / 3e8 Pa set, which slide 10 then rejected for overlap.)
+
+The chosen dt = 2.5e-5 s respects both stability bounds: it is 0.77x the PPT's
+P-wave step and 0.14x the Rayleigh step. The binding constraint is the
+accuracy criterion below, not stability.
 
 ### Steps per collision (the criterion the papers actually use)
 
@@ -199,3 +223,7 @@ interval at which frames are stored for the surrogate model (Kishida et al.
 - dt-halving test: run 2.5e-5 vs 1.25e-5 s for 2 revolutions; toe, shoulder
   and power must agree within the run-to-run scatter.
 - Restitution recovery and energy balance (see [16](16_validation_checks.md)).
+- **Add missing formula sources to Zotero** (see "Formulas used and the
+  status of their sources"): the YADE documentation (P-wave step), a source
+  for the Rayleigh time step, and a contact-mechanics reference for the Hertz
+  impact duration and maximum overlap. Verify each before citing.
