@@ -88,7 +88,7 @@ checked in the original before citing.
 | V. Smilauer et al., *Yade documentation*, 3rd ed., 2021, DOI [10.5281/zenodo.5705394](https://zenodo.org/records/5705394) (PPT cites the 2nd ed., 2015, DOI [10.5281/zenodo.34073](https://zenodo.org/records/34073)) | P-wave critical step dt = r / sqrt(E / rho) (`PWaveTimeStep`) | Free PDF |
 | Y. Li, Y. Xu, C. Thornton, *A comparison of discrete element simulations and experiments for 'sandpiles' composed of spherical particles*, Powder Technol. 160 (2005) 219-228, DOI [10.1016/j.powtec.2005.09.002](https://doi.org/10.1016/j.powtec.2005.09.002) | Rayleigh critical time step | Subscription |
 | W. Nan, W.P. Goh, M.T. Rahman, *Elasto-plastic and adhesive contact: an improved linear model and its application*, Powder Technol. 407 (2022) 117634, DOI [10.1016/j.powtec.2022.117634](https://doi.org/10.1016/j.powtec.2022.117634), [arXiv:2202.09520](https://arxiv.org/abs/2202.09520) | Rayleigh step stated as Eq. (71) (verified in the arXiv text) | Open (arXiv) |
-| K.L. Johnson, *Contact Mechanics*, Cambridge University Press, 1985, ISBN 0-521-34796-3, Ch. 11 "Dynamic effects and impact", pp. 351-369 | Hertz impact duration and maximum overlap | Book |
+| K.L. Johnson, *Contact Mechanics*, Cambridge University Press, 1985 (digital ed. 2012), DOI [10.1017/CBO9781139171731](https://doi.org/10.1017/CBO9781139171731), ISBN 978-0-521-34796-9; Ch. 4 "Normal contact of elastic solids -- Hertz theory", pp. 84-106 (force law); Ch. 11 "Dynamic effects and impact", pp. 340-373, impact of spheres within pp. 351-369 | Hertz impact duration and maximum overlap | Book |
 
 Govender et al. 2016 (Blaze-DEMGPU framework, `FQ4KKWQN`) and Chou et al. 2017
 (mixing index, `475694QA`) were searched but give no DEM parameter used here.
