@@ -18,14 +18,73 @@ Options considered (contact time and peak overlap both scale as E^-0.4):
 
 ## Evidence
 
+The references are grouped by the argument they support. Every quote was
+checked in the PDF.
+
+### E1. Stability is necessary but not sufficient; accuracy sets dt
+
 | Source | What it says | Where | Verified |
 |---|---|---|---|
-| Cleary 2001 | "Between 15 and 25 timesteps are required to accurately integrate each collision. This necessitates very small timesteps (typically 10^-4 to 10^-6 s depending on the controlling length and time scales of each problem). If the integration is accurate then the coefficient of restitution ... should be recovered." | §2 "The discrete element method", PDF p5 / j.83 | Yes |
-| Boemer & Ponthot 2017 | Time step chosen to limit artificial numerical power to 1 % of total power; "equivalent to choosing 20-70 time steps per collision depending on the coefficient of restitution" | §2.2.3 "Time integration", PDF p5 / j.57 | Yes |
-| Boemer & Ponthot 2017 | "The time step was chosen equal to 1e-5, 2.5e-6 and 1e-6 seconds respectively for kn = 1e5, 1e6 and 1e7 N/m" | §3.1 (before 3.1.1), PDF p7 / j.59 | Yes |
-| Govender 2015 | Typical DEM limits penetration to d_max ~ 0.05 r (smallest particle); lifter-motion bound dt_max = d_max / (R omega) (Eq. 11); they use d_max = 0.025 r giving dt_max = 1.65e-5 s | §1.5-1.6, PDF p6-7 / j.157-158 | Yes |
-| Govender 2015 | dt = 2e-5 s for the slice mill (Table 6) and for the Los Bronces SAG mill (Table 8) | Table 6, PDF p12 / j.163; Table 8, PDF p14 / j.165 | Yes |
-| Kishida 2025 | dt = 2.0 us (with E = 1e7 Pa, 0.25-0.5 mm particles) | Fig. 2(b), PDF p4 | Yes (figure read) |
+| Boemer & Ponthot 2017 | "To ensure the stability of the algorithm, it is necessary that the time step is smaller than the critical time step tc, e.g. tc = 2/omega_max for an undamped system ... Furthermore, this time step can also be determined in order to limit the creation of numerical energy, i.e. to recover the coefficient of restitution ... By limiting the creation of artificial energy in normal collisions to 1 % with respect to the total energy in the system, **this criterion is more restrictive than the stability requirement**." | §2.2.3 "Time integration", PDF p5 / j.57 | Yes |
+| Cleary 2001 | "If the integration is accurate then the coefficient of restitution from which the damping coefficient was chosen should be recovered." | §2, PDF p5 / j.83 | Yes |
+| Govender 2015 | Kn (and with it dt) "is chosen such that physical quantities of interest (such as energy) are conserved during integration for the typical range of velocities observed in tumbling mill simulations" | §1.5, PDF p6 / j.157 | Yes |
+
+This is why the critical-step formula of PPT slide 9 (a stability bound)
+cannot by itself justify dt: the papers size dt for accuracy, which is
+stricter.
+
+### E2. The accuracy criterion: steps per collision
+
+| Source | What it says | Where | Verified |
+|---|---|---|---|
+| Cleary 2001 | "Between 15 and 25 timesteps are required to accurately integrate each collision." | §2, PDF p5 / j.83 | Yes |
+| Boemer & Ponthot 2017 | The 1 % artificial-energy criterion "is equivalent to choosing 20-70 time steps per collision depending on the coefficient of restitution; more time steps per collision are usually required when the coefficient of restitution is important" | §2.2.3, PDF p5 / j.57 | Yes |
+
+### E3. Typical magnitude of dt in mill DEM
+
+| Source | What it says | Where | Verified |
+|---|---|---|---|
+| Cleary 2001 | The 15-25 steps "necessitates very small timesteps (typically 10^-4 to 10^-6 s depending on the controlling length and time scales of each problem)" -- the range is a consequence of the steps criterion, not a free choice | §2, PDF p5 / j.83 | Yes |
+| Govender 2015 | dt = 2e-5 s for the slice mill, GPU and CPU codes | Table 6, PDF p12 / j.163 | Yes |
+| Govender 2015 | dt = 2e-5 s for the Los Bronces SAG mill (10.12 m, 10 rpm) -- the closest industrial case to this project | Table 8, PDF p14 / j.165 | Yes |
+| Boemer & Ponthot 2017 | dt = 1e-5, 2.5e-6, 1e-6 s for kn = 1e5, 1e6, 1e7 N/m (lab mill, 15 mm balls, run in YADE) | §3.1, PDF p7 / j.59 | Yes |
+| Kishida 2025 | dt = 2.0 us (E = 1e7 Pa, 0.25-0.5 mm particles) | Fig. 2(b), PDF p4 | Yes (figure read) |
+| Thakur 2016 | dt = 1e-5 s (uniaxial compression of 2-3.75 mm particles; not a mill) | Parameter table, PDF p5 / j.134 | Yes |
+
+### E4. Worst-case impact speed
+
+| Source | What it says | Where | Verified |
+|---|---|---|---|
+| Boemer & Ponthot 2017 | Maximum relative impact velocity "can be assumed to be equal to sqrt(2 x 9.81 x 0.8) ~ 4 m/s, which corresponds to the terminal velocity when a ball falls from the top of the mill (diameter of 0.8 m) to its lowest position starting from rest" | §3.1.2, PDF p8 / j.60 | Yes |
+| Govender 2015 | Kn / dt chosen "for the typical range of velocities observed in tumbling mill simulations" | §1.5, PDF p6 / j.157 | Yes |
+
+Applied here: sqrt(2 x 9.81 x 11.8375) = 15.2 m/s.
+
+### E5. Stiffness and dt are chosen together
+
+| Source | What it says | Where | Verified |
+|---|---|---|---|
+| Cleary & Morrison 2016 | Stiffness "is used as a numerical rather than a physical parameter and is chosen ... so as to maximise the timestep and therefore minimise the simulation time ... as long as the numerical contact deformations remain small" | §2, PDF p3 / j.77 | Yes |
+| Govender 2015 | "Typical DEM simulations use a spring stiffness and time-step that limits the maximum penetration depth to d_max ~ 0.05 r where r is the radius of the smallest particle (Cleary, 2001; ...)" | §1.5, PDF p6 / j.157 | Yes |
+
+The overlap side of this trade-off is documented in
+[03](03_stiffness_young_modulus.md).
+
+### E6. Mill-specific bound: lifter motion per step
+
+| Source | What it says | Where | Verified |
+|---|---|---|---|
+| Govender 2015 | Distance covered by a lifter in one step is R omega dt, so "the maximum time-step for a mill rotating at omega rpm having a maximum penetration distance of d_max is given by dt = d_max / (R omega)" (Eq. 11); with d_max = 0.025 r, dt_max = 1.65e-5 s for their mill | §1.6, Eq. (11), PDF p7 / j.158 | Yes |
+
+### E7. The DEM dt is independent of the dataset frame interval
+
+| Source | What it says | Where | Verified |
+|---|---|---|---|
+| Kishida 2025 | "The Delta t_RNN was significantly larger than the time step used in the DEM"; Delta t_RNN = 0.05 s | §2.1, PDF p3; §3, PDF p6 | Yes |
+
+So reducing the DEM dt to 2.5e-5 s does not change the 0.05 s frame
+interval of the datasets ([14](14_dataset_runs_and_recording.md)); it only
+changes run time.
 
 ## PPT
 
@@ -115,12 +174,22 @@ literature requires.
 
 ## Verdict and how to defend it
 
-"The time step was chosen so that every collision is integrated with at least
-~20 steps (Cleary 2001, §2: 15-25; Boemer & Ponthot 2017, §2.2.3: 20-70).
-With the reduced moduli of slide 12 the Hertz contact time of the fastest
-impacts is ~4.5e-4 s, giving dt = 2.5e-5 s. Govender et al.'s lifter-motion
-bound (Eq. 11) gives 1.6-3.1e-4 s and is not limiting. The resulting dt is of
-the same order as the 2e-5 s used by Govender et al. for a SAG mill."
+"The time step was set by integration accuracy rather than stability alone,
+since recovering the coefficient of restitution is more restrictive than the
+stability limit (Boemer & Ponthot 2017, §2.2.3; Cleary 2001, §2). Every
+collision is integrated with 15-25 steps or more (Cleary 2001, §2; 20-70 in
+Boemer & Ponthot 2017, §2.2.3, more steps being needed at high restitution).
+With the reduced moduli -- stiffness being a numerical parameter chosen
+jointly with dt (Cleary & Morrison 2016, §2; Govender et al. 2015, §1.5) --
+the Hertz contact time at the worst-case impact speed sqrt(2 g D) = 15.2 m/s
+(the free-fall estimate of Boemer & Ponthot 2017, §3.1.2) is 4.3-5.1e-4 s,
+so dt = 2.5e-5 s gives 17-20.5 steps per collision. The lifter-motion bound
+of Govender et al. (2015, Eq. 11) gives 1.6-3.1e-4 s and is not limiting.
+The resulting dt is consistent with the 1e-4 to 1e-6 s range of Cleary (2001)
+and close to the 2e-5 s used by Govender et al. (2015, Table 8) for the
+Los Bronces SAG mill. The DEM time step is independent of the 0.05 s
+interval at which frames are stored for the surrogate model (Kishida et al.
+2025, §2.1)."
 
 ## Open items / validation
 
