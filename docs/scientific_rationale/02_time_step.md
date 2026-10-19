@@ -2,19 +2,30 @@
 
 ## Decision
 
-**dt = 2.5e-5 s** with the slide-12 moduli (E_steel = 33.16 GPa,
-E_rock = 2.868 GPa) -- **option A, decided 2026-10-18**. Acceptance rule:
->= 15-25 integration steps per collision up to the worst-case impact speed
-sqrt(2 g D) = 15.2 m/s (17-20 steps with this dt), and an energy balance
-within a few percent (see [16](16_validation_checks.md)).
+**dt = 2.5e-5 s** (option A, decided 2026-10-18) with the moduli of
+[03](03_stiffness_young_modulus.md): both physical moduli reduced by the same
+factor **f = 26** (decided 2026-10-19), i.e. **E_steel = 7.96 GPa,
+E_rock = 2.115 GPa**.
 
-Options considered (contact time and peak overlap both scale as E^-0.4):
+dt and f are chosen together: f = 26 is the smallest uniform reduction for
+which **every contact type gets >= 20 integration steps at the worst-case
+impact speed** sqrt(2 g D) = 15.2 m/s with dt = 2.5e-5 s (20.1-36.2 steps).
+That satisfies both accuracy criteria of the literature -- 15-25 steps
+(Cleary 2001) and 20-70 steps (Boemer & Ponthot 2017) -- plus an energy
+balance within a few percent (see [16](16_validation_checks.md)).
 
-| Option | dt | E steel / rock | Peak overlap at 15.2 m/s | Cost vs 1e-4 | Status |
-|---|---|---|---|---|---|
-| **A** | 2.5e-5 s | 33.16 / 2.868 GPa (slide 12) | 1.9-3.3 % | 4x | **chosen** |
-| C | 5e-5 s | 5.86 / 0.507 GPa (slide 12 / 5.66) | 3.8-6.6 % | 2x | fallback if compute is short |
-| B | 1e-4 s | 1.04 / 0.090 GPa (slide 12 / 32) | 7.6-13 % | 1x | rejected: exceeds Boemer's ~10 % limit |
+Options considered (contact time and peak overlap both scale as E^-0.4, so a
+larger dt needs a larger reduction for the same number of steps):
+
+| Option | dt | Uniform reduction f | E steel / rock | Max peak overlap at 15.2 m/s | Cost vs 1e-4 | Status |
+|---|---|---|---|---|---|---|
+| **A** | 2.5e-5 s | **26** | 7.96 / 2.115 GPa | 3.8 % | 4x | **chosen** |
+| C | 5e-5 s | 147 | 1.41 / 0.374 GPa | 7.6 % | 2x | fallback if compute is short |
+| B | 1e-4 s | 832 | 0.249 / 0.066 GPa | 15 % | 1x | rejected: exceeds Boemer's ~10 % limit |
+
+The PPT's slide-12 set (33.16 / 2.868 GPa, i.e. steel / 6.2 and rock / 19.2)
+was first adopted with dt = 2.5e-5 s and then replaced by the uniform
+reduction; see [03](03_stiffness_young_modulus.md) for why.
 
 ## Evidence
 
@@ -130,58 +141,59 @@ coefficients seen in the literature (2.94, 3.21) are the same law written with
 a different stiffness constant.
 
 All formulas used in this file and in [03](03_stiffness_young_modulus.md)
-are now located in a source held in Zotero (verified 2026-10-19). Nan et al.
-2022 (manuscript p18) add that the Rayleigh step "only provides the maximum
-limit of the time step" and recommend Delta t = 0.01-0.1 Delta T_R to
-resolve the details of their elasto-plastic adhesive contact (e.g. the
-pull-off stage, their Fig. 1). That model has no adhesion here, so the
-range is context rather than a criterion; dt = 2.5e-5 s is 0.14 Delta T_R,
-and the governing check remains the steps-per-collision criterion (E2).
+are located in a source held in Zotero (verified 2026-10-19).
 
-### Critical step with the slide-12 moduli
 
-| Estimate | Steel (r = 0.06985) | Rock (r = 0.034925) |
+Nan et al. 2022 (manuscript p18) add that the Rayleigh step "only provides
+the maximum limit of the time step" and recommend Delta t = 0.01-0.1
+Delta T_R to resolve the details of their elasto-plastic adhesive contact
+(e.g. the pull-off stage, their Fig. 1). That model has no adhesion here, so
+the range is context rather than a criterion; dt = 2.5e-5 s is 0.12 Delta T_R
+(rock), and the governing check remains the steps-per-collision criterion
+(E2).
+
+### Critical step (stability) with the chosen moduli
+
+| Estimate | Steel (r = 0.06985 m) | Rock (r = 0.034925 m) |
 |---|---|---|
-| PPT formula r sqrt(rho (1 - nu^2) / E) | 3.25e-5 s | 3.25e-5 s |
-| Rayleigh pi r sqrt(rho / G) / (0.8766 + 0.163 nu) (Li et al. 2005, Eq. 10), G = E / (2 (1 + nu)) | 1.86e-4 s | 1.82e-4 s |
+| YADE P-wave step r / sqrt(E / rho) | 6.94e-5 s | 3.91e-5 s |
+| PPT slide-9 formula r sqrt(rho (1 - nu^2) / E) | 6.63e-5 s | 3.79e-5 s |
+| Rayleigh step pi r sqrt(rho / G) / (0.8766 + 0.163 nu) (Li et al. 2005, Eq. 10), G = E / (2 (1 + nu)) | 3.79e-4 s | 2.12e-4 s |
 
-By the PPT's own formula, **dt = 1e-4 s is 3.1x the critical step** of the
-material set chosen on slide 12. (Slide 9's 1e-4 target was paired with the
-much softer 3.5e9 / 3e8 Pa set, which slide 10 then rejected for overlap.)
+dt = 2.5e-5 s is 0.64x the smallest P-wave step and 0.12x the smallest
+Rayleigh step: stability is respected with margin. The binding constraint is
+the accuracy criterion below.
 
-The chosen dt = 2.5e-5 s respects both stability bounds: it is 0.77x the PPT's
-P-wave step and 0.14x the Rayleigh step. The binding constraint is the
-accuracy criterion below, not stability.
+For the record: with the PPT's slide-12 set the PPT's own formula gives
+3.25e-5 s, so the dt = 1e-4 s of slides 17-19 was 3.1x above the critical
+step of the moduli it was used with.
 
 ### Steps per collision (the criterion the papers actually use)
 
-Hertz elastic impact duration t_c = 2.87 (m*^2 / (R* E*^2 v))^(1/5):
+Hertz elastic impact duration t_c = 2.87 (m*^2 / (R* E*^2 v))^(1/5)
+(Johnson 1985, Eq. 11.24), f = 26 moduli:
 
-| Pair | v (m/s) | t_c (s) | steps @ 1e-4 | steps @ 4e-5 | steps @ 2.5e-5 |
+| Pair | v (m/s) | t_c (s) | steps @ 1e-4 | steps @ 5e-5 | steps @ 2.5e-5 |
 |---|---|---|---|---|---|
-| steel-steel | 1 | 8.8e-4 | 8.8 | 22.0 | 35.3 |
-| steel-steel | 8 | 5.8e-4 | 5.8 | 14.5 | 23.3 |
-| steel-rock | 5 | 5.3e-4 | 5.3 | 13.3 | 21.3 |
-| steel-rock | 8 | 4.9e-4 | 4.9 | 12.1 | 19.4 |
-| steel-rock | 12 | 4.5e-4 | 4.5 | 11.2 | 17.9 |
-| rock-rock | 8 | 5.1e-4 | 5.1 | 12.7 | 20.3 |
-| steel-steel | **15.2** (worst case) | 5.1e-4 | 5.1 | 12.8 | **20.5** |
-| steel-rock | **15.2** | 4.3e-4 | 4.3 | 10.7 | **17.1** |
-| rock-rock | **15.2** | 4.5e-4 | 4.5 | 11.1 | **17.8** |
+| steel-steel | 1 | 1.56e-3 | 15.6 | 31.2 | 62.4 |
+| steel-steel | 8 | 1.03e-3 | 10.3 | 20.6 | 41.2 |
+| steel-rock | 5 | 6.40e-4 | 6.4 | 12.8 | 25.6 |
+| steel-rock | 8 | 5.82e-4 | 5.8 | 11.6 | 23.3 |
+| steel-rock | 12 | 5.37e-4 | 5.4 | 10.7 | 21.5 |
+| rock-rock | 8 | 5.72e-4 | 5.7 | 11.4 | 22.9 |
+| steel-steel | **15.2** (worst case) | 9.05e-4 | 9.0 | 18.1 | **36.2** |
+| steel-rock | **15.2** | 5.12e-4 | 5.1 | 10.2 | **20.5** |
+| rock-rock | **15.2** | 5.03e-4 | 5.0 | 10.1 | **20.1** |
 
 The worst case uses Boemer & Ponthot's choice of impact speed (§3.1.2,
 PDF p8): free fall across the mill, sqrt(2 g D) = 15.2 m/s for D = 11.84 m.
-Even there dt = 2.5e-5 s gives 17-20.5 steps, inside Cleary's 15-25. The
-contacts below 20 steps are the rock ones, whose low restitution (0.3-0.5)
-needs the fewest steps: Boemer notes "more time steps per collision are
-usually required when the coefficient of restitution is important" (§2.2.3,
-PDF p5).
-
-Impact speeds of 8-12 m/s occur: the shell moves at 5.58 m/s at 9 rpm and the
-old dataset shows particle speeds up to 12.6 m/s (frame 399). At 1e-4 s a
-collision is resolved in ~5 steps -- far below Cleary's 15-25 and Boemer's
-20-70. At **2.5e-5 s** the fast collisions get ~18-23 steps and slow ones
-~30-35, inside both criteria.
+Real impacts are slower: the shell moves at 5.58 m/s at 9 rpm and the old
+dataset's fastest particle moved at 12.6 m/s (frame 399). Even in the worst
+case every contact gets >= 20 steps, meeting both Cleary's 15-25 and
+Boemer's 20-70 (the rock contacts, with low restitution 0.3-0.5, need the
+fewest steps: "more time steps per collision are usually required when the
+coefficient of restitution is important", Boemer §2.2.3, PDF p5). At
+dt = 1e-4 s the same collisions would get only ~5 steps.
 
 ### Govender's lifter-motion bound
 
@@ -190,10 +202,9 @@ dt_max = d_max / (R omega) with R = 5.92 m, omega = 0.942 rad/s:
 
 ### Option B: keep dt = 1e-4 s
 
-t_c and peak overlap both scale as E^(-2/5). Making 1e-4 s give the same
-~20 steps needs t_c x4, i.e. E / 32 (E_steel ~ 1.0 GPa, E_rock ~ 0.09 GPa).
-Peak overlaps then grow x4: ~4.5 % (steel-steel, 8 m/s) to ~11 % (rock pairs,
-12 m/s), and 7.6-13 % at the 15.2 m/s worst case, of the smaller diameter.
+Getting the same >= 20 steps at 1e-4 s needs t_c x4, i.e. E / 32 relative to
+option A (f = 832: E_steel ~ 0.25 GPa, E_rock ~ 0.07 GPa). Peak overlaps then
+grow x4, to ~13-15 % of the smaller diameter at the 15.2 m/s worst case.
 Boemer (§4, PDF p13) finds results insensitive "provided that the maximum
 overlap percentage ... is smaller than about 10 %", so option B exceeds the
 only measured sensitivity limit and is rejected. All overlap criteria in the
@@ -203,38 +214,40 @@ literature are compared in [03](03_stiffness_young_modulus.md).
 
 Throughput measured on this machine (24 cores, 16 threads) during the fill
 of the full-scale lifter benchmark, with part of the charge loaded: ~400
-steps/s (expect somewhat less with the full ~14k particles). A 33 s run at 2.5e-5 s is 1.33 M steps (~55 min); at 1e-4 s it
-would be ~14 min. The 4x cost buys a collision resolution that the cited
-literature requires.
+steps/s (expect somewhat less with the full ~14k particles). A 33 s run at
+2.5e-5 s is 1.33 M steps (~55 min); at 1e-4 s it would be ~14 min. The 4x
+cost buys a collision resolution that the cited literature requires.
 
 ## Verdict and how to defend it
 
 "The time step was set by integration accuracy rather than stability alone,
 since recovering the coefficient of restitution is more restrictive than the
-stability limit (Boemer & Ponthot 2017, §2.2.3; Cleary 2001, §2). Every
-collision is integrated with 15-25 steps or more (Cleary 2001, §2; 20-70 in
-Boemer & Ponthot 2017, §2.2.3, more steps being needed at high restitution).
-With the reduced moduli -- stiffness being a numerical parameter chosen
-jointly with dt (Cleary & Morrison 2016, §2; Govender et al. 2015, §1.5) --
-the Hertz contact time at the worst-case impact speed sqrt(2 g D) = 15.2 m/s
-(the free-fall estimate of Boemer & Ponthot 2017, §3.1.2) is 4.3-5.1e-4 s,
-so dt = 2.5e-5 s gives 17-20.5 steps per collision. The lifter-motion bound
-of Govender et al. (2015, Eq. 11) gives 1.6-3.1e-4 s and is not limiting.
-The resulting dt is consistent with the 1e-4 to 1e-6 s range of Cleary (2001)
-and close to the 2e-5 s used by Govender et al. (2015, Table 8) for the
-Los Bronces SAG mill. The DEM time step is independent of the 0.05 s
-interval at which frames are stored for the surrogate model (Kishida et al.
-2025, §2.1)."
+stability limit (Boemer & Ponthot 2017, §2.2.3; Cleary 2001, §2). Stiffness
+being a numerical parameter chosen jointly with dt (Cleary & Morrison 2016,
+§2; Govender et al. 2015, §1.5), both Young's moduli were reduced by the same
+factor, 26, the smallest for which every collision is integrated with at
+least 20 steps at dt = 2.5e-5 s -- satisfying both the 15-25 steps of Cleary
+(2001, §2) and the 20-70 of Boemer & Ponthot (2017, §2.2.3) -- at the
+worst-case impact speed sqrt(2 g D) = 15.2 m/s (the free-fall estimate of
+Boemer & Ponthot 2017, §3.1.2), using the Hertz impact duration of Johnson
+(1985, Eq. 11.24). The P-wave and Rayleigh stability limits (YADE
+documentation; Li et al. 2005) and the lifter-motion bound of Govender et al.
+(2015, Eq. 11) are all respected with margin. The resulting dt is consistent
+with the 1e-4 to 1e-6 s range of Cleary (2001) and close to the 2e-5 s used
+by Govender et al. (2015, Table 8) for the Los Bronces SAG mill. The DEM time
+step is independent of the 0.05 s interval at which frames are stored for the
+surrogate model (Kishida et al. 2025, §2.1)."
 
 ## Open items / validation
 
 - Measure the impact-velocity distribution in a pilot run (99th percentile of
   normal relative velocity at contact) and recompute the steps-per-collision
   table with it.
-- dt-halving test: run 2.5e-5 vs 1.25e-5 s for 2 revolutions; toe, shoulder
-  and power must agree within the run-to-run scatter.
+- dt-halving test (V9): run 2.5e-5 vs 1.25e-5 s for 2 revolutions; toe,
+  shoulder and power must agree within the run-to-run scatter.
 - Restitution recovery and energy balance (see [16](16_validation_checks.md)).
+- Correct PPT slides 9-11: YADE's `PWaveTimeStep` uses E, not
+  E / (1 - nu^2).
 - ~~Add the formula sources to Zotero~~ -- done 2026-10-19; all formula
   locations verified (see the
-  [README](README.md#references-added-on-2026-10-19-verified-in-the-pdfs)).- Correct PPT slides 9-11: YADE's `PWaveTimeStep` uses E, not
-  E / (1 - nu^2).
+  [README](README.md#references-added-on-2026-10-19-verified-in-the-pdfs)).

@@ -42,8 +42,8 @@ target anyway).
 | # | File | Decision in one line |
 |---|------|----------------------|
 | 01 | [01_contact_model.md](01_contact_model.md) | Hertz-Mindlin with pair-wise restitution, pair-wise friction and rolling resistance |
-| 02 | [02_time_step.md](02_time_step.md) | dt = 2.5e-5 s with the slide-12 moduli (not 1e-4 s) |
-| 03 | [03_stiffness_young_modulus.md](03_stiffness_young_modulus.md) | E_steel = 33.16 GPa, E_rock = 2.868 GPa (reduced; overlap-controlled) |
+| 02 | [02_time_step.md](02_time_step.md) | dt = 2.5e-5 s (not 1e-4 s): every contact gets >= 20 steps at the worst-case impact speed |
+| 03 | [03_stiffness_young_modulus.md](03_stiffness_young_modulus.md) | Physical moduli (207 / 55 GPa) / 26 = 7.96 / 2.115 GPa, uniform to keep the stiffness ratio; overlaps checked |
 | 04 | [04_numerical_damping.md](04_numerical_damping.md) | NewtonIntegrator damping = 0 whenever the mill rotates |
 | 05 | [05_friction.md](05_friction.md) | Calibrate; baseline mu = 0.5, pair-wise and liner friction as calibration variables |
 | 06 | [06_rolling_resistance.md](06_rolling_resistance.md) | Add rolling resistance for rock (spheres stand in for angular ore); calibrate |
@@ -126,9 +126,11 @@ they go into the thesis:
 
 Every derived number (Rayleigh time step, Hertz collision time, peak overlap,
 critical speed, particle counts) uses the formulas written out in the topic
-file, with the PPT slide-12 material set: steel rho = 7850, E = 33.16e9,
-nu = 0.292, r = 0.06985 m; rock rho = 2650, E = 2.868e9, nu = 0.25,
-r = 0.034925 m. Particle masses: ball 11.206 kg, rock 0.4729 kg.
+file, with the decided material set (physical moduli / 26, see
+[03](03_stiffness_young_modulus.md)): steel rho = 7850, E = 7.962e9,
+nu = 0.292, r = 0.06985 m; rock rho = 2650, E = 2.115e9, nu = 0.25,
+r = 0.034925 m. Particle masses: ball 11.206 kg, rock 0.4729 kg. Where a
+doc compares with the PPT's slide-12 set (33.16e9 / 2.868e9), it says so.
 
 ## Code state referenced
 
