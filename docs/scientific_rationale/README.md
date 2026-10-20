@@ -44,7 +44,7 @@ target anyway).
 | 01 | [01_contact_model.md](01_contact_model.md) | Hertz-Mindlin with pair-wise restitution, pair-wise friction and rolling resistance |
 | 02 | [02_time_step.md](02_time_step.md) | dt = 2.5e-5 s (not 1e-4 s): every contact gets >= 20 steps at the worst-case impact speed |
 | 03 | [03_stiffness_young_modulus.md](03_stiffness_young_modulus.md) | Physical moduli (207 / 55 GPa) / 26 = 7.96 / 2.115 GPa, uniform to keep the stiffness ratio; overlaps checked |
-| 04 | [04_numerical_damping.md](04_numerical_damping.md) | NewtonIntegrator damping = 0 whenever the mill rotates |
+| 04 | [04_numerical_damping.md](04_numerical_damping.md) | NewtonIntegrator damping = 0 everywhere; the "explosions" it hid were an unstable dt (tested) |
 | 05 | [05_friction.md](05_friction.md) | Calibrate; baseline mu = 0.5, pair-wise and liner friction as calibration variables |
 | 06 | [06_rolling_resistance.md](06_rolling_resistance.md) | Add rolling resistance for rock (spheres stand in for angular ore); calibrate |
 | 07 | [07_restitution.md](07_restitution.md) | e = 0.3 / 0.5 / 0.8 (rock-rock / rock-steel / steel-steel) |
@@ -53,7 +53,7 @@ target anyway).
 | 10 | [10_mill_geometry.md](10_mill_geometry.md) | STL slice, 30 lifters, D = 11.8375 m, 0.375 m depth; test end-wall friction |
 | 11 | [11_mill_speed.md](11_mill_speed.md) | 9 rpm = 72.8 % of critical |
 | 12 | [12_charge_fill_and_particles.md](12_charge_fill_and_particles.md) | Jb = 17 %, Jc = 26 %, 2:1 sizes, counts from measured in-slice packing |
-| 13 | [13_initial_conditions.md](13_initial_conditions.md) | SIC / RMIC at rest, damped settle, velocities zeroed; SIC = rock bottom, balls top |
+| 13 | [13_initial_conditions.md](13_initial_conditions.md) | SIC / RMIC at rest, undamped settle with a geometric stop rule, velocities zeroed; SIC = rock bottom, balls top |
 | 14 | [14_dataset_runs_and_recording.md](14_dataset_runs_and_recording.md) | Record from rest; durations in revolutions; training window after measured quasi-steady state |
 | 15 | [15_calibration_targets.md](15_calibration_targets.md) | Match the SAG_B (reference) bulk toe 215 / shoulder 24.6 deg (0 deg at 3 o'clock, CCW); SAG_A / SAG_C show these values are typical; power only for the internal energy balance |
 | 16 | [16_validation_checks.md](16_validation_checks.md) | Acceptance tests every run must pass |

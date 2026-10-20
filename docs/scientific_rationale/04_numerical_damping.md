@@ -2,14 +2,20 @@
 
 ## Decision
 
-`NewtonIntegrator.damping = 0` in **every run in which the mill rotates**
-(calibration runs and SIC / RMIC dataset runs). Non-zero damping (0.2-0.5) is
-allowed only while pouring and settling an initial condition; particle
-velocities are zeroed before the IC is saved.
+**`NewtonIntegrator.damping = 0` everywhere, at all times** (decided
+2026-10-19): filling, settling and packing measurements as well as
+calibration and SIC / RMIC dataset runs. Initial conditions are settled by
+the physical dissipation of the contact law alone, with a mean-speed stop
+rule ([13](13_initial_conditions.md)); particle velocities are zeroed before
+an IC is saved.
 
 The value is **always set explicitly** in the code, never left to YADE's
 default: the default differs between YADE versions (0.0 in the 3rd-edition
 documentation, 0.2 in the `yadedaily` build installed here).
+
+Damping was previously needed only because the integration was unstable
+(see "Why damping appeared necessary" below); with the stable dt of
+[02](02_time_step.md) it is not.
 
 Energy is dissipated only by the contact law: normal / tangential dashpots set
 from restitution ([07](07_restitution.md)), friction ([05](05_friction.md))
@@ -37,6 +43,53 @@ A particle falling from the shoulder therefore reaches the toe with ~20 %
 less kinetic energy than physics dictates, and its trajectory is distorted
 -- a direct bias on the toe angle, the impact energies and the mixing that
 the datasets are meant to capture.
+
+## Why damping appeared necessary
+
+**Observation (PPT setup):** without damping, particles poured into the mill
+collided "explosively" and were shot out of the mill; damping 0.2-0.5 stopped
+it.
+
+**Test (2026-10-19, this machine).** The 2 m smoke-test mill
+(`configs/simulation/smoke_test.json`, 300 rocks + 60 balls, 8 lifters) was
+filled and settled with the branch code and **damping = 0 throughout**, at
+five time steps expressed as a fraction of the Rayleigh step
+dt_R = 6.13e-4 s of its material set. Escaped = particle centre outside the
+shell radius or the slice depth after fill + settle:
+
+| dt / dt_R | dt (s) | Escaped | Max speed | Mean speed at end |
+|---|---|---|---|---|
+| 0.3 | 1.84e-4 | **0 / 360** | 0.08 m/s | 0.004 m/s (settled) |
+| 0.6 | 3.68e-4 | **0 / 360** | 0.21 m/s | 0.033 m/s (settles, but jittery: near the limit) |
+| 1.0 | 6.13e-4 | **360 / 360** | 4,187 m/s | 1,687 m/s |
+| 1.5 | 9.20e-4 | **360 / 360** | 11,156 m/s | 2,579 m/s |
+| 3.0 | 1.84e-3 | **360 / 360** | 10,610 m/s | 5,030 m/s |
+
+Above the stability limit the explicit integration **creates** energy at
+every contact (particles leave a collision faster than they entered), and the
+charge explodes. Damping "fixed" this only by draining the spurious energy as
+fast as it was created -- it masked an unstable time step.
+
+**Where the earlier setups sat** (dimensionless dt / dt_R is what transfers
+between the smoke test and the full mill):
+
+| Setup | dt / dt_R | Regime |
+|---|---|---|
+| `config.py` moduli (155.7 / 13.47 GPa) at dt = 1e-4 s | ~1.2 | explodes |
+| PPT slide-12 moduli (33.16 / 2.868 GPa) at dt = 1e-4 s | ~0.55 | at the jittery edge |
+| **Decided set (f = 26) at dt = 2.5e-5 s** | **0.12** | stable with a wide margin |
+
+**Contributing causes on `main`, fixed on the branch:**
+
+- Fill boxes sized from the shell circle ignored the 30 lifters, and boxes
+  straddling the mill axis had corners outside the shell: spheres could be
+  created overlapping a facet and be ejected through it (facets are thin,
+  so a sphere whose centre crosses the facet plane is pushed to the other
+  side). The branch keeps fill boxes inside the inner radius minus lifter
+  height minus a particle radius, and bounds the box width by the farther
+  chord.
+- Resized rocks kept the mass of a steel ball (~24x too heavy), making their
+  impacts far more energetic. Fixed (mass and inertia recomputed).
 
 ## Evidence
 
@@ -88,10 +141,16 @@ the datasets are meant to capture.
 - **Effect on calibration.** Any friction / restitution values tuned with
   0.2 compensate for this artefact and are not transferable to undamped
   runs.
-- **Where damping is legitimate.** Pouring and settling an IC is a
-  quasi-static process -- exactly YADE's intended use -- and its velocities
-  are zeroed before the IC is saved, so the damping leaves no trace in the
-  dataset runs.
+- **Why not even during IC settling.** Pouring and settling an IC is a
+  quasi-static process -- YADE's intended use -- and its velocities are
+  zeroed afterwards, so damping there would leave no trace in the dynamics.
+  It is still not used, for two reasons: (1) with a stable dt the contact
+  law alone settles the charge (test above: 0 escapes, mean speed 4 mm/s);
+  (2) damping changes how the charge packs while it settles, and the
+  packing fraction phi measured in that state sets the particle counts
+  ([12](12_charge_fill_and_particles.md)). A single damping-free protocol
+  for packing measurement, IC generation and dataset runs keeps all three
+  consistent.
 - **Historical reason.** With YADE's Cundall-Strack law (no dashpot), the
   integrator damping is the only way to dissipate normal-impact energy, which
   explains its use in earlier versions of the setup. With Hertz-Mindlin and
@@ -99,25 +158,38 @@ the datasets are meant to capture.
 
 ## Verdict and how to defend it
 
-"Artificial (non-viscous) damping is used only to bring the poured charge to
-rest when generating initial conditions -- the quasi-static use for which
-YADE provides it (YADE documentation, 3rd ed., §2.1 'Numerical damping') --
-and particle velocities are reset to zero afterwards. All rotating
-simulations use zero artificial damping: YADE's scheme is 'clearly
-non-physical' (ibid.) and, applied to gravity, would make particles fall at
-0.8 g and rise at 1.2 g for a coefficient of 0.2. Energy is therefore
-dissipated exclusively through the contact model (restitution, friction,
-rolling resistance), as in all the mill DEM studies consulted, where the
-energy dissipated in collisions must balance the energy supplied by the mill
-within a few percent (Cleary & Morrison 2016, §2) and artificial numerical
-power is kept below 1 % (Boemer & Ponthot 2017, §3.1)."
+"No artificial (non-viscous) damping is used at any stage. YADE provides it
+for quasi-static problems with contact laws lacking velocity-based damping
+and describes it as 'clearly non-physical' (YADE documentation, 3rd ed.,
+§2.1 'Numerical damping'); applied to gravity, a coefficient of 0.2 would
+make particles fall at 0.8 g and rise at 1.2 g. Energy is dissipated
+exclusively through the contact model (restitution, friction, rolling
+resistance), as in all the mill DEM studies consulted, where the energy
+dissipated in collisions must balance the energy supplied by the mill within
+a few percent (Cleary & Morrison 2016, §2) and artificial numerical power is
+kept below 1 % (Boemer & Ponthot 2017, §3.1). Damping had earlier appeared
+necessary to stop particles being ejected during filling; a test at five
+time steps showed this was an integration instability (all particles
+ejected at dt >= dt_R, none at dt <= 0.6 dt_R, without damping), which the
+chosen dt = 0.12 dt_R avoids. Initial conditions are therefore poured and
+settled by contact dissipation alone, with the same protocol used to measure
+the packing fraction."
 
 ## Open items / validation
 
 - Energy balance per run (V4): integral of power (torque x omega) vs. the
   sum of contact dissipation (YADE energy tracker `O.trackEnergy = True`); see
   [16](16_validation_checks.md).
-- V5: assert `NewtonIntegrator.damping == 0` whenever the mill's angular
-  velocity is non-zero.
-- Re-generate the datasets: those made with 0.2 do not represent undamped
-  mill dynamics.
+- V5: assert `NewtonIntegrator.damping == 0` in every stage, set
+  explicitly in the code (code change, pending: the branch's scenario still
+  has `fill.damping` / `settle.damping` = 0.2 defaults).
+- V13 (new): zero sphere-sphere and sphere-facet overlaps before the first
+  step of every fill batch; abort otherwise.
+- Confirm on the first full-scale IC that the charge settles without escapes
+  and within an acceptable time (the smoke test covers the physics; the
+  dimensionless dt / dt_R is what transfers).
+- Fallback only if full-scale settling proves too slow: temporarily lower the
+  restitution during IC generation (contact-level, does not distort gravity,
+  erased when velocities are zeroed). Not expected to be needed.
+- Re-generate the datasets and re-measure phi: those made with 0.2 do not
+  represent undamped mill dynamics.

@@ -88,8 +88,10 @@ than bulk binary packings (0.58-0.62, Shi & Zhang 2008)."
 
 ## Open items / validation
 
-- Re-measure phi with the calibrated friction and rolling resistance; fix the
-  counts from it; store them in the scenario with phi and the method.
+- Re-measure phi with the calibrated friction and rolling resistance **and
+  the damping-free IC protocol of [13](13_initial_conditions.md)** (slides
+  13-15 measured it with damping 0.2 -> 0.0, which packs differently); fix
+  the counts from it; store them in the scenario with phi and the method.
 - Write the measurement method precisely (bed height at rest vs. volume of
   the occupied cells) and its repeatability over seeds.
 - Update `config.ROCK_COUNT` / `BALL_COUNT` (code change, pending).
