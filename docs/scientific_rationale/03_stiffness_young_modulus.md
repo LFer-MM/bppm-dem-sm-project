@@ -198,4 +198,12 @@ scaling with particle size in coarse-grained DEM, not softening for dt.
   both materials together, 3 revolutions each, same dt = 2.5e-5 s (E x 2
   still gets >= 15.3 steps per collision); toe, shoulder, power and charge
   angle must stay within the replicate scatter (V12).
-- Update `config.MATERIALS` to the f = 26 values (code change, pending).
+- Update `config.MATERIALS` and `young_scale`: see C03-1 below.
+
+## Pending code changes
+
+| ID | Change | Current code | When |
+|---|---|---|---|
+| C03-1 | Store the **physical** moduli in `config.MATERIALS` (steel 207e9, rock 55e9 Pa) and set `solver.young_scale = 1/26` in the scenario, so the provenance stays visible | `config.py`: 155.7e9 / 13.47e9 Pa (PPT slide-11 row), `young_scale` default 1.0 | Before any production run |
+| C03-2 | Overlap statistics relative to the smaller **diameter**, per pair type (mean, P99, max) in the monitor | `monitor.max_overlap()` divides by the smaller **radius** (2x the literature convention) and reports the max only; same in `diagnostics.check_overlaps()` | With C03-1 |
+| C03-3 | V10 scenarios: `young_scale` = 1/52 and 1/13 | None | After C03-1 |

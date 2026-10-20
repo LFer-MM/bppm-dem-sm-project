@@ -251,3 +251,11 @@ surrogate model (Kishida et al. 2025, §2.1)."
 - ~~Add the formula sources to Zotero~~ -- done 2026-10-19; all formula
   locations verified (see the
   [README](README.md#references-added-on-2026-10-19-verified-in-the-pdfs)).
+
+## Pending code changes
+
+| ID | Change | Current code | When |
+|---|---|---|---|
+| C02-1 | **Default dt = 2.5e-5 s** (explicit `solver.dt_s` in the scenario defaults and JSONs) | Default is 0.3 x Rayleigh step: with the f = 26 moduli that is 6.4e-5 s, only ~8 steps per collision | Before any production run |
+| C02-2 | Replace the scenario warning `dt / dt_R > 0.5` by the governing check: Hertz contact time (Johnson Eq. 11.24) at sqrt(2 g D) gives >= 20 steps for every pair | Only the Rayleigh-ratio warning (`scenario.warnings`) | With C02-1 |
+| C02-3 | Log the impact-velocity distribution (P99 of normal relative velocity at contact) in the monitor | Not logged | With the run-type split |

@@ -58,6 +58,25 @@ target anyway).
 | 15 | [15_calibration_targets.md](15_calibration_targets.md) | Match the SAG_B (reference) bulk toe 215 / shoulder 24.6 deg (0 deg at 3 o'clock, CCW); SAG_A / SAG_C show these values are typical; power only for the internal energy balance |
 | 16 | [16_validation_checks.md](16_validation_checks.md) | Acceptance tests every run must pass |
 
+## Pending code changes
+
+Each topic file ends with a **"Pending code changes"** table (IDs `Cnn-k`,
+nn = topic number) listing what the code must change to implement its
+decisions. Status after reviewing topics 01-04 (2026-10-19): nothing
+implemented yet; decided to collect all topics first and implement at the
+end.
+
+| Topic | IDs | Must be done before any production run |
+|---|---|---|
+| [01](01_contact_model.md) | C01-1 ... C01-4 | -- (C01-1, C01-2 need values from 05 / 06) |
+| [02](02_time_step.md) | C02-1 ... C02-3 | **C02-1** (default dt), C02-2 |
+| [03](03_stiffness_young_modulus.md) | C03-1 ... C03-3 | **C03-1** (moduli), C03-2 |
+| [04](04_numerical_damping.md) | C04-1 ... C04-5 | **C04-1** (damping), C04-2, C04-4 |
+
+Related items from later topics (not yet reviewed): `MILL_DIAMETER_M`
+11.0 -> 11.8375 ([10](10_mill_geometry.md)); split the runner into
+calibrate / make-IC / dataset run types ([14](14_dataset_runs_and_recording.md)).
+
 ## Source registry
 
 Bibliographic data below is taken from the Zotero records (checked against

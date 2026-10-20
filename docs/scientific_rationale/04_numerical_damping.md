@@ -181,7 +181,7 @@ the packing fraction."
   sum of contact dissipation (YADE energy tracker `O.trackEnergy = True`); see
   [16](16_validation_checks.md).
 - V5: assert `NewtonIntegrator.damping == 0` in every stage, set
-  explicitly in the code (code change, pending: the branch's scenario still
+  explicitly in the code (see C04-1 / C04-2 below; the branch's scenario still
   has `fill.damping` / `settle.damping` = 0.2 defaults).
 - V13 (new): zero sphere-sphere and sphere-facet overlaps before the first
   step of every fill batch; abort otherwise.
@@ -193,3 +193,13 @@ the packing fraction."
   erased when velocities are zeroed). Not expected to be needed.
 - Re-generate the datasets and re-measure phi: those made with 0.2 do not
   represent undamped mill dynamics.
+
+## Pending code changes
+
+| ID | Change | Current code | When |
+|---|---|---|---|
+| C04-1 | **Damping = 0 in every stage**, set explicitly (drop the `fill.damping` / `settle.damping` fields or default them to 0) | `scenario.py` defaults `fill.damping = settle.damping = 0.2` | Before any production run |
+| C04-2 | V5 assertion at the start of every stage | None | With C04-1 |
+| C04-3 | Energy tracking (`O.trackEnergy = True`, `Law2...calcEnergy = True`) and the V4 energy balance (mill work vs contact dissipation) | Monitor logs power and kinetic energy only | With the run-type split |
+| C04-4 | V13 overlap check before each fill batch; V14 escape check after each stage | None | With C04-1 |
+| C04-5 | Settle stop rule -> geometric criterion of [13](13_initial_conditions.md) (charge COM angle / height stationary over 1 s, mean speed < 1 cm/s, time cap) | `run_until_forces_balanced` (unbalanced force), which does not converge without damping | With C01-2 (rolling resistance may change the residual motion) |
