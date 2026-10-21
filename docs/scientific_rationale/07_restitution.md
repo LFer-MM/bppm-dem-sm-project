@@ -24,9 +24,11 @@
 | Source | What it says | Where | Verified |
 |---|---|---|---|
 | Cleary & Morrison 2016 | e = 0.3 (rock-rock), 0.5 (rock-steel), 0.8 (steel-steel) | Table 2, PDF p7 / j.81 | Yes |
-| Owen & Cleary 2015 | e = 0.75 steel-steel, 0.5 steel-rock, 0.3 rock-rock; "highest for steel-steel collisions which are relatively elastic and lowest for rock-rock collisions which have significant local fracture at contacts" | Table 4 and §3 text, PDF p3 / j.21 | Yes |
+| Owen & Cleary 2015 | e = 0.75 steel-steel, 0.5 steel-rock, 0.3 rock-rock; "highest for steel-steel collisions which are relatively elastic and lowest for rock-rock collisions which have significant local fracture at contacts". Table 4 has no separate liner entry: the steel liner uses the steel pairs for both e and friction | Table 4 and §3 text, PDF p3 / j.21 | Yes |
+| Owen & Cleary 2015 | "DEM simulation of mill behaviour has been shown to be only weakly sensitive to the specific choices of these material parameters (Cleary, 2001a)" | §3, PDF p3 / j.21 | Yes |
+| Boemer & Ponthot 2017 | "different values are sometimes used for ball-ball and ball-liner collisions" (citing their refs. 19, 42) | §1, PDF p2 / j.54 | Yes |
 | Boemer & Ponthot 2017 | Influence of e "becomes important for values close to 1; apart from that, the charge motion is again relatively insensitive"; e = 0.3, 0.6, 0.9 tested; stiffness and e "only have a relatively small impact on the power draw" | §3.1.3-3.1.4, PDF p10 / j.62 | Yes |
-| Govender 2015 | e particle 0.75, lifter 0.75 for Los Bronces; power could be matched "exactly by changing the coefficient of restitution" | Table 8 and §3 text, PDF p14 / j.165 | Yes |
+| Govender 2015 | Los Bronces: friction particle 0.40 vs lifter 0.70, but e = 0.75 for **both** particles and lifters; power could be matched "exactly by changing the coefficient of restitution" | Table 8 and §3 text, PDF p14 / j.165 | Yes |
 | Kishida 2025 | e = 0.75 (single material) | Fig. 2(b), PDF p4 | Yes |
 | Cleary 2001 (2D) | Friction and restitution "relatively unimportant" (citing Cleary 1998a) | §9, PDF p22 / j.100 | Yes |
 | YADE source (`7c8d01e`) | With `en` given, the normal damping ratio is computed from "formula (B6) of [Thornton2013], written specifically for the Hertz-Mindlin model (no-slip solution) where the end of contact is considered to take place once the normal force is zero"; alpha from Eq. (B7); dashpot c_n = beta_n 2 sqrt(m* k_n) with the current Hertz stiffness k_n | `pkg/dem/HertzMindlin.hpp:90`; `HertzMindlin.cpp:184-207, 458-463` | Yes (source read) |
@@ -58,9 +60,39 @@ charge is insensitive to e unless e approaches 1, so the 0.75-0.8 difference
 is immaterial. Govender's remark that e can tune power is a reason to keep e
 fixed: tuning it would hide errors elsewhere (e.g. damping).
 
-- **Liner pairs.** The liners and lifters are steel, so steel values apply
-  (Govender also gives lifters the particle e, Table 8). The separate liner
-  material exists only to carry its own friction ([05](05_friction.md)).
+- **Liner pairs: same e as steel, different friction -- why this is
+  consistent.** e is a material property of the impact (energy lost to
+  plastic deformation and fracture: low for rock, high for steel), and
+  liners and balls are both steel. The liner friction mu_w is an
+  **effective, calibrated** parameter: it absorbs what the smooth, idealised
+  lifter facets do not represent (worn profile, ore / slurry layer on the
+  liner, packing against the lifter face), which is why it is fitted to the
+  shoulder ([05](05_friction.md)). This is exactly Govender et al.'s
+  Los Bronces set (Table 8: friction 0.40 particle / 0.70 lifter, e = 0.75
+  for both); Owen & Cleary treat the steel liner as steel for both
+  (Table 4). Separate ball-liner e values exist in the literature (Boemer &
+  Ponthot, §1), but no source in the library gives one, and the charge is
+  insensitive to e (below).
+- **Why e is fixed rather than calibrated.**
+  1. The calibration targets barely respond to it: Boemer & Ponthot
+     (§3.1.3, Fig. 12) tested e = 0.3 / 0.6 / 0.9 -- important only close
+     to 1, "apart from that, the charge motion is again relatively
+     insensitive"; Cleary 2001 (§9) and Owen & Cleary (§3) report the same
+     weak sensitivity.
+  2. Hence it is not identifiable from toe / shoulder: with two targets
+     already used by mu_p and mu_w, a parameter that hardly moves them would
+     fit equally well over a wide range, so a "calibrated" e would be
+     arbitrary.
+  3. The values are physically grounded and consistent across sources
+     (0.3 / 0.5 / 0.8 Cleary & Morrison; 0.3 / 0.5 / 0.75 Owen & Cleary;
+     0.75 Govender).
+  4. e does move power (Govender), but power is not a target
+     ([15](15_calibration_targets.md)).
+- **Limits of that argument.** Boemer's test is a lab ball mill with steel
+  balls only, and steel-steel 0.8 lies nearer the 0.9 where sensitivity
+  starts. None of the sources tests e against **segregation**, the
+  surrogate's output. A restitution sensitivity check (Open items) covers
+  this.
 - **Velocity independence.** YADE's Hertz-Mindlin maps e to a damping ratio
   with Thornton et al.'s formula for Hertzian contacts and scales the dashpot
   with the current stiffness, so the input e should be recovered at any
@@ -89,6 +121,10 @@ et al. (2013), so the coefficient holds at all impact velocities."
 - Binary-collision test in YADE at the chosen dt: measured e must match the
   input within ~2 % for each pair ([16](16_validation_checks.md)).
 - Interstitial slurry not modelled (limitation, see Analysis).
+- **Restitution sensitivity check (proposed):** at the calibrated point, one
+  run with all e lowered and one with all raised (e.g. +-0.1, steel-steel
+  capped at 0.9); compare toe / shoulder and steel / rock segregation with
+  the reference. Small change -> fixing e is shown for segregation too.
 
 ## Pending code changes
 
