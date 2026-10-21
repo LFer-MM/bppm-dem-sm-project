@@ -4,11 +4,15 @@
 
 Friction is the **primary calibration variable**.
 
-- Baseline: mu = 0.5 for every pair (rock-rock, rock-steel, steel-steel),
-  as in Cleary & Morrison 2016.
-- Calibration space: particle-particle friction per pair (including the Owen &
-  Cleary set 0.4 / 0.5 / 0.8) and a separate particle-liner friction, scored
-  against the plant toe / shoulder ([15](15_calibration_targets.md)).
+- **Particle-particle friction: one uniform mu_p for all three pairs**
+  (steel-steel, steel-rock, rock-rock), as in Cleary & Morrison 2016
+  (decided 2026-10-20). Baseline mu_p = 0.5. The Owen & Cleary set
+  0.4 / 0.5 / 0.8 is run **once as a sensitivity case**, not calibrated.
+- Only two friction parameters are calibrated, because there are only two
+  targets (plant toe / shoulder, [15](15_calibration_targets.md)): mu_p and a
+  particle-liner friction mu_w. Rolling resistance is not a third calibrated
+  knob ([06](06_rolling_resistance.md)). Separate liner material and grid:
+  open, see Open items.
 - Implementation: friction angles in **radians** (mu = tan(angle)), assigned
   per pair with a `frictAngle` `MatchMaker`. Without it YADE takes the
   **minimum** of the two materials' angles.
@@ -68,6 +72,27 @@ density search of slide 30 must be repeated after the fix.
   compensates.
 - Owen's pair-wise set needs a `frictAngle` MatchMaker in YADE; with
   per-material angles and the min rule, steel-rock would get 0.4, not 0.5.
+- **Why uniform mu_p rather than Owen's ratios.** Owen's ordering
+  (steel-steel < steel-rock < rock-rock) is the more physically plausible
+  one: rock is rough, worn balls are smooth. Uniform mu_p is chosen anyway
+  because:
+  1. The targets cannot identify the ratio. Toe and shoulder are bulk
+     responses; 1 : 1 : 1 and 0.4 : 0.5 : 0.8 (rescaled) fit them equally
+     well, so the ratio is an assumption either way. Uniform adds no
+     species contrast the data does not support.
+  2. Neither set is measured. Owen's values are a modelling choice ("rocks
+     are typically quite rough"), and the same group used 0.5 for every pair
+     a year later (Cleary & Morrison 2016, Table 2).
+  3. Rock roughness is already represented. With spheres, the angularity
+     that makes rock-rock contacts strong is modelled by rock rolling
+     resistance ([06](06_rolling_resistance.md)); a higher rock-rock mu on
+     top would count it twice.
+  4. Segregation is the surrogate's output. A friction contrast between
+     species acts directly on steel / rock segregation; with uniform mu_p,
+     segregation comes only from size and density, which are known.
+  5. It needs no MatchMaker for particle pairs (all three equal).
+- Cost of the choice: if rock roughness does drive segregation in the real
+  mill, uniform mu_p understates it. The Owen sensitivity run checks this.
 
 ## Verdict and how to defend it
 
@@ -79,10 +104,33 @@ Morrison 2016, Table 2), 0.4 / 0.5 / 0.8 for steel-steel / steel-rock /
 rock-rock (Owen & Cleary 2015, Table 4), 0.575 (Kishida et al. 2025) and
 0.40 particle / 0.70 lifter for a SAG mill (Govender et al. 2015, Table 8)."
 
+On the pair structure: "Owen & Cleary's ordering (steel-steel 0.4,
+steel-rock 0.5, rock-rock 0.8; Owen & Cleary 2015, Table 4) is physically
+plausible, but the toe / shoulder targets cannot identify the ratios, rock
+angularity is represented by rolling resistance, and segregation is the
+output of interest. A uniform particle friction is therefore used, as in
+Cleary & Morrison 2016 (Table 2), with Owen's set as a sensitivity case."
+
 ## Open items / validation
 
-- Calibration grid (proposal): mu_particle in {0.3, 0.5, 0.7} x mu_liner in
-  {0.3, 0.5, 0.7} x mu_roll(rock) in {0, 0.05, 0.1}; 3 revolutions each to
-  steady state; score = distance to SAG_B toe / shoulder.
+- **Owen sensitivity run** (decided 2026-10-20): after calibration, one run
+  with steel-steel / steel-rock / rock-rock = 0.4 / 0.5 / 0.8 scaled so that
+  the charge shape stays matched (or plain 0.4 / 0.5 / 0.8 with the
+  calibrated mu_w), compared with the uniform case on toe / shoulder and on
+  steel / rock segregation. Small change -> uniform mu_p justified; large
+  change -> report as a limitation or revisit.
+- Open: separate liner material (so mu_w is independent of steel-steel), and
+  the grid / cost of calibrating mu_p x mu_w.
+- Calibration grid (old proposal, to be replaced by the mu_p x mu_w grid):
+  mu_particle in {0.3, 0.5, 0.7} x mu_liner in {0.3, 0.5, 0.7} x
+  mu_roll(rock) in {0, 0.05, 0.1}; 3 revolutions each to steady state;
+  score = distance to SAG_B toe / shoulder.
 - Re-measure the packing fraction after calibration ([12](12_charge_fill_and_particles.md)):
   packing depends on friction.
+
+## Pending code changes
+
+| ID | Change | Current code | When |
+|---|---|---|---|
+| C05-1 | Uniform mu_p: steel and rock get the same `friction_angle` (radians, mu = tan(angle)) from one config value | Per-material `friction_angle`, both atan(0.5) | Before calibration |
+| C05-2 | Optional `frictAngle` `MatchMaker` for per-pair particle friction, used only by the Owen sensitivity run | No MatchMaker: pair angle = min of the two materials | Before the sensitivity run |
