@@ -45,7 +45,7 @@ target anyway).
 | 02 | [02_time_step.md](02_time_step.md) | dt = 2.5e-5 s (not 1e-4 s): every contact gets >= 20 steps at the worst-case impact speed |
 | 03 | [03_stiffness_young_modulus.md](03_stiffness_young_modulus.md) | Physical moduli (207 / 55 GPa) / 26 = 7.96 / 2.115 GPa, uniform to keep the stiffness ratio; overlaps checked |
 | 04 | [04_numerical_damping.md](04_numerical_damping.md) | NewtonIntegrator damping = 0 everywhere; the "explosions" it hid were an unstable dt (tested) |
-| 05 | [05_friction.md](05_friction.md) | Calibrate; baseline mu = 0.5, pair-wise and liner friction as calibration variables |
+| 05 | [05_friction.md](05_friction.md) | Calibrate; uniform particle friction mu_p (baseline 0.5) plus liner friction mu_w; Owen 0.4 / 0.5 / 0.8 as a sensitivity run |
 | 06 | [06_rolling_resistance.md](06_rolling_resistance.md) | Add rolling resistance for rock (spheres stand in for angular ore); calibrate |
 | 07 | [07_restitution.md](07_restitution.md) | e = 0.3 / 0.5 / 0.8 (rock-rock / rock-steel / steel-steel) |
 | 08 | [08_density.md](08_density.md) | 7850 / 2650 kg/m^3 (literature; no plant measurement); not calibrated; sensitivity 2650 vs 2850 |
