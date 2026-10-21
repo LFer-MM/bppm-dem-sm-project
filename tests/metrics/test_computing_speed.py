@@ -6,9 +6,9 @@ import json
 
 import pytest
 
-from bppm_dem_sm.metrics import computing_speed as cs_module
-from bppm_dem_sm.config import ComputingSpeedOptions, ExperimentConfig
-from bppm_dem_sm.experiment_pipeline import run_experiment_pipeline
+from pm_dem_sm.metrics import computing_speed as cs_module
+from pm_dem_sm.config import ComputingSpeedOptions, ExperimentConfig
+from pm_dem_sm.experiment_pipeline import run_experiment_pipeline
 
 
 def test_computing_speed_options_defaults():
@@ -109,14 +109,14 @@ def test_load_computing_speed_roundtrips(tmp_path, monkeypatch):
 
 def test_run_experiment_pipeline_records_timing_and_computing_speed(tmp_path, monkeypatch):
     monkeypatch.setattr(cs_module, "REPORTS_DIR", tmp_path)
-    monkeypatch.setattr("bppm_dem_sm.experiment_pipeline.silence_tensorflow", lambda: None)
+    monkeypatch.setattr("pm_dem_sm.experiment_pipeline.silence_tensorflow", lambda: None)
     monkeypatch.setattr(
-        "bppm_dem_sm.experiment_pipeline.training.train_and_save", lambda config: (object(), {"loss": [1.0]})
+        "pm_dem_sm.experiment_pipeline.training.train_and_save", lambda config: (object(), {"loss": [1.0]})
     )
     monkeypatch.setattr(
-        "bppm_dem_sm.experiment_pipeline.prediction.predict_frames", lambda config, model=None: None
+        "pm_dem_sm.experiment_pipeline.prediction.predict_frames", lambda config, model=None: None
     )
-    monkeypatch.setattr("bppm_dem_sm.experiment_pipeline.run_metrics.compute_metrics", lambda config: {})
+    monkeypatch.setattr("pm_dem_sm.experiment_pipeline.run_metrics.compute_metrics", lambda config: {})
 
     config = ExperimentConfig(
         do_train=True,
@@ -137,7 +137,7 @@ def test_run_experiment_pipeline_records_timing_and_computing_speed(tmp_path, mo
 
 
 def test_run_experiment_pipeline_no_timing_key_when_stages_skipped(monkeypatch):
-    monkeypatch.setattr("bppm_dem_sm.experiment_pipeline.silence_tensorflow", lambda: None)
+    monkeypatch.setattr("pm_dem_sm.experiment_pipeline.silence_tensorflow", lambda: None)
     results = run_experiment_pipeline(
         ExperimentConfig(do_train=False, do_predict=False, do_metrics=False, do_visualization=False)
     )

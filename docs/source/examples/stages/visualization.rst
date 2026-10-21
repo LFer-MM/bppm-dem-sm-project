@@ -1,7 +1,7 @@
 Visualization
 =============
 
-:mod:`bppm_dem_sm.visualization` holds every plot and animation in the
+:mod:`pm_dem_sm.visualization` holds every plot and animation in the
 project. Other stages only compute and save, so each plot here reads its
 input from disk (or from a dict you pass) and works in a separate process
 from the stage that produced it.
@@ -9,14 +9,14 @@ from the stage that produced it.
 Every figure from one call
 --------------------------
 
-:func:`~bppm_dem_sm.visualization.run_visualization.generate_visualizations`
+:func:`~pm_dem_sm.visualization.run_visualization.generate_visualizations`
 is the ``do_visualization`` stage. It renders whatever has inputs on disk
 and skips the rest:
 
 .. code-block:: python
 
-   from bppm_dem_sm import ExperimentConfig, VisualizationOptions
-   from bppm_dem_sm.visualization.run_visualization import generate_visualizations
+   from pm_dem_sm import ExperimentConfig, VisualizationOptions
+   from pm_dem_sm.visualization.run_visualization import generate_visualizations
 
    cfg = ExperimentConfig(
        visualization=VisualizationOptions(plane="xy", fps=30, save_figures=True, show_plots=False),
@@ -56,7 +56,7 @@ Takes the history file ``train_and_save`` wrote, a loaded dict, or a Keras
 
 .. code-block:: python
 
-   from bppm_dem_sm.visualization.training_curves import plot_training_history
+   from pm_dem_sm.visualization.training_curves import plot_training_history
 
    fig = plot_training_history(
        "models/rnn_gru_sic_model.history.json",
@@ -80,9 +80,9 @@ plot whose input is missing prints a message and returns ``None``:
 
 .. code-block:: python
 
-   from bppm_dem_sm import ExperimentConfig, VisualizationOptions
-   from bppm_dem_sm.metrics.run_metrics import load_metrics
-   from bppm_dem_sm.visualization import metrics_plots
+   from pm_dem_sm import ExperimentConfig, VisualizationOptions
+   from pm_dem_sm.metrics.run_metrics import load_metrics
+   from pm_dem_sm.visualization import metrics_plots
 
    cfg = ExperimentConfig(visualization=VisualizationOptions(save_figures=True))
    m = load_metrics(cfg)
@@ -110,7 +110,7 @@ A frame's XY scatter (rocks red, balls blue) with a square grid of
 
 .. code-block:: python
 
-   from bppm_dem_sm.visualization.cell_grid import plot_particles_with_grid
+   from pm_dem_sm.visualization.cell_grid import plot_particles_with_grid
 
    frame = "data/processed/sic_dataset_20s_dt0p0001_parquet/frame_00000.parquet"
    plot_particles_with_grid(frame, cell_size=0.44, save_path="reports/figures/grid_lacey.png", show=False)
@@ -119,8 +119,8 @@ A frame's XY scatter (rocks red, balls blue) with a square grid of
 ``0.44`` is the Lacey / granular-temperature cell
 (``metrics.cell_size``); ``0.5588`` is the SR cell
 (``stochastic.velocity_cell_size``).
-:func:`~bppm_dem_sm.visualization.run_visualization.plot_frame_grid` and
-:func:`~bppm_dem_sm.visualization.run_visualization.plot_sr_grid` read
+:func:`~pm_dem_sm.visualization.run_visualization.plot_frame_grid` and
+:func:`~pm_dem_sm.visualization.run_visualization.plot_sr_grid` read
 those values from a config.
 
 .. figure:: ../_images/cell_grids.png
@@ -137,7 +137,7 @@ From a config (plane, fps, marker size, and stride come from
 
 .. code-block:: python
 
-   from bppm_dem_sm.visualization.run_visualization import animate_frames
+   from pm_dem_sm.visualization.run_visualization import animate_frames
 
    anim, path = animate_frames(
        cfg.prediction.pred_frames_dir, cfg, pattern="pred_frame_*.parquet",
@@ -164,7 +164,7 @@ Without a config, for any frame directory:
 
 .. code-block:: python
 
-   from bppm_dem_sm.visualization.animate_particles import animate_particles
+   from pm_dem_sm.visualization.animate_particles import animate_particles
 
    animate_particles(
        "data/processed/sic_dataset_20s_dt0p0001_parquet",

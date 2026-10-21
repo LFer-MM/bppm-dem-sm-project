@@ -1,8 +1,8 @@
 Python: the pipeline
 ====================
 
-:func:`~bppm_dem_sm.experiment_pipeline.run_experiment_pipeline` is what
-``bppm-dem-sm ml-pipeline`` calls. From Python you also get back what each
+:func:`~pm_dem_sm.experiment_pipeline.run_experiment_pipeline` is what
+``pm-dem-sm ml-pipeline`` calls. From Python you also get back what each
 stage produced.
 
 Three ways to configure a run
@@ -12,7 +12,7 @@ From the same JSON file the CLI uses:
 
 .. code-block:: python
 
-   from bppm_dem_sm import ExperimentConfig, run_experiment_pipeline
+   from pm_dem_sm import ExperimentConfig, run_experiment_pipeline
 
    cfg = ExperimentConfig.from_json("configs/pipeline_example.json")
    results = run_experiment_pipeline(cfg)
@@ -29,7 +29,7 @@ From nested option groups:
 
 .. code-block:: python
 
-   from bppm_dem_sm import ExperimentConfig, PredictionOptions, TrainingOptions
+   from pm_dem_sm import ExperimentConfig, PredictionOptions, TrainingOptions
 
    cfg = ExperimentConfig(
        do_train=True,
@@ -39,8 +39,8 @@ From nested option groups:
    results = run_experiment_pipeline(cfg)
 
 ``StochasticOptions`` and ``ComputingSpeedOptions`` are imported from
-:mod:`bppm_dem_sm.config`; the other option groups are also re-exported from
-``bppm_dem_sm``.
+:mod:`pm_dem_sm.config`; the other option groups are also re-exported from
+``pm_dem_sm``.
 
 The CLI recipes, in Python
 --------------------------
@@ -51,7 +51,7 @@ One-to-one with :doc:`cli`. As there, ``do_predict``, ``do_metrics``, and
 .. code-block:: python
 
    from pathlib import Path
-   from bppm_dem_sm import run_experiment_pipeline
+   from pm_dem_sm import run_experiment_pipeline
 
    off = dict(do_predict=False, do_metrics=False, do_visualization=False)
 
@@ -98,7 +98,7 @@ The return value has one key per stage that ran, plus ``config``:
      - Value
    * - ``config``
      - always
-     - The resolved :class:`~bppm_dem_sm.config.ExperimentConfig`
+     - The resolved :class:`~pm_dem_sm.config.ExperimentConfig`
        (overrides applied).
    * - ``dem_simulation``
      - ``do_simulate``
@@ -108,7 +108,7 @@ The return value has one key per stage that ran, plus ``config``:
      - ``{"data_dir": Path, "integrity_report": DataFrame}``.
    * - ``model`` / ``history``
      - ``do_train``
-     - Trained :class:`~bppm_dem_sm.model.rnn.model.RNNModel` (Keras network
+     - Trained :class:`~pm_dem_sm.model.rnn.model.RNNModel` (Keras network
        at ``.network``) and its Keras ``History``.
    * - ``predictions``
      - ``do_predict``
@@ -119,12 +119,12 @@ The return value has one key per stage that ran, plus ``config``:
      - ``train_seconds`` / ``predict_seconds`` for the stages that ran.
    * - ``metrics``
      - ``do_metrics``
-     - The :func:`~bppm_dem_sm.metrics.run_metrics.compute_metrics` dict plus
+     - The :func:`~pm_dem_sm.metrics.run_metrics.compute_metrics` dict plus
        ``computing_speed``.
    * - ``visualizations``
      - ``do_visualization``
      - Figures and saved paths from
-       :func:`~bppm_dem_sm.visualization.run_visualization.generate_visualizations`.
+       :func:`~pm_dem_sm.visualization.run_visualization.generate_visualizations`.
 
 .. code-block:: python
 
@@ -152,19 +152,19 @@ Save the resolved config of a run next to its outputs, then reload it:
 
    import json
    from pathlib import Path
-   from bppm_dem_sm import ExperimentConfig
+   from pm_dem_sm import ExperimentConfig
 
    cfg = ExperimentConfig.from_json("configs/pipeline_example.json")
    Path("configs/my_run.json").write_text(json.dumps(cfg.to_dict(), indent=2))
    assert ExperimentConfig.from_json("configs/my_run.json") == cfg
 
-:meth:`~bppm_dem_sm.config.ExperimentConfig.with_overrides` returns a
+:meth:`~pm_dem_sm.config.ExperimentConfig.with_overrides` returns a
 modified copy. It takes top-level fields, whole option groups, or flat leaf
 names; leaf names apply after whole groups:
 
 .. code-block:: python
 
-   from bppm_dem_sm import VisualizationOptions
+   from pm_dem_sm import VisualizationOptions
 
    cfg2 = cfg.with_overrides(
        do_train=True,

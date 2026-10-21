@@ -42,7 +42,7 @@ by the mill papers.
 
 | Where | What |
 |---|---|
-| `main` `bppm_dem_sm/simulation/yade_dem/engines.py:79-82` | Hertz-Mindlin with `en = MatchMaker` (restitution per pair). No `frictAngle` MatchMaker (min rule), no `includeMoment` (no rolling resistance), `ScGeom` (not `ScGeom6D`). |
+| `main` `pm_dem_sm/simulation/yade_dem/engines.py:79-82` | Hertz-Mindlin with `en = MatchMaker` (restitution per pair). No `frictAngle` MatchMaker (min rule), no `includeMoment` (no rolling resistance), `ScGeom` (not `ScGeom6D`). |
 | `main` `engines.py:67` | Optional `Law2_ScGeom_FrictPhys_CundallStrack` -- no collisional damping at all. |
 | `main` `config.py:485-488` | Restitution MatchMaker built with hard-coded material ids 0 (steel) and 1 (rock). The branch builds it from material labels instead. |
 

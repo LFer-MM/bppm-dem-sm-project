@@ -9,10 +9,10 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from bppm_dem_sm.config import ComputingSpeedOptions, ExperimentConfig
-from bppm_dem_sm.metrics import computing_speed as cs_module
-from bppm_dem_sm.metrics import run_metrics
-from bppm_dem_sm.visualization import metrics_plots
+from pm_dem_sm.config import ComputingSpeedOptions, ExperimentConfig
+from pm_dem_sm.metrics import computing_speed as cs_module
+from pm_dem_sm.metrics import run_metrics
+from pm_dem_sm.visualization import metrics_plots
 
 from helpers import metrics_config
 

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from bppm_dem_sm.simulation.scenario import SimulationScenario, load_scenario
+from pm_dem_sm.simulation.scenario import SimulationScenario, load_scenario
 
 # --- Setup -------------------------------------------------------------------
 

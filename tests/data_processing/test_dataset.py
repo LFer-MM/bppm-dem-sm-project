@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from bppm_dem_sm.data_processing.dataset import (
+from pm_dem_sm.data_processing.dataset import (
     build_supervised_dataset,
     local_mean_positions,
     train_test_split,

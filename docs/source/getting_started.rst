@@ -13,29 +13,29 @@ From the repository root (Python 3.12):
    pip install -r requirements.txt
    pip install -e .
 
-This registers the ``bppm-dem-sm`` console script, with two subcommands:
+This registers the ``pm-dem-sm`` console script, with two subcommands:
 ``dem-sim`` (launch a DEM simulation) and ``ml-pipeline`` (run the
 experiment pipeline).
 
 Run the pipeline (CLI)
 ----------------------
 
-Preferred: pass a JSON file whose keys match :class:`~bppm_dem_sm.config.ExperimentConfig`
+Preferred: pass a JSON file whose keys match :class:`~pm_dem_sm.config.ExperimentConfig`
 (nested ``training`` / ``prediction`` / ``metrics`` / ``visualization`` objects).
 When ``--config`` is set, other pipeline flags are ignored.
 
 .. code-block:: bash
 
-   bppm-dem-sm ml-pipeline --config configs/pipeline_example.json
+   pm-dem-sm ml-pipeline --config configs/pipeline_example.json
 
 Override individual fields without JSON (Boolean flags use ``--flag`` /
 ``--no-flag``):
 
 .. code-block:: bash
 
-   bppm-dem-sm ml-pipeline --do-train --no-do-predict --epochs 10
+   pm-dem-sm ml-pipeline --do-train --no-do-predict --epochs 10
 
-See ``bppm-dem-sm ml-pipeline --help`` for the full flag list.
+See ``pm-dem-sm ml-pipeline --help`` for the full flag list.
 
 Example config
 --------------
@@ -62,7 +62,7 @@ Minimal shape (paths and stage toggles). A fuller example lives at
 
 Stages gated by ``do_simulate``, ``do_process``, ``do_train``, ``do_predict``,
 ``do_metrics``, and ``do_visualization`` run in that order inside
-:func:`~bppm_dem_sm.experiment_pipeline.run_experiment_pipeline`.
+:func:`~pm_dem_sm.experiment_pipeline.run_experiment_pipeline`.
 ``do_simulate`` additionally needs YADE installed and on ``PATH``
 (``dem_backend="yade"``, the default) -- BlazeDEM (``dem_backend="blaze"``)
 is not implemented yet.
@@ -72,7 +72,7 @@ Use from Python
 
 .. code-block:: python
 
-   from bppm_dem_sm import ExperimentConfig, TrainingOptions, run_experiment_pipeline
+   from pm_dem_sm import ExperimentConfig, TrainingOptions, run_experiment_pipeline
 
    cfg = ExperimentConfig.from_json("configs/pipeline_example.json")
    results = run_experiment_pipeline(cfg)

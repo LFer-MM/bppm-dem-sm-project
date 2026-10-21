@@ -6,7 +6,7 @@ import pytest
 
 pytest.importorskip("yade")
 
-from bppm_dem_sm.simulation.yade_dem import stl as sim
+from pm_dem_sm.simulation.yade_dem import stl as sim
 
 
 def test_chord_box_3d_geometry_and_corners():

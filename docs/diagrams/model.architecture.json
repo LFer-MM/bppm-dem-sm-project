@@ -2,12 +2,12 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "bppm_dem_sm.model: RNNSR (GRU + SR model)",
+    "title": "pm_dem_sm.model: RNNSR (GRU + SR model)",
     "output": "docs/diagrams/model-architecture.html",
     "quality_profile": "showcase",
     "locale": "en",
     "repository": {
-      "url": "git@github.com:LFer-MM/bppm-dem-sm-project.git",
+      "url": "git@github.com:LFer-MM/pm-dem-sm.git",
       "link_mode": "local-only",
       "revision": "060154601be9db011cca23f6d9542166277707d6"
     }
@@ -29,13 +29,13 @@
       ],
       "sources": [
         {
-          "path": "bppm_dem_sm/model/rnn/model.py",
+          "path": "pm_dem_sm/model/rnn/model.py",
           "line": 18,
           "end_line": 125,
           "label": "build, predict, save/load"
         },
         {
-          "path": "bppm_dem_sm/model/rnn/model.py",
+          "path": "pm_dem_sm/model/rnn/model.py",
           "line": 131,
           "end_line": 175,
           "label": "legacy SavedModel adapter"
@@ -57,7 +57,7 @@
       ],
       "sources": [
         {
-          "path": "bppm_dem_sm/config.py",
+          "path": "pm_dem_sm/config.py",
           "line": 312,
           "end_line": 315
         }
@@ -79,7 +79,7 @@
       ],
       "sources": [
         {
-          "path": "bppm_dem_sm/model/sr/model.py",
+          "path": "pm_dem_sm/model/sr/model.py",
           "line": 21,
           "end_line": 98
         }
@@ -101,12 +101,12 @@
       ],
       "sources": [
         {
-          "path": "bppm_dem_sm/model/rnn/training.py",
+          "path": "pm_dem_sm/model/rnn/training.py",
           "line": 22,
           "end_line": 77
         },
         {
-          "path": "bppm_dem_sm/data_processing/dataset.py",
+          "path": "pm_dem_sm/data_processing/dataset.py",
           "line": 8,
           "end_line": 45,
           "label": "local mean + sliding windows"
@@ -129,7 +129,7 @@
       ],
       "sources": [
         {
-          "path": "bppm_dem_sm/model/training.py",
+          "path": "pm_dem_sm/model/training.py",
           "line": 18,
           "end_line": 38
         }
@@ -151,13 +151,13 @@
       ],
       "sources": [
         {
-          "path": "bppm_dem_sm/model/sr/fitting.py",
+          "path": "pm_dem_sm/model/sr/fitting.py",
           "line": 17,
           "end_line": 66,
           "label": "fit_sr, Eq. 2"
         },
         {
-          "path": "bppm_dem_sm/model/sr/fitting.py",
+          "path": "pm_dem_sm/model/sr/fitting.py",
           "line": 69,
           "end_line": 90
         }
@@ -178,12 +178,12 @@
       ],
       "sources": [
         {
-          "path": "bppm_dem_sm/model/rnn/training.py",
+          "path": "pm_dem_sm/model/rnn/training.py",
           "line": 67,
           "end_line": 75
         },
         {
-          "path": "bppm_dem_sm/config.py",
+          "path": "pm_dem_sm/config.py",
           "line": 344
         }
       ]
@@ -203,7 +203,7 @@
       ],
       "sources": [
         {
-          "path": "bppm_dem_sm/experiment_pipeline.py",
+          "path": "pm_dem_sm/experiment_pipeline.py",
           "line": 106,
           "end_line": 119
         }
@@ -224,12 +224,12 @@
       ],
       "sources": [
         {
-          "path": "bppm_dem_sm/model/sr/fitting.py",
+          "path": "pm_dem_sm/model/sr/fitting.py",
           "line": 87,
           "end_line": 88
         },
         {
-          "path": "bppm_dem_sm/model/sr/loading.py",
+          "path": "pm_dem_sm/model/sr/loading.py",
           "line": 15,
           "end_line": 24
         }
@@ -251,7 +251,7 @@
       ],
       "sources": [
         {
-          "path": "bppm_dem_sm/model/rnn/loading.py",
+          "path": "pm_dem_sm/model/rnn/loading.py",
           "line": 18,
           "end_line": 61
         }
@@ -273,13 +273,13 @@
       ],
       "sources": [
         {
-          "path": "bppm_dem_sm/model/prediction.py",
+          "path": "pm_dem_sm/model/prediction.py",
           "line": 55,
           "end_line": 64,
           "label": "load GRU and SR model"
         },
         {
-          "path": "bppm_dem_sm/model/prediction.py",
+          "path": "pm_dem_sm/model/prediction.py",
           "line": 78,
           "end_line": 115,
           "label": "predict + v_tilde * dt_step"
@@ -301,7 +301,7 @@
       ],
       "sources": [
         {
-          "path": "bppm_dem_sm/model/sr/loading.py",
+          "path": "pm_dem_sm/model/sr/loading.py",
           "line": 27,
           "end_line": 42
         }
@@ -322,7 +322,7 @@
       ],
       "sources": [
         {
-          "path": "bppm_dem_sm/model/prediction.py",
+          "path": "pm_dem_sm/model/prediction.py",
           "line": 49,
           "end_line": 73
         }
@@ -344,12 +344,12 @@
       ],
       "sources": [
         {
-          "path": "bppm_dem_sm/model/prediction.py",
+          "path": "pm_dem_sm/model/prediction.py",
           "line": 89,
           "end_line": 115
         },
         {
-          "path": "bppm_dem_sm/config.py",
+          "path": "pm_dem_sm/config.py",
           "line": 169,
           "end_line": 179
         }

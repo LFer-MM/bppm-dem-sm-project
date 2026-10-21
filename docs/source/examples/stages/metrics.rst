@@ -1,7 +1,7 @@
 Metrics
 =======
 
-:mod:`bppm_dem_sm.metrics` scores ground-truth (DEM) and predicted frames
+:mod:`pm_dem_sm.metrics` scores ground-truth (DEM) and predicted frames
 with the measures used in Kishida et al. (2025): Lacey's mixing index, the
 radial/axial large-particle fraction profile, the velocity distribution per
 species, granular temperature, and computing speed. Computation only -- the
@@ -10,16 +10,16 @@ plots are in :doc:`visualization`.
 All of them at once
 -------------------
 
-:func:`~bppm_dem_sm.metrics.run_metrics.compute_metrics` is the
+:func:`~pm_dem_sm.metrics.run_metrics.compute_metrics` is the
 ``do_metrics`` stage. It scores ``data_dir`` and, if predictions exist,
 ``prediction.pred_frames_dir``. It writes each result next to the frames it
-came from, so :func:`~bppm_dem_sm.metrics.run_metrics.load_metrics` can read
+came from, so :func:`~pm_dem_sm.metrics.run_metrics.load_metrics` can read
 them back later without recomputing:
 
 .. code-block:: python
 
-   from bppm_dem_sm import ExperimentConfig, MetricsOptions
-   from bppm_dem_sm.metrics.run_metrics import compute_metrics, load_metrics
+   from pm_dem_sm import ExperimentConfig, MetricsOptions
+   from pm_dem_sm.metrics.run_metrics import compute_metrics, load_metrics
 
    cfg = ExperimentConfig(
        metrics=MetricsOptions(cell_size=0.44, min_particles_per_cell=15, metrics_dt=0.05),
@@ -61,7 +61,7 @@ particles are skipped:
 .. code-block:: python
 
    import pandas as pd
-   from bppm_dem_sm.metrics.lacey_mixing_index import detect_tracer_radius, lacey_index_for_frame
+   from pm_dem_sm.metrics.lacey_mixing_index import detect_tracer_radius, lacey_index_for_frame
 
    df = pd.read_parquet("data/processed/sic_dataset_20s_dt0p0001_parquet/frame_00000.parquet")
    tracer_r = detect_tracer_radius(df["r"].to_numpy())
@@ -87,7 +87,7 @@ every frame you compare, so bins line up:
 
 .. code-block:: python
 
-   from bppm_dem_sm.metrics.segregation_profile import (
+   from pm_dem_sm.metrics.segregation_profile import (
        axial_bin_edges,
        axial_fraction_profile,
        radial_bin_edges,
@@ -117,7 +117,7 @@ same particle ids:
 
 .. code-block:: python
 
-   from bppm_dem_sm.metrics.velocity_metrics import (
+   from pm_dem_sm.metrics.velocity_metrics import (
        granular_temperature_by_cell,
        velocity_speed_by_species,
    )
@@ -155,9 +155,9 @@ you timed yourself (the pipeline does not time DEM):
 
 .. code-block:: python
 
-   from bppm_dem_sm import ExperimentConfig
-   from bppm_dem_sm.config import ComputingSpeedOptions
-   from bppm_dem_sm.metrics.computing_speed import compute_computing_speed, load_computing_speed
+   from pm_dem_sm import ExperimentConfig
+   from pm_dem_sm.config import ComputingSpeedOptions
+   from pm_dem_sm.metrics.computing_speed import compute_computing_speed, load_computing_speed
 
    cfg = ExperimentConfig(
        computing_speed=ComputingSpeedOptions(

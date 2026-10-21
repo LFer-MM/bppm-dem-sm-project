@@ -12,10 +12,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from bppm_dem_sm.config import ExperimentConfig, MetricsOptions, PredictionOptions
-from bppm_dem_sm.metrics import computing_speed as cs_module
-from bppm_dem_sm.metrics import run_metrics
-from bppm_dem_sm.visualization import run_visualization
+from pm_dem_sm.config import ExperimentConfig, MetricsOptions, PredictionOptions
+from pm_dem_sm.metrics import computing_speed as cs_module
+from pm_dem_sm.metrics import run_metrics
+from pm_dem_sm.visualization import run_visualization
 
 from helpers import write_frame, write_frames
 

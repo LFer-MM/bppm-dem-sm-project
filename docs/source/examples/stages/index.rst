@@ -2,7 +2,7 @@ Python: stage by stage
 ======================
 
 Each pipeline stage is a plain function you can call on its own. Most take
-an :class:`~bppm_dem_sm.config.ExperimentConfig` for their paths and
+an :class:`~pm_dem_sm.config.ExperimentConfig` for their paths and
 settings; the lower-level helpers on these pages take arrays, DataFrames, or
 paths directly, so they also work on frames this pipeline did not produce.
 

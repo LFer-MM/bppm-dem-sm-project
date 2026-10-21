@@ -9,7 +9,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from bppm_dem_sm.config import ExperimentConfig, MetricsOptions, PredictionOptions
+from pm_dem_sm.config import ExperimentConfig, MetricsOptions, PredictionOptions
 
 
 def write_frame(path, ids, xyz, r=None, v=None):

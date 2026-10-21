@@ -1,10 +1,10 @@
 Stochastic random (SR) model
 ============================
 
-:mod:`bppm_dem_sm.model.sr` implements the SR model, the second half of the
+:mod:`pm_dem_sm.model.sr` implements the SR model, the second half of the
 extended-RNNSR method (Kishida et al., 2025). The GRU predicts each
 particle's local mean motion; the SR model supplies the local velocity
-fluctuation around it. :class:`~bppm_dem_sm.model.sr.model.SRModel` holds a
+fluctuation around it. :class:`~pm_dem_sm.model.sr.model.SRModel` holds a
 per-cell velocity standard deviation sigma_v(x), fitted once from reference
 DEM frames (Step 3, Eq. 2), and samples ``v_tilde ~ N(0, sigma_v(x)^2)`` per
 axis (Step 4, Eq. 3). The prediction loop combines the two as
@@ -27,16 +27,16 @@ predicted position:
 
 .. code-block:: python
 
-   from bppm_dem_sm import ExperimentConfig
-   from bppm_dem_sm.config import StochasticOptions
-   from bppm_dem_sm.model.prediction import predict_frames
+   from pm_dem_sm import ExperimentConfig
+   from pm_dem_sm.config import StochasticOptions
+   from pm_dem_sm.model.prediction import predict_frames
 
    cfg = ExperimentConfig(
        stochastic=StochasticOptions(enabled=True, stochastic_seed=0),
    ).with_overrides(autoregressive=True)
    preds = predict_frames(cfg)
 
-From the CLI: ``bppm-dem-sm ml-pipeline --enabled --autoregressive``. The
+From the CLI: ``pm-dem-sm ml-pipeline --enabled --autoregressive``. The
 same ``stochastic_seed`` gives the same draws. If no ``.sr.npz`` sits next
 to ``model_path``, prediction raises ``FileNotFoundError``; run training
 first, or pass a fitted model as ``predict_frames(cfg, sr_model=...)``.
@@ -48,8 +48,8 @@ From position and velocity arrays of shape ``(T, N, 3)``:
 
 .. code-block:: python
 
-   from bppm_dem_sm.data_processing import frames as data_io
-   from bppm_dem_sm.model.sr.fitting import fit_sr
+   from pm_dem_sm.data_processing import frames as data_io
+   from pm_dem_sm.model.sr.fitting import fit_sr
 
    frames_dir = "data/processed/sic_training_dataset_3s_4s_parquet"
    pos, _, _ = data_io.load_frames_stacked(frames_dir)
@@ -62,7 +62,7 @@ saving the result next to ``model_path``:
 
 .. code-block:: python
 
-   from bppm_dem_sm.model.sr.fitting import fit_and_save_sr
+   from pm_dem_sm.model.sr.fitting import fit_and_save_sr
 
    sr_model = fit_and_save_sr(pos, vel, cfg)  # writes <model_path stem>.sr.npz
 
@@ -77,8 +77,8 @@ sigma_v = 0, i.e. no added noise.
 
    ``velocity_cell_size`` (0.5588 m, ``4 x BALL_DIAM_M``) is deliberately
    not the Lacey cell size (0.44 m, ``0.04 x MILL_DIAMETER_M``); see
-   :class:`~bppm_dem_sm.config.StochasticOptions`. Both grids can be drawn
-   with :func:`~bppm_dem_sm.visualization.cell_grid.plot_particles_with_grid`
+   :class:`~pm_dem_sm.config.StochasticOptions`. Both grids can be drawn
+   with :func:`~pm_dem_sm.visualization.cell_grid.plot_particles_with_grid`
    -- see :doc:`visualization`.
 
 Sampling
@@ -89,8 +89,8 @@ What ``predict_frames`` does at each step, for any ``(N, 3)`` positions:
 .. code-block:: python
 
    import numpy as np
-   from bppm_dem_sm.data_processing import frames as data_io
-   from bppm_dem_sm.model.sr.loading import load_sr
+   from pm_dem_sm.data_processing import frames as data_io
+   from pm_dem_sm.model.sr.loading import load_sr
 
    sr_model = load_sr("models/rnn_gru_sic_model.keras")  # reads models/rnn_gru_sic_model.sr.npz
 

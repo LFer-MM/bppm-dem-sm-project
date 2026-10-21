@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pandas as pd
 
-from bppm_dem_sm.config import ExperimentConfig
-from bppm_dem_sm.data_processing import run_data_processing
+from pm_dem_sm.config import ExperimentConfig
+from pm_dem_sm.data_processing import run_data_processing
 
 
 def test_process_frames_converts_and_reports_integrity(tmp_path):

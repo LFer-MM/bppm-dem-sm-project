@@ -6,7 +6,7 @@ import math
 
 import pytest
 
-from bppm_dem_sm.simulation import mill_geometry as geom
+from pm_dem_sm.simulation import mill_geometry as geom
 
 
 def test_shell_vertices_lie_on_circle_and_span_depth():

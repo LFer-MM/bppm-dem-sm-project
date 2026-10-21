@@ -1,0 +1,508 @@
+"""DEM scenario definition: one JSON file describing a full mill simulation run.
+
+A :class:`SimulationScenario` holds everything a DEM backend needs to build,
+fill, settle, spin up, and record a SAG mill slice: geometry, particle
+species, materials, contact model, time step, and per-stage settings. It is
+backend-agnostic and stdlib-only, so it imports both under the project venv
+(CLI, launcher, tests) and under YADE's own interpreter
+(:mod:`pm_dem_sm.simulation.yade_dem.run_simulation`).
+
+Defaults come from the DEM constants in :mod:`pm_dem_sm.config`; a scenario
+JSON (see ``configs/simulation/``) overrides any subset of them. The derived
+checks (:meth:`SimulationScenario.checks`) are plain formulas -- critical
+speed, fill level, Rayleigh time step -- so a scenario can be sanity-checked
+before any DEM time is spent.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+import json
+import math
+from pathlib import Path
+from typing import Any
+
+from .. import config
+from ..config import _from_plain_dict, _to_plain_dict
+
+# --- Constants ---------------------------------------------------------------
+
+#: Pipeline stages run by a DEM backend, in order.
+STAGES = ("build", "fill", "settle", "spinup", "record")
+#: Valid ``MillGeometry.source`` values.
+MILL_SOURCES = ("stl", "parametric")
+#: Valid ``MillGeometry.end_walls`` values.
+END_WALLS = ("liner", "frictionless")
+#: Valid ``ContactOptions.model`` values.
+CONTACT_MODELS = ("hertz_mindlin", "cundall_strack")
+#: Valid ``FillOptions.method`` values.
+FILL_METHODS = ("random", "segregated")
+#: Standard gravity (m/s^2).
+GRAVITY = 9.81
+
+
+# --- Public classes ----------------------------------------------------------
+
+
+@dataclass
+class MillGeometry:
+    """Mill slice geometry, liner, and drive speed.
+
+    The mill axis is the Z axis through the origin; the slice spans
+    ``0 <= z <= depth_m``, and gravity points along ``-Y``.
+
+    Attributes:
+        source: ``"stl"`` (load ``stl_path``) or ``"parametric"`` (build a
+            shell with lifters from the fields below).
+        stl_path: Mill slice STL, used when ``source == "stl"``.
+        diameter_m: Inside-liner diameter (m). For ``"stl"`` it must match the
+            STL; it sizes the fill boxes and the derived checks.
+        depth_m: Slice depth along Z (m).
+        speed_rpm: Drive speed (rev/min); positive rotates counter-clockwise
+            seen from ``+Z``.
+        n_shell_segments: Facet segments around the parametric shell.
+        n_lifters: Lifter rows on the parametric shell (``0`` = smooth liner).
+        lifter_height_m: Lifter height above the shell (m).
+        lifter_base_width_m: Lifter width at the shell (m).
+        lifter_top_width_m: Lifter width at its top face (m).
+        liner_material: Material key (in ``materials``) of shell and lifters.
+        end_walls: ``"liner"`` gives the flat slice end walls the liner
+            material; ``"frictionless"`` gives them zero friction to limit the
+            wall effects of a thin slice.
+    """
+
+    source: str = "stl"
+    stl_path: Path = Path(config.SAGMILL_STL_PATH)
+    diameter_m: float = config.MILL_DIAMETER_M
+    depth_m: float = 0.375
+    speed_rpm: float = 9.0
+    n_shell_segments: int = 120
+    n_lifters: int = 0
+    lifter_height_m: float = 0.25
+    lifter_base_width_m: float = 0.30
+    lifter_top_width_m: float = 0.15
+    liner_material: str = "steel"
+    end_walls: str = "liner"
+
+
+@dataclass
+class ContactOptions:
+    """Contact law selection.
+
+    Attributes:
+        model: ``"hertz_mindlin"`` (nonlinear, restitution from
+            ``restitution``) or ``"cundall_strack"`` (linear).
+    """
+
+    model: str = "hertz_mindlin"
+
+
+@dataclass
+class SolverOptions:
+    """Time integration settings.
+
+    Attributes:
+        dt_s: Explicit time step (s); ``None`` uses ``dt_safety`` times the
+            P-wave critical step of the built scene.
+        dt_safety: Fraction of the critical time step used when ``dt_s`` is
+            ``None``.
+        young_scale: Multiplier on every material's Young's modulus. Values
+            below 1 soften contacts, which lengthens the stable time step
+            (``dt`` scales as ``young_scale ** -0.5``) at the cost of larger
+            overlaps; the manifest records it so runs stay comparable.
+        threads: OpenMP threads for the backend (``None`` = backend default).
+    """
+
+    dt_s: float | None = None
+    dt_safety: float = 0.3
+    young_scale: float = 1.0
+    threads: int | None = None
+
+
+@dataclass
+class FillOptions:
+    """Charge generation (stage ``fill``).
+
+    Attributes:
+        method: ``"random"`` (species mixed in every batch) or
+            ``"segregated"`` (small species first, then large).
+        box_height_m: Height of each chord-box ingress batch (m).
+        settle_steps: DEM steps run after each batch.
+        damping: Numerical (non-viscous) damping while filling.
+    """
+
+    method: str = "random"
+    box_height_m: float = 1.0
+    settle_steps: int = 20000
+    damping: float = 0.2
+
+
+@dataclass
+class SettleOptions:
+    """Static settling before rotation (stage ``settle``).
+
+    Attributes:
+        damping: Numerical damping while settling.
+        unbalanced_force: Stop once YADE's unbalanced-force ratio is below this.
+        check_every: Steps between unbalanced-force checks.
+        max_steps: Give up (and continue) after this many steps.
+    """
+
+    damping: float = 0.2
+    unbalanced_force: float = 0.01
+    check_every: int = 1000
+    max_steps: int = 200_000
+
+
+@dataclass
+class SpinupOptions:
+    """Rotation from rest until the charge reaches steady state (stage ``spinup``).
+
+    Steady state is declared when, after ``min_revolutions``, the mean charge
+    centre-of-mass angle and mean drive power over the last
+    ``window_revolutions`` differ from the window before by less than
+    ``angle_tol_deg`` and ``power_rel_tol``. Numerical damping is always 0
+    from this stage on.
+
+    Attributes:
+        min_revolutions: Revolutions run before steady state is tested.
+        max_revolutions: Revolutions after which spin-up stops regardless.
+        window_revolutions: Length of each comparison window (revolutions).
+        angle_tol_deg: Allowed change of mean charge angle between windows.
+        power_rel_tol: Allowed relative change of mean power between windows.
+    """
+
+    min_revolutions: float = 2.0
+    max_revolutions: float = 10.0
+    window_revolutions: float = 1.0
+    angle_tol_deg: float = 1.0
+    power_rel_tol: float = 0.05
+
+
+@dataclass
+class RecordOptions:
+    """Frame recording at steady state (stage ``record``).
+
+    Attributes:
+        duration_s: Simulated time to record (s).
+        frame_interval_s: Simulated time between frame CSVs (s).
+        monitor_interval_s: Simulated time between mill-log rows (s), in
+            every stage from ``fill`` on.
+    """
+
+    duration_s: float = 20.0
+    frame_interval_s: float = 0.05
+    monitor_interval_s: float = 0.05
+
+
+@dataclass
+class Species:
+    """One particle species of the charge.
+
+    Attributes:
+        name: Species name (e.g. ``"rock"``, ``"ball"``).
+        material: Material key in ``SimulationScenario.materials``; written
+            as the ``m`` column of every frame.
+        radius_m: Sphere radius (m).
+        count: Number of particles.
+        color: RGB triple for the YADE viewer.
+    """
+
+    name: str
+    material: str
+    radius_m: float
+    count: int
+    color: list[float] = field(default_factory=lambda: [1.0, 1.0, 1.0])
+
+    @property
+    def volume_m3(self) -> float:
+        """Total solid volume of this species (m^3)."""
+        return self.count * 4.0 / 3.0 * math.pi * self.radius_m**3
+
+
+@dataclass
+class SimulationScenario:
+    """A complete, reproducible DEM run of the mill slice.
+
+    Attributes:
+        name: Scenario name; default run directory name.
+        seed: RNG seed for particle placement.
+        mill: Geometry, liner, and speed.
+        species: Particle species; the fill stage supports exactly two
+            (small and large).
+        materials: Material properties keyed by material name (same shape
+            as :data:`pm_dem_sm.config.MATERIALS`).
+        restitution: Pairwise restitution ``[material_a, material_b, e]``.
+        contact: Contact law.
+        solver: Time step, stiffness scaling, threads.
+        fill: Fill-stage settings.
+        settle: Settle-stage settings.
+        spinup: Spin-up stage settings.
+        record: Record-stage settings.
+    """
+
+    name: str = "sag_slice"
+    seed: int = 0
+    mill: MillGeometry = field(default_factory=MillGeometry)
+    species: list[Species] = field(default_factory=lambda: _default_species())
+    materials: dict[str, dict[str, Any]] = field(
+        default_factory=lambda: {k: dict(v) for k, v in config.MATERIALS.items()}
+    )
+    restitution: list[list[Any]] = field(
+        default_factory=lambda: [[a, b, e] for (a, b), e in config.RESTITUTION_COEFFICIENTS.items()]
+    )
+    contact: ContactOptions = field(default_factory=ContactOptions)
+    solver: SolverOptions = field(default_factory=SolverOptions)
+    fill: FillOptions = field(default_factory=FillOptions)
+    settle: SettleOptions = field(default_factory=SettleOptions)
+    spinup: SpinupOptions = field(default_factory=SpinupOptions)
+    record: RecordOptions = field(default_factory=RecordOptions)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> SimulationScenario:
+        """Build a scenario from a mapping such as parsed JSON; unknown keys raise.
+
+        Args:
+            data: Mapping of field names to values; nested groups are objects
+                and ``species`` is a list of objects.
+
+        Returns:
+            SimulationScenario: The coerced scenario, validated.
+
+        Raises:
+            ValueError: If a key is unknown or :meth:`validate` fails.
+        """
+        data = dict(data)
+        species = data.pop("species", None)
+        scenario = _from_plain_dict(cls, data)
+        if species is not None:
+            scenario.species = [_from_plain_dict(Species, s) for s in species]
+        scenario.validate()
+        return scenario
+
+    @classmethod
+    def from_json(cls, path: Path | str) -> SimulationScenario:
+        """Load a scenario from a JSON file.
+
+        Args:
+            path: JSON object whose keys are :class:`SimulationScenario` fields.
+
+        Returns:
+            SimulationScenario: Scenario built via :meth:`from_dict`.
+        """
+        with Path(path).open(encoding="utf-8") as fh:
+            return cls.from_dict(json.load(fh))
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize to JSON-ready plain types (paths become strings).
+
+        Returns:
+            dict[str, Any]: Field name to value; round-trips through
+            :meth:`from_dict`.
+        """
+        species = [_to_plain_dict(s) for s in self.species]
+        out = _to_plain_dict(self)
+        out["species"] = species
+        return out
+
+    def validate(self) -> None:
+        """Check enumerated fields and cross-references.
+
+        Raises:
+            ValueError: On an unknown option value, a species or liner whose
+                material is not in ``materials``, a restitution pair that is
+                missing, or a species count other than two.
+        """
+        _check_choice("mill.source", self.mill.source, MILL_SOURCES)
+        _check_choice("mill.end_walls", self.mill.end_walls, END_WALLS)
+        _check_choice("contact.model", self.contact.model, CONTACT_MODELS)
+        _check_choice("fill.method", self.fill.method, FILL_METHODS)
+        if len(self.species) != 2:
+            raise ValueError(f"Exactly two species are supported, got {len(self.species)}")
+        used = {s.material for s in self.species} | {self.mill.liner_material}
+        missing = used - set(self.materials)
+        if missing:
+            raise ValueError(f"Materials not defined in 'materials': {sorted(missing)}")
+        pairs = {frozenset((a, b)) for a, b, _ in self.restitution}
+        for a in used:
+            for b in used:
+                if frozenset((a, b)) not in pairs:
+                    raise ValueError(f"No restitution coefficient for pair ({a}, {b})")
+        if self.mill.n_lifters and self.lifter_gap_m <= 0:
+            raise ValueError("Lifters overlap: reduce n_lifters or lifter_base_width_m")
+
+    @property
+    def small(self) -> Species:
+        """The species with the smaller radius."""
+        return min(self.species, key=lambda s: s.radius_m)
+
+    @property
+    def large(self) -> Species:
+        """The species with the larger radius."""
+        return max(self.species, key=lambda s: s.radius_m)
+
+    @property
+    def lifter_gap_m(self) -> float:
+        """Free arc length between neighbouring lifter bases at the shell (m)."""
+        if not self.mill.n_lifters:
+            return math.inf
+        pitch = math.pi * self.mill.diameter_m / self.mill.n_lifters
+        return pitch - self.mill.lifter_base_width_m
+
+    def restitution_for(self, a: str, b: str) -> float:
+        """Return the restitution coefficient of material pair ``(a, b)``, in either order.
+
+        Args:
+            a: First material name.
+            b: Second material name.
+
+        Returns:
+            float: Coefficient of restitution.
+
+        Raises:
+            KeyError: If the pair is not in ``restitution``.
+        """
+        for x, y, e in self.restitution:
+            if {x, y} == {a, b}:
+                return float(e)
+        raise KeyError((a, b))
+
+    def critical_speed_rpm(self) -> float:
+        """Return the mill critical speed (rev/min) for the large species.
+
+        ``N_c = (60 / 2 pi) sqrt(g / (R - r_large))``, i.e. the classic
+        ``42.3 / sqrt(D - d)`` with ``D`` and ``d`` in meters.
+
+        Returns:
+            float: Critical speed (rev/min).
+        """
+        r_eff = self.mill.diameter_m / 2.0 - self.large.radius_m
+        return 60.0 / (2.0 * math.pi) * math.sqrt(GRAVITY / r_eff)
+
+    def fill_fraction(self, packing: float = 0.6) -> float:
+        """Return the charge filling ``J`` (bulk charge volume / mill slice volume).
+
+        Args:
+            packing: Assumed solid fraction of the bulk charge.
+
+        Returns:
+            float: ``J`` in ``[0, 1]`` (lifter volume neglected).
+        """
+        solids = sum(s.volume_m3 for s in self.species)
+        mill = math.pi * (self.mill.diameter_m / 2.0) ** 2 * self.mill.depth_m
+        return solids / packing / mill
+
+    def rayleigh_dt_s(self) -> float:
+        """Return the smallest Rayleigh critical time step over all species (s).
+
+        ``dt_R = pi r sqrt(rho / G) / (0.1631 nu + 0.8766)`` with
+        ``G = E young_scale / (2 (1 + nu))``. Uses the scenario's materials, so
+        it can be checked before building the scene.
+
+        Returns:
+            float: Rayleigh time step (s).
+        """
+        out = math.inf
+        for s in self.species:
+            m = self.materials[s.material]
+            nu = m["poisson"]
+            shear = m["young"] * self.solver.young_scale / (2.0 * (1.0 + nu))
+            dt = math.pi * s.radius_m * math.sqrt(m["density"] / shear) / (0.1631 * nu + 0.8766)
+            out = min(out, dt)
+        return out
+
+    def revolution_s(self) -> float:
+        """Return the duration of one mill revolution (s)."""
+        return 60.0 / abs(self.mill.speed_rpm)
+
+    def checks(self) -> dict[str, float]:
+        """Return derived quantities used to sanity-check a scenario.
+
+        Returns:
+            dict[str, float]: ``critical_speed_rpm``, ``fraction_critical``,
+            ``fill_fraction_J``, ``ball_volume_fraction``, ``rayleigh_dt_s``,
+            ``dt_over_rayleigh`` (``dt_s``, or ``dt_safety`` times the Rayleigh
+            step when ``dt_s`` is unset), ``revolution_s``,
+            ``lifter_gap_over_large_d``.
+        """
+        nc = self.critical_speed_rpm()
+        dt_r = self.rayleigh_dt_s()
+        dt = self.solver.dt_s if self.solver.dt_s else self.solver.dt_safety * dt_r
+        solids = sum(s.volume_m3 for s in self.species)
+        return {
+            "critical_speed_rpm": nc,
+            "fraction_critical": abs(self.mill.speed_rpm) / nc,
+            "fill_fraction_J": self.fill_fraction(),
+            "ball_volume_fraction": self.large.volume_m3 / solids,
+            "rayleigh_dt_s": dt_r,
+            "dt_over_rayleigh": dt / dt_r,
+            "revolution_s": self.revolution_s(),
+            "lifter_gap_over_large_d": self.lifter_gap_m / (2.0 * self.large.radius_m),
+        }
+
+    def warnings(self) -> list[str]:
+        """Return human-readable warnings for physically doubtful settings.
+
+        Returns:
+            list[str]: One message per problem; empty when nothing stands out.
+        """
+        c = self.checks()
+        out = []
+        if c["dt_over_rayleigh"] > 0.5:
+            out.append(
+                f"dt is {c['dt_over_rayleigh']:.2f} x the Rayleigh step; above ~0.5 the "
+                "contact integration loses accuracy (raise young_scale reduction or lower dt)."
+            )
+        if not 0.6 <= c["fraction_critical"] <= 0.85:
+            out.append(
+                f"Speed is {100 * c['fraction_critical']:.0f}% of critical; SAG mills "
+                "usually run at 70-80%."
+            )
+        if not 0.15 <= c["fill_fraction_J"] <= 0.40:
+            out.append(f"Fill level J = {c['fill_fraction_J']:.2f} is outside 0.15-0.40.")
+        if self.mill.source == "parametric" and self.mill.n_lifters == 0:
+            out.append("Smooth liner (no lifters): charge lift relies on wall friction alone.")
+        elif c["lifter_gap_over_large_d"] < 2.0:
+            out.append("Gap between lifters is under two large-particle diameters (packing risk).")
+        if self.mill.depth_m < 4 * 2 * self.large.radius_m and self.mill.end_walls == "liner":
+            out.append(
+                "Slice is under 4 large diameters deep with frictional end walls; "
+                "consider end_walls='frictionless'."
+            )
+        if self.solver.young_scale != 1.0:
+            out.append(f"Young's moduli scaled by {self.solver.young_scale:g}.")
+        return out
+
+
+# --- Public functions --------------------------------------------------------
+
+
+def load_scenario(path: Path | str | None = None) -> SimulationScenario:
+    """Load a scenario JSON, or return the defaults when ``path`` is ``None``.
+
+    Args:
+        path: Scenario JSON path, or ``None``.
+
+    Returns:
+        SimulationScenario: The loaded (or default) scenario.
+    """
+    if path is None:
+        return SimulationScenario()
+    return SimulationScenario.from_json(path)
+
+
+# --- Private helper functions ------------------------------------------------
+
+
+def _default_species() -> list[Species]:
+    """Build the bidisperse rock/steel charge from the :mod:`pm_dem_sm.config` constants."""
+    return [
+        Species("rock", "rock", config.ROCK_DIAM_M / 2.0, config.ROCK_COUNT, [1.0, 0.0, 0.0]),
+        Species("ball", "steel", config.BALL_DIAM_M / 2.0, config.BALL_COUNT, [0.0, 0.0, 1.0]),
+    ]
+
+
+def _check_choice(name: str, value: str, choices: tuple[str, ...]) -> None:
+    """Raise ``ValueError`` unless ``value`` is one of ``choices``."""
+    if value not in choices:
+        raise ValueError(f"{name} must be one of {choices}, got {value!r}")

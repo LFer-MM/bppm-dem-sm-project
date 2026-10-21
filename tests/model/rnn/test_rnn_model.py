@@ -6,8 +6,8 @@ from pathlib import Path
 
 import numpy as np
 
-from bppm_dem_sm.model.rnn import RNNModel
-from bppm_dem_sm.model.rnn import loading
+from pm_dem_sm.model.rnn import RNNModel
+from pm_dem_sm.model.rnn import loading
 
 # --- Helpers -----------------------------------------------------------------
 

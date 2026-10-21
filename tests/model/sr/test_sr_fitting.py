@@ -5,9 +5,9 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from bppm_dem_sm.config import ExperimentConfig, StochasticOptions
-from bppm_dem_sm.model.sr import SRModel
-from bppm_dem_sm.model.sr.fitting import fit_and_save_sr, fit_sr
+from pm_dem_sm.config import ExperimentConfig, StochasticOptions
+from pm_dem_sm.model.sr import SRModel
+from pm_dem_sm.model.sr.fitting import fit_and_save_sr, fit_sr
 
 
 def test_fit_sr_zero_for_uniform_motion():

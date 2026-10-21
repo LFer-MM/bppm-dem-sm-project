@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'Bidisperse Polyhedrical Particle Mixing DEM Surrogate Model'
+project = 'Particle Mixing DEM Surrogate Model'
 copyright = '2026, Fernando Martinez'
 author = 'Fernando Martinez'
 release = '0.1'
@@ -17,7 +17,7 @@ release = '0.1'
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('../..'))  # repo root, so autodoc can import bppm_dem_sm
+sys.path.insert(0, os.path.abspath('../..'))  # repo root, so autodoc can import pm_dem_sm
 
 extensions = [
     'sphinx.ext.autodoc',

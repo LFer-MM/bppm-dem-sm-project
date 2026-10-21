@@ -27,10 +27,10 @@ PACKAGE_SECTIONS = [
 TEST_SECTIONS = ["Setup", "Helpers", "Tests"]
 DIVIDER = re.compile(r"^# --- (?P<name>[^:]+?)(?:: (?P<qualifier>.+?))? -+$")
 # Scripts whose top-level statements must run in a fixed order.
-EXEMPT = {"bppm_dem_sm/__main__.py"}
+EXEMPT = {"pm_dem_sm/__main__.py"}
 FILES = sorted(
     p.relative_to(REPO_ROOT).as_posix()
-    for root in ("bppm_dem_sm", "tests")
+    for root in ("pm_dem_sm", "tests")
     for p in (REPO_ROOT / root).rglob("*.py")
 )
 

@@ -5,8 +5,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from bppm_dem_sm.model.sr import SRModel
-from bppm_dem_sm.model.sr.loading import load_sr, sr_path_for
+from pm_dem_sm.model.sr import SRModel
+from pm_dem_sm.model.sr.loading import load_sr, sr_path_for
 
 
 def test_sr_path_for_sits_next_to_the_gru(tmp_path):

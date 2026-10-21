@@ -3,7 +3,7 @@ requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "bppm-dem-sm"
+name = "pm-dem-sm"
 version = "0.0.1"
 description = "Sin descripcion de momento."
 authors = [
@@ -18,7 +18,7 @@ classifiers = [
 requires-python = "~=3.12.0"
 
 [project.scripts]
-bppm-dem-sm = "bppm_dem_sm.cli:main"
+pm-dem-sm = "pm_dem_sm.cli:main"
 
 [project.optional-dependencies]
 docs = [
@@ -31,8 +31,8 @@ docs = [
 
 [tool.ruff]
 line-length = 99
-src = ["bppm_dem_sm"]
-include = ["pyproject.toml", "bppm_dem_sm/**/*.py"]
+src = ["pm_dem_sm"]
+include = ["pyproject.toml", "pm_dem_sm/**/*.py"]
 
 [tool.ruff.lint]
 # I: import sorting. D + D401: Google-style docstrings with imperative summaries
@@ -43,7 +43,7 @@ extend-select = ["I", "D", "D401"]
 convention = "google"
 
 [tool.ruff.lint.isort]
-known-first-party = ["bppm_dem_sm"]
+known-first-party = ["pm_dem_sm"]
 force-sort-within-sections = true
 
 [tool.pytest.ini_options]

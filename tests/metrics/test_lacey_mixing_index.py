@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bppm_dem_sm.metrics import lacey_mixing_index as lacey
+from pm_dem_sm.metrics import lacey_mixing_index as lacey
 
 
 def test_extract_frame_index():

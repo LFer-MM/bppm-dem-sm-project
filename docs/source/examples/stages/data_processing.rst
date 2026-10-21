@@ -1,7 +1,7 @@
 Data processing
 ===============
 
-:mod:`bppm_dem_sm.data_processing` turns raw DEM CSV dumps into parquet
+:mod:`pm_dem_sm.data_processing` turns raw DEM CSV dumps into parquet
 frames and parquet frames into a supervised dataset for the GRU.
 
 CSV to parquet, with an integrity check
@@ -13,8 +13,8 @@ The pipeline's ``do_process`` stage, on its own. Converts every CSV in
 .. code-block:: python
 
    from pathlib import Path
-   from bppm_dem_sm import ExperimentConfig
-   from bppm_dem_sm.data_processing.run_data_processing import process_frames
+   from pm_dem_sm import ExperimentConfig
+   from pm_dem_sm.data_processing.run_data_processing import process_frames
 
    cfg = ExperimentConfig(
        raw_data_dir=Path("data/raw/sic_csv_frames"),
@@ -27,8 +27,8 @@ Or call the two steps directly:
 
 .. code-block:: python
 
-   from bppm_dem_sm.data_processing.convert import convert_folder_csv_to_parquet
-   from bppm_dem_sm.data_processing.integrity import report_particle_integrity
+   from pm_dem_sm.data_processing.convert import convert_folder_csv_to_parquet
+   from pm_dem_sm.data_processing.integrity import report_particle_integrity
 
    convert_folder_csv_to_parquet(
        "data/raw/sic_csv_frames",
@@ -49,7 +49,7 @@ Loading frames
 
 .. code-block:: python
 
-   from bppm_dem_sm.data_processing import frames as data_io
+   from pm_dem_sm.data_processing import frames as data_io
 
    paths = data_io.sorted_frame_files(
        "data/processed/sic_dataset_20s_dt0p0001_parquet", "frame_*.parquet"
@@ -76,9 +76,9 @@ windows of ``frames_in`` steps, and split off a validation set.
 
 .. code-block:: python
 
-   from bppm_dem_sm.config import FEATURE_COLS
-   from bppm_dem_sm.data_processing import dataset as data_ds
-   from bppm_dem_sm.data_processing import frames as data_io
+   from pm_dem_sm.config import FEATURE_COLS
+   from pm_dem_sm.data_processing import dataset as data_ds
+   from pm_dem_sm.data_processing import frames as data_io
 
    pos, rad, ids = data_io.load_frames_stacked(
        "data/processed/sic_training_dataset_3s_4s_parquet",

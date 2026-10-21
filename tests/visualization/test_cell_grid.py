@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from bppm_dem_sm.visualization import cell_grid as vis
+from pm_dem_sm.visualization import cell_grid as vis
 
 
 def test_plot_particles_with_grid_runs(tmp_path):

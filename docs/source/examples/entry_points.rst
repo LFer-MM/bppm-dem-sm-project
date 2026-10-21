@@ -2,8 +2,8 @@ Choosing an entry point
 =======================
 
 The same code runs behind every entry point --
-:class:`~bppm_dem_sm.config.ExperimentConfig` holds the settings and
-:func:`~bppm_dem_sm.experiment_pipeline.run_experiment_pipeline` runs the
+:class:`~pm_dem_sm.config.ExperimentConfig` holds the settings and
+:func:`~pm_dem_sm.experiment_pipeline.run_experiment_pipeline` runs the
 stages it enables.
 
 .. list-table::

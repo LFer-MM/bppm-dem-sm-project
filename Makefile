@@ -2,7 +2,7 @@
 # GLOBALS                                                                       #
 #################################################################################
 
-PROJECT_NAME = bidisperse_polyhedrical_particle_mixing_dem_surrogate_model
+PROJECT_NAME = particle_mixing_dem_surrogate_model
 PYTHON_VERSION = 3.12
 PYTHON_INTERPRETER = python
 

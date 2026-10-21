@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bppm_dem_sm.metrics import run_metrics
-from bppm_dem_sm.config import ExperimentConfig, MetricsOptions, PredictionOptions
+from pm_dem_sm.metrics import run_metrics
+from pm_dem_sm.config import ExperimentConfig, MetricsOptions, PredictionOptions
 
 from helpers import metrics_config, write_frame
 

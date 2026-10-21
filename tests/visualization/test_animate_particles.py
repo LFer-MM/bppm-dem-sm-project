@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from bppm_dem_sm.visualization.animate_particles import LARGE_COLOR, SMALL_COLOR, radius_colors
+from pm_dem_sm.visualization.animate_particles import LARGE_COLOR, SMALL_COLOR, radius_colors
 
 
 def test_radius_colors_maps_small_and_large():

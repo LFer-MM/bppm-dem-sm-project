@@ -1,6 +1,6 @@
 # Proposed Package Structure
 
-A by-concern reorganization of `bppm_dem_sm/`, starting from the `simulation`
+A by-concern reorganization of `pm_dem_sm/`, starting from the `simulation`
 split you specified, then applying the same one-concern-per-module logic to
 the rest of the package. Grounded in the current code (functions named below
 all exist today); nothing here is invented.
@@ -611,7 +611,7 @@ one place still saying "pipeline" on its own:
 
 | Was | Becomes |
 |---|---|
-| `bppm_dem_sm/pipeline.py` | `bppm_dem_sm/experiment_pipeline.py` |
+| `pm_dem_sm/pipeline.py` | `pm_dem_sm/experiment_pipeline.py` |
 | `run_pipeline(config, **overrides)` | `run_experiment_pipeline(config, **overrides)` |
 
 Applied throughout this doc (the six-stage orchestrator in

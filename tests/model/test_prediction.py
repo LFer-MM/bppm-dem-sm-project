@@ -5,12 +5,12 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from bppm_dem_sm.config import ExperimentConfig, PredictionOptions, StochasticOptions
-from bppm_dem_sm.data_processing import frames as data_io
-from bppm_dem_sm.model import prediction
-from bppm_dem_sm.model.rnn import RNNModel
-from bppm_dem_sm.model.sr import SRModel
-from bppm_dem_sm.model.sr.fitting import fit_and_save_sr
+from pm_dem_sm.config import ExperimentConfig, PredictionOptions, StochasticOptions
+from pm_dem_sm.data_processing import frames as data_io
+from pm_dem_sm.model import prediction
+from pm_dem_sm.model.rnn import RNNModel
+from pm_dem_sm.model.sr import SRModel
+from pm_dem_sm.model.sr.fitting import fit_and_save_sr
 
 from helpers import write_frame
 

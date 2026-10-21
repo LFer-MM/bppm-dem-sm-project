@@ -1,6 +1,6 @@
 # Simulation Section — Structure
 
-Overview of the `simulation` subpackage (`bppm_dem_sm/simulation/`) and its
+Overview of the `simulation` subpackage (`pm_dem_sm/simulation/`) and its
 tests (`tests/simulation/`). This is the DEM (YADE) side of the project: the
 part of the codebase that sets up, runs, and drives the discrete-element
 mill simulation, as opposed to the data-processing/model/metrics packages
@@ -8,7 +8,7 @@ that run under the plain TensorFlow/pandas environment.
 
 ## Package boundary: two Python interpreters
 
-The subpackage docstring (`bppm_dem_sm/simulation/__init__.py`) spells out
+The subpackage docstring (`pm_dem_sm/simulation/__init__.py`) spells out
 the key constraint that shapes this whole section:
 
 > Everything here runs inside YADE's embedded Python interpreter
@@ -123,7 +123,7 @@ Mirrors the package, testing only what can run without YADE installed
 ## Directory tree
 
 ```
-bppm_dem_sm/simulation/
+pm_dem_sm/simulation/
 ├── __init__.py          # subpackage docstring: YADE-only boundary note
 ├── launcher.py           # subprocess bridge (venv side, no `yade` import)
 ├── sim_functions.py      # simulation primitives library (YADE side, 995 lines)

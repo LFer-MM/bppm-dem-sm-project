@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from bppm_dem_sm.cli import build_parser, config_from_args, main
-from bppm_dem_sm.config import REPO_ROOT, ExperimentConfig, PredictionOptions, TrainingOptions
-from bppm_dem_sm.experiment_pipeline import run_experiment_pipeline
+from pm_dem_sm.cli import build_parser, config_from_args, main
+from pm_dem_sm.config import REPO_ROOT, ExperimentConfig, PredictionOptions, TrainingOptions
+from pm_dem_sm.experiment_pipeline import run_experiment_pipeline
 
 
 def test_from_dict_coerces_paths_and_bools():
@@ -174,7 +174,7 @@ def test_example_pipeline_json_loads():
 
 
 def test_run_experiment_pipeline_accepts_flat_overrides(monkeypatch):
-    monkeypatch.setattr("bppm_dem_sm.experiment_pipeline.silence_tensorflow", lambda: None)
+    monkeypatch.setattr("pm_dem_sm.experiment_pipeline.silence_tensorflow", lambda: None)
     results = run_experiment_pipeline(
         ExperimentConfig(do_train=False, do_predict=False, do_metrics=False, do_visualization=False),
         epochs=9,
@@ -184,12 +184,12 @@ def test_run_experiment_pipeline_accepts_flat_overrides(monkeypatch):
 
 
 def test_run_experiment_pipeline_prints_enabled_stage_banners(capsys, monkeypatch):
-    monkeypatch.setattr("bppm_dem_sm.experiment_pipeline.silence_tensorflow", lambda: None)
+    monkeypatch.setattr("pm_dem_sm.experiment_pipeline.silence_tensorflow", lambda: None)
     run_experiment_pipeline(
         ExperimentConfig(do_train=False, do_predict=False, do_metrics=False, do_visualization=False)
     )
     out = capsys.readouterr().out
-    assert "bppm-dem-sm ml-pipeline" in out
+    assert "pm-dem-sm ml-pipeline" in out
     assert "Stages: (none enabled)" in out
     assert "Pipeline complete." in out
     assert "STAGE" not in out
@@ -223,7 +223,7 @@ def test_main_dem_sim_missing_yade_returns_nonzero(monkeypatch, capsys):
         """Simulate YADE missing from PATH."""
         raise FileNotFoundError("YADE executable 'yade' not found on PATH.")
 
-    monkeypatch.setattr("bppm_dem_sm.cli.launcher.launch_simulation", _raise)
+    monkeypatch.setattr("pm_dem_sm.cli.launcher.launch_simulation", _raise)
     exit_code = main(["dem-sim"])
     assert exit_code == 1
     assert "not found on PATH" in capsys.readouterr().out
@@ -236,10 +236,10 @@ def test_main_dem_sim_blaze_backend_not_implemented(capsys):
 
 
 def test_main_ml_pipeline_dispatches_to_run_experiment_pipeline(monkeypatch):
-    monkeypatch.setattr("bppm_dem_sm.tf_quiet.silence_tensorflow", lambda: None)
+    monkeypatch.setattr("pm_dem_sm.tf_quiet.silence_tensorflow", lambda: None)
     captured = {}
     monkeypatch.setattr(
-        "bppm_dem_sm.cli.run_experiment_pipeline",
+        "pm_dem_sm.cli.run_experiment_pipeline",
         lambda config: captured.setdefault("config", config),
     )
     exit_code = main(["ml-pipeline", "--do-train"])
@@ -248,7 +248,7 @@ def test_main_ml_pipeline_dispatches_to_run_experiment_pipeline(monkeypatch):
 
 
 def test_progress_helpers_emit_banners_and_track(capsys):
-    from bppm_dem_sm.progress import complete, plan, stage, track
+    from pm_dem_sm.progress import complete, plan, stage, track
 
     plan(["Prediction", "Metrics"])
     stage(1, 2, "Prediction")

@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from bppm_dem_sm.metrics import segregation_profile as sp
+from pm_dem_sm.metrics import segregation_profile as sp
 
 # --- Helpers -----------------------------------------------------------------
 

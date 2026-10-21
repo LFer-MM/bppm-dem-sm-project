@@ -1,0 +1,12 @@
+"""The extended-RNNSR surrogate: a GRU plus the stochastic-random (SR) model.
+
+Each half is its own subpackage, split by concern:
+
+- :mod:`pm_dem_sm.model.rnn` -- the GRU: model, training, loading.
+- :mod:`pm_dem_sm.model.sr` -- the SR model: model, fitting, loading.
+
+The two steps that combine both halves live at this level:
+:mod:`~pm_dem_sm.model.training` (Step 3, train the GRU and fit the SR)
+and :mod:`~pm_dem_sm.model.prediction` (Step 4, GRU prediction plus SR
+noise).
+"""

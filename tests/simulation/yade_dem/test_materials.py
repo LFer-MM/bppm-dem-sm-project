@@ -8,7 +8,7 @@ import pytest
 
 pytest.importorskip("yade")
 
-from bppm_dem_sm.simulation.yade_dem import materials as sim
+from pm_dem_sm.simulation.yade_dem import materials as sim
 
 
 def test_mat_label_empty_material():

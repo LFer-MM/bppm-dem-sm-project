@@ -6,7 +6,7 @@ import subprocess
 
 import pytest
 
-from bppm_dem_sm.simulation import launcher as dem_launcher
+from pm_dem_sm.simulation import launcher as dem_launcher
 
 
 def test_default_simulation_script_points_at_packaged_file():

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from bppm_dem_sm.data_processing.integrity import particle_radius_counts_per_file
+from pm_dem_sm.data_processing.integrity import particle_radius_counts_per_file
 
 
 def test_particle_radius_counts_per_file(tmp_path):

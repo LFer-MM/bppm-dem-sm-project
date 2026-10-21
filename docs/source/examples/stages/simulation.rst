@@ -3,8 +3,8 @@ DEM simulation
 
 The DEM run happens under YADE's own Python interpreter, which cannot be
 imported into this package's environment.
-:func:`~bppm_dem_sm.simulation.launcher.launch_simulation` therefore starts
-it as a subprocess; this is what ``bppm-dem-sm dem-sim`` and
+:func:`~pm_dem_sm.simulation.launcher.launch_simulation` therefore starts
+it as a subprocess; this is what ``pm-dem-sm dem-sim`` and
 ``do_simulate`` call. ``dem-sim`` does not import pandas or TensorFlow, so it
 works on a machine that only has YADE (``yade`` or the ``yadedaily`` build).
 
@@ -12,10 +12,10 @@ Scenarios
 ---------
 
 A run is described by one JSON file, loaded into a
-:class:`~bppm_dem_sm.simulation.scenario.SimulationScenario`: mill geometry
+:class:`~pm_dem_sm.simulation.scenario.SimulationScenario`: mill geometry
 and speed, the two particle species, materials and restitution, contact
 law, time step, and the settings of each stage. Keys left out keep their
-defaults (which come from :mod:`bppm_dem_sm.config`). Three scenarios ship in
+defaults (which come from :mod:`pm_dem_sm.config`). Three scenarios ship in
 ``configs/simulation/``:
 
 ``smoke_test.json``
@@ -32,7 +32,7 @@ Check a scenario before spending DEM time on it:
 
 .. code-block:: python
 
-   from bppm_dem_sm.simulation.scenario import load_scenario
+   from pm_dem_sm.simulation.scenario import load_scenario
 
    s = load_scenario("configs/simulation/sag_slice_lifters.json")
    print(s.checks())    # critical speed, fill level J, Rayleigh dt, lifter gap, ...
@@ -58,20 +58,20 @@ Running
 
 .. code-block:: bash
 
-   bppm-dem-sm dem-sim --scenario configs/simulation/sag_slice_lifters.json \
+   pm-dem-sm dem-sim --scenario configs/simulation/sag_slice_lifters.json \
        --run-dir data/raw/yade_runs/sag_slice_lifters --threads 16
 
    # Resume from the settle checkpoint (e.g. after changing spin-up settings):
-   bppm-dem-sm dem-sim --run-dir data/raw/yade_runs/sag_slice_lifters --from-stage spinup
+   pm-dem-sm dem-sim --run-dir data/raw/yade_runs/sag_slice_lifters --from-stage spinup
 
    # Watch it in the YADE viewer:
-   bppm-dem-sm dem-sim --scenario configs/simulation/smoke_test.json --gui
+   pm-dem-sm dem-sim --scenario configs/simulation/smoke_test.json --gui
 
 From Python:
 
 .. code-block:: python
 
-   from bppm_dem_sm.simulation.launcher import launch_simulation
+   from pm_dem_sm.simulation.launcher import launch_simulation
 
    result = launch_simulation(
        scenario="configs/simulation/smoke_test.json",
@@ -106,7 +106,7 @@ As a pipeline stage
 
 .. code-block:: python
 
-   from bppm_dem_sm import run_experiment_pipeline
+   from pm_dem_sm import run_experiment_pipeline
 
    results = run_experiment_pipeline(
        do_simulate=True,
@@ -122,5 +122,5 @@ Backends
 --------
 
 ``backend="yade"`` is the only implemented backend. ``backend="blaze"``
-(:mod:`bppm_dem_sm.simulation.blaze_dem`) is a placeholder and raises
+(:mod:`pm_dem_sm.simulation.blaze_dem`) is a placeholder and raises
 ``NotImplementedError``.

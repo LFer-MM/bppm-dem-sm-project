@@ -7,8 +7,8 @@ from pathlib import Path
 
 import numpy as np
 
-from bppm_dem_sm.config import ExperimentConfig, PredictionOptions
-from bppm_dem_sm.model.rnn import RNNModel, training
+from pm_dem_sm.config import ExperimentConfig, PredictionOptions
+from pm_dem_sm.model.rnn import RNNModel, training
 
 # --- Helpers -----------------------------------------------------------------
 

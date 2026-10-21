@@ -7,11 +7,11 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from bppm_dem_sm.config import ExperimentConfig, StochasticOptions
-from bppm_dem_sm.model import training
-from bppm_dem_sm.model.rnn import RNNModel
-from bppm_dem_sm.model.rnn import training as rnn_training
-from bppm_dem_sm.model.sr import SRModel
+from pm_dem_sm.config import ExperimentConfig, StochasticOptions
+from pm_dem_sm.model import training
+from pm_dem_sm.model.rnn import RNNModel
+from pm_dem_sm.model.rnn import training as rnn_training
+from pm_dem_sm.model.sr import SRModel
 
 from helpers import write_frame
 

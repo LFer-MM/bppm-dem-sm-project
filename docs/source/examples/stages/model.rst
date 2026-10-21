@@ -3,22 +3,22 @@ Surrogate model
 
 The surrogate has two halves, each a subpackage split by concern:
 
-- :mod:`bppm_dem_sm.model.rnn` -- the GRU that predicts each particle's
+- :mod:`pm_dem_sm.model.rnn` -- the GRU that predicts each particle's
   next ``(x, y, z)`` from its last ``frames_in`` steps of ``(x, y, z, r)``:
   ``model``, ``training``, ``loading``.
-- :mod:`bppm_dem_sm.model.sr` -- the stochastic random (SR) model:
+- :mod:`pm_dem_sm.model.sr` -- the stochastic random (SR) model:
   ``model``, ``fitting``, ``loading``; see :doc:`sr`.
 
 The two steps that use both halves sit at the top of the package:
-:mod:`bppm_dem_sm.model.training` (``do_train``) and
-:mod:`bppm_dem_sm.model.prediction` (``do_predict``). TensorFlow is imported
+:mod:`pm_dem_sm.model.training` (``do_train``) and
+:mod:`pm_dem_sm.model.prediction` (``do_predict``). TensorFlow is imported
 only when a GRU method is called.
 
 Building the network
 --------------------
 
-:class:`~bppm_dem_sm.model.rnn.model.RNNModel` is the GRU's counterpart to
-:class:`~bppm_dem_sm.model.sr.model.SRModel`: one object with ``build``,
+:class:`~pm_dem_sm.model.rnn.model.RNNModel` is the GRU's counterpart to
+:class:`~pm_dem_sm.model.sr.model.SRModel`: one object with ``build``,
 ``predict``, and ``save``/``load``. It wraps the Keras network (it does not
 subclass it), so saved files stay plain ``.keras`` models.
 ``RNNModel.build`` creates
@@ -27,7 +27,7 @@ compiled with Adam and MSE:
 
 .. code-block:: python
 
-   from bppm_dem_sm.model.rnn import RNNModel
+   from pm_dem_sm.model.rnn import RNNModel
 
    model = RNNModel.build(frames_in=15, n_features=4, gru_units=20, dense_units=15, learning_rate=0.01)
    model.network.summary()
@@ -43,23 +43,23 @@ such as fitting on your own ``(X, y)``, e.g. from :doc:`data_processing`:
 Training and saving
 -------------------
 
-:func:`~bppm_dem_sm.model.training.train_and_save` is the ``do_train``
+:func:`~pm_dem_sm.model.training.train_and_save` is the ``do_train``
 stage. It loads ``train_data_dir`` once and hands the frames to both halves:
 
-- :func:`~bppm_dem_sm.model.rnn.training.train_and_save_rnn` converts the
+- :func:`~pm_dem_sm.model.rnn.training.train_and_save_rnn` converts the
   trajectories to local mean components (``x - v * dt_step``, paper Eq. 1;
   turn off with ``TrainingOptions(local_mean_conversion=False)``), builds
   the dataset and the network from ``config.training``, fits, and writes
   ``model_path`` plus a ``<name>.history.json`` with the per-epoch
   ``loss`` / ``val_loss``.
-- :func:`~bppm_dem_sm.model.sr.fitting.fit_and_save_sr` fits the SR model
+- :func:`~pm_dem_sm.model.sr.fitting.fit_and_save_sr` fits the SR model
   on the raw frames and saves it as ``<name>.sr.npz`` (see :doc:`sr`).
 
 .. code-block:: python
 
    from pathlib import Path
-   from bppm_dem_sm import ExperimentConfig, TrainingOptions
-   from bppm_dem_sm.model.training import train_and_save
+   from pm_dem_sm import ExperimentConfig, TrainingOptions
+   from pm_dem_sm.model.training import train_and_save
 
    cfg = ExperimentConfig(
        model_path=Path("models/rnn_gru_sic_model.keras"),
@@ -81,7 +81,7 @@ directories (behind a predict-only adapter, so ``model.network`` has no
 
 .. code-block:: python
 
-   from bppm_dem_sm.model.rnn.loading import load_rnn
+   from pm_dem_sm.model.rnn.loading import load_rnn
 
    model = load_rnn("models/rnn_gru_sic_model.keras")
    print(model.input_shape, model.output_shape)  # (None, 15, 4) (None, 3)
@@ -92,7 +92,7 @@ directory name are tried before raising ``FileNotFoundError``.
 Predicting frames
 -----------------
 
-:func:`~bppm_dem_sm.model.prediction.predict_frames` is the
+:func:`~pm_dem_sm.model.prediction.predict_frames` is the
 ``do_predict`` stage. It seeds a window with ``frames_in`` ground-truth
 frames starting at ``prediction.start_frame``, then predicts one frame per
 step. It writes ``pred_frame_XXXXX.parquet`` files under
@@ -101,8 +101,8 @@ step. It writes ``pred_frame_XXXXX.parquet`` files under
 
 .. code-block:: python
 
-   from bppm_dem_sm import ExperimentConfig, PredictionOptions
-   from bppm_dem_sm.model.prediction import predict_frames
+   from pm_dem_sm import ExperimentConfig, PredictionOptions
+   from pm_dem_sm.model.prediction import predict_frames
 
    cfg = ExperimentConfig(prediction=PredictionOptions(start_frame=66))
    preds = predict_frames(cfg)  # loads cfg.model_path

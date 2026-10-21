@@ -13,7 +13,7 @@ the rest of the run, score it against DEM, and save every figure.
 Inputs:
 
 - ``data/raw/sic_csv_frames/`` -- the DEM CSV dump of the full run (from
-  ``bppm-dem-sm dem-sim``, or add ``--do-simulate`` / ``do_simulate=True``
+  ``pm-dem-sm dem-sim``, or add ``--do-simulate`` / ``do_simulate=True``
   to produce it in the same run).
 - ``data/processed/sic_training_dataset_3s_4s_parquet/`` -- the short
   reference window the GRU is trained on (``train_data_dir``). The pipeline
@@ -42,21 +42,21 @@ CLI -- save the settings as ``configs/full_study.json``, so the run can be repea
 
 .. code-block:: bash
 
-   bppm-dem-sm ml-pipeline --config configs/full_study.json
+   pm-dem-sm ml-pipeline --config configs/full_study.json
 
 Python -- the same settings:
 
 .. code-block:: python
 
    from pathlib import Path
-   from bppm_dem_sm import (
+   from pm_dem_sm import (
        ExperimentConfig,
        PredictionOptions,
        TrainingOptions,
        VisualizationOptions,
        run_experiment_pipeline,
    )
-   from bppm_dem_sm.config import ComputingSpeedOptions, StochasticOptions
+   from pm_dem_sm.config import ComputingSpeedOptions, StochasticOptions
 
    cfg = ExperimentConfig(
        raw_data_dir=Path("data/raw/sic_csv_frames"),
@@ -106,13 +106,13 @@ CLI:
 
 .. code-block:: bash
 
-   bppm-dem-sm ml-pipeline --no-do-visualization \
+   pm-dem-sm ml-pipeline --no-do-visualization \
        --pred-out-dir data/interim/pred_teacher_forced
 
-   bppm-dem-sm ml-pipeline --no-do-visualization \
+   pm-dem-sm ml-pipeline --no-do-visualization \
        --autoregressive --enabled --pred-out-dir data/interim/pred_ar_sr
 
-   bppm-dem-sm ml-pipeline --no-do-predict --no-do-metrics --do-visualization \
+   pm-dem-sm ml-pipeline --no-do-predict --no-do-metrics --do-visualization \
        --save-figures --no-show-plots --pred-out-dir data/interim/pred_ar_sr
 
 Python -- keep both metric dicts in memory and compare directly:
@@ -120,7 +120,7 @@ Python -- keep both metric dicts in memory and compare directly:
 .. code-block:: python
 
    from pathlib import Path
-   from bppm_dem_sm import ExperimentConfig, run_experiment_pipeline
+   from pm_dem_sm import ExperimentConfig, run_experiment_pipeline
 
    base = ExperimentConfig(do_visualization=False)  # do_train defaults to off
 

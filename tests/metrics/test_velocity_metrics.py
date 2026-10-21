@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bppm_dem_sm.metrics import velocity_metrics as vm
+from pm_dem_sm.metrics import velocity_metrics as vm
 
 # --- Helpers -----------------------------------------------------------------
 

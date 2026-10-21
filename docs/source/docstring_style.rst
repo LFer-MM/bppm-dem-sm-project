@@ -1,7 +1,7 @@
 Docstring and comment style
 ===========================
 
-Every Python file in ``bppm_dem_sm/`` and ``tests/`` follows the conventions
+Every Python file in ``pm_dem_sm/`` and ``tests/`` follows the conventions
 below. They are what :doc:`api` is generated from (Sphinx ``autodoc`` +
 ``napoleon``), so following them is what keeps the API reference correct.
 ``ruff check`` enforces the docstring rules for the package (``D`` rules,
@@ -66,7 +66,7 @@ upstream docs through intersphinx: ``numpy.ndarray``, ``pandas.DataFrame``,
 
 **Cross-references.** Use Sphinx roles with the fully qualified path for
 public objects, adding ``~`` to show only the last component:
-``:func:`~bppm_dem_sm.metrics.lacey_mixing_index.extract_frame_index```.
+``:func:`~pm_dem_sm.metrics.lacey_mixing_index.extract_frame_index```.
 Short names only resolve inside the same module. Private objects
 (``_name``) are not rendered by autodoc, so refer to them as literals
 (````_save_sphere_frame````) instead of with a role. Parameters, field
@@ -130,7 +130,7 @@ Every file has the same shape: module docstring, then imports (sorted by
 ruff), then the top-level code in a fixed order of sections. Empty sections
 are left out.
 
-Package files (``bppm_dem_sm/``, and non-test modules such as
+Package files (``pm_dem_sm/``, and non-test modules such as
 ``tests/helpers.py``):
 
 1. ``Constants`` -- module-level values that never change.
@@ -165,7 +165,7 @@ accepted trade-off for a predictable layout.
 
 ``tests/test_code_layout.py`` checks every file against these rules, so a
 misplaced function or a non-standard divider fails the test suite. The only
-exemption is ``bppm_dem_sm/__main__.py``, whose statements must run in order.
+exemption is ``pm_dem_sm/__main__.py``, whose statements must run in order.
 
 Tests
 -----

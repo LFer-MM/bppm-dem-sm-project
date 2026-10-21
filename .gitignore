@@ -199,5 +199,6 @@ CLAUDE.local.md
 docs/diagrams/*.finalize.json
 docs/diagrams/*.finalize-summary.json
 docs/diagrams/*.delivery.json
+docs/diagrams/*.delivery-pending.json
 docs/diagrams/*.browser-check.json
 .archify/

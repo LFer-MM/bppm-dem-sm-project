@@ -10,7 +10,7 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 
-from bppm_dem_sm.visualization.training_curves import plot_training_history
+from pm_dem_sm.visualization.training_curves import plot_training_history
 
 # --- Setup -------------------------------------------------------------------
 
