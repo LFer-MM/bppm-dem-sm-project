@@ -9,7 +9,7 @@
     "repository": {
       "url": "git@github.com:LFer-MM/pm-dem-sm.git",
       "link_mode": "local-only",
-      "revision": "060154601be9db011cca23f6d9542166277707d6"
+      "revision": "c49e962c6241b50dff61f8b5e9d5fbfcfb98e8a4"
     }
   },
   "components": [
