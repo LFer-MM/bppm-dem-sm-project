@@ -29,7 +29,6 @@
 | Govender 2015 | e particle 0.75, lifter 0.75 for Los Bronces; power could be matched "exactly by changing the coefficient of restitution" | Table 8 and §3 text, PDF p14 / j.165 | Yes |
 | Kishida 2025 | e = 0.75 (single material) | Fig. 2(b), PDF p4 | Yes |
 | Cleary 2001 (2D) | Friction and restitution "relatively unimportant" (citing Cleary 1998a) | §9, PDF p22 / j.100 | Yes |
-| Govender 2015 | Los Bronces: e = 0.75 for particles **and** lifters (steel lifters get the particle value) | Table 8, PDF p14 / j.165 | Yes |
 | YADE source (`7c8d01e`) | With `en` given, the normal damping ratio is computed from "formula (B6) of [Thornton2013], written specifically for the Hertz-Mindlin model (no-slip solution) where the end of contact is considered to take place once the normal force is zero"; alpha from Eq. (B7); dashpot c_n = beta_n 2 sqrt(m* k_n) with the current Hertz stiffness k_n | `pkg/dem/HertzMindlin.hpp:90`; `HertzMindlin.cpp:184-207, 458-463` | Yes (source read) |
 | YADE source / docs 2021 | "If neither e_s nor beta_s is given, the value of en is used for es" | `HertzMindlin.hpp:97`; docs printed p. 562 (PDF p569) | Yes |
 | Thornton et al. 2013 | Origin of the e -> beta mapping (Eqs. B6-B7) | via the YADE source only | **No** (not read) |
