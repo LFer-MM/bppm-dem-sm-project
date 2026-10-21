@@ -11,11 +11,17 @@ Friction is the **primary calibration variable**.
 - Only two friction parameters are calibrated, because there are only two
   targets (plant toe / shoulder, [15](15_calibration_targets.md)): mu_p and a
   particle-liner friction mu_w. Rolling resistance is not a third calibrated
-  knob ([06](06_rolling_resistance.md)). Separate liner material and grid:
-  open, see Open items.
+  knob ([06](06_rolling_resistance.md)).
+- **Separate liner material** (decided 2026-10-20): shell and lifters get
+  their own material "liner" (steel stiffness, density and Poisson ratio;
+  its own friction), so mu_w is independent of steel-steel friction. Govender
+  et al. 2015 (Table 8) treat lifter friction separately (0.70 vs 0.40 for
+  particles) and use it to match the shoulder (§1.6.1).
 - Implementation: friction angles in **radians** (mu = tan(angle)), assigned
   per pair with a `frictAngle` `MatchMaker`. Without it YADE takes the
-  **minimum** of the two materials' angles.
+  **minimum** of the two materials' angles, so mu_w could never exceed mu_p:
+  the MatchMaker is **required** for the calibration, not only for the Owen
+  run. Grid: open, see Open items.
 
 ## Evidence
 
@@ -119,8 +125,9 @@ Cleary & Morrison 2016 (Table 2), with Owen's set as a sensitivity case."
   calibrated mu_w), compared with the uniform case on toe / shoulder and on
   steel / rock segregation. Small change -> uniform mu_p justified; large
   change -> report as a limitation or revisit.
-- Open: separate liner material (so mu_w is independent of steel-steel), and
-  the grid / cost of calibrating mu_p x mu_w.
+- Open: the grid / cost of calibrating mu_p x mu_w.
+- Restitution for the new liner pairs (liner-steel, liner-rock) comes from
+  [07](07_restitution.md); default: same values as the steel pairs.
 - Calibration grid (old proposal, to be replaced by the mu_p x mu_w grid):
   mu_particle in {0.3, 0.5, 0.7} x mu_liner in {0.3, 0.5, 0.7} x
   mu_roll(rock) in {0, 0.05, 0.1}; 3 revolutions each to steady state;
@@ -133,4 +140,5 @@ Cleary & Morrison 2016 (Table 2), with Owen's set as a sensitivity case."
 | ID | Change | Current code | When |
 |---|---|---|---|
 | C05-1 | Uniform mu_p: steel and rock get the same `friction_angle` (radians, mu = tan(angle)) from one config value | Per-material `friction_angle`, both atan(0.5) | Before calibration |
-| C05-2 | Optional `frictAngle` `MatchMaker` for per-pair particle friction, used only by the Owen sensitivity run | No MatchMaker: pair angle = min of the two materials | Before the sensitivity run |
+| C05-2 | `frictAngle` `MatchMaker` with per-pair friction: particle-liner pairs = mu_w (needed whenever mu_w > mu_p); particle pairs = mu_p, or the Owen set in the sensitivity run | No MatchMaker: pair angle = min of the two materials | Before calibration |
+| C05-3 | Add a `"liner"` entry to `MATERIALS` (steel density / young / poisson, friction mu_w) and set `mill.liner_material = "liner"`; add liner-steel / liner-rock restitution pairs; the frictionless `end_wall` material keeps deriving from it | `mill.liner_material = "steel"` (`scenario.py:84`); no liner material in `config.py` | Before calibration |

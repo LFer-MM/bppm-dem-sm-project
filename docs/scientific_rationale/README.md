@@ -72,7 +72,7 @@ end.
 | [02](02_time_step.md) | C02-1 ... C02-3 | **C02-1** (default dt), C02-2 |
 | [03](03_stiffness_young_modulus.md) | C03-1 ... C03-3 | **C03-1** (moduli), C03-2 |
 | [04](04_numerical_damping.md) | C04-1 ... C04-5 | **C04-1** (damping), C04-2, C04-4 |
-| [05](05_friction.md) | C05-1, C05-2 (in progress: liner / grid open) | **C05-1** |
+| [05](05_friction.md) | C05-1 ... C05-3 (grid still open) | **C05-1**, **C05-2**, **C05-3** |
 
 Related items from later topics (not yet reviewed): `MILL_DIAMETER_M`
 11.0 -> 11.8375 ([10](10_mill_geometry.md)); split the runner into
