@@ -31,9 +31,6 @@ two sides never call each other in-process.
 
 ## Relevant links
 
-- [COST Action CA22132 — Working Groups and Membership](https://www.cost.eu/actions/CA22132/#tabs+Name:Working%20Groups%20and%20Membership)
-- [On-DEM Confluence — Index overview](https://on-dem.atlassian.net/wiki/spaces/Index/overview?mode=global)
-
 ## Citation and license
 
 If you use this software, please cite it using the metadata in
