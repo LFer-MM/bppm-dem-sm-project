@@ -36,6 +36,18 @@ equivalent to Owen & Cleary's visual bulk toe / shoulder (§4.1). The liner
 contact-force distribution (Owen & Cleary §4.3) is a cross-check, not the
 primary measure, because it mainly detects the impact toe.
 
+**Origin of the plant angles** (stated by the author, 2026-10-20): the
+SAG_B toe and shoulder are **model estimates**, not direct observations. An
+acoustic impactometer (microphones on the shell) detects where the charge
+strikes the liner; its signal, together with process variables, feeds a
+model that outputs toe and shoulder. Consequences:
+- What the microphones sense directly is **impact location** (closest to the
+  impact toe); the bulk toe / shoulder come from the model. Which definition
+  the reported angles follow depends on that model (open item).
+- The narrow SAG_B toe box (~1 deg) partly reflects model smoothing, not
+  only measurement precision; the acceptance band in simulation should not
+  be tighter than the simulated measurement can resolve.
+
 **Power:** not a calibration target and no plant power data is used
 (decided 2026-10-18). Power is computed in YADE only for the internal energy
 balance ([16](16_validation_checks.md), V4). The analysis below records why
@@ -140,6 +152,11 @@ insensitive to the contact parameters (Boemer & Ponthot 2017, §3.1.4); it
 was used only to check the internal energy balance of the simulations."
 
 ## Open items
+
+- Identify the plant charge-shape model / impactometer vendor and how it
+  defines toe and shoulder (bulk boundary vs. impact location). This decides
+  whether the bulk contour or the liner-impact distribution is the primary
+  simulated measure.
 
 - Implement bulk toe / shoulder extraction from the time-averaged position
   density (plus the liner-force cross-check).
