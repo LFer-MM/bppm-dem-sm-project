@@ -84,6 +84,20 @@ density search of slide 30 must be repeated after the fix.
   ore. Cleary & Morrison's mu = 0.5 was used with super-quadric shapes; with
   spheres the same mu gives a weaker charge, which rolling resistance
   compensates.
+- **Why exactly two calibrated parameters, and why mu_p and mu_w.** There
+  are two targets (bulk toe, shoulder), so at most two parameters can be
+  identified; with more, many combinations fit equally well and the
+  calibrated values are not unique. The two must act through different
+  mechanisms:
+  - mu_p (particle-particle) sets the shear strength of the bulk charge:
+    cascading and the toe.
+  - mu_w (particle-liner) sets how firmly lifters and shell hold the charge
+    before release: the shoulder (Govender et al. 2015, §1.6.1, tune lifter
+    friction separately for this).
+  - Rock rolling resistance also acts on bulk shear strength, almost the
+    same mechanism as mu_p; calibrating both would be ill-conditioned, so it
+    is fixed separately ([06](06_rolling_resistance.md)) and checked as a
+    sensitivity.
 - Owen's pair-wise set needs a `frictAngle` MatchMaker in YADE; with
   per-material angles and the min rule, steel-rock would get 0.4, not 0.5.
 - **Why uniform mu_p rather than Owen's ratios.** Owen's ordering
@@ -116,7 +130,11 @@ used to match the shoulder position (Govender et al. 2015, §1.6.1). The
 search is bracketed by literature values: mu = 0.5 for all pairs (Cleary &
 Morrison 2016, Table 2), 0.4 / 0.5 / 0.8 for steel-steel / steel-rock /
 rock-rock (Owen & Cleary 2015, Table 4), 0.575 (Kishida et al. 2025) and
-0.40 particle / 0.70 lifter for a SAG mill (Govender et al. 2015, Table 8)."
+0.40 particle / 0.70 lifter for a SAG mill (Govender et al. 2015, Table 8).
+Two parameters are calibrated, one per target mechanism: a uniform
+particle-particle friction and a separate particle-liner friction, on a
+3 x 3 grid from a shared settled initial condition; the remaining contact
+parameters are fixed from the literature and tested one at a time."
 
 On the pair structure: "Owen & Cleary's ordering (steel-steel 0.4,
 steel-rock 0.5, rock-rock 0.8; Owen & Cleary 2015, Table 4) is physically
