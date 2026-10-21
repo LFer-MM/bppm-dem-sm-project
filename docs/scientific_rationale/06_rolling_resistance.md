@@ -162,7 +162,7 @@ band."
 
 ## Open items / validation
 
-- Obtain Wensrich & Katterfeld 2012 and Ai et al. 2011 (Zotero); compare the
+- Obtain Wensrich & Katterfeld 2012 and Ai et al. 2011 (checklist in [README](README.md), "Pending Zotero additions"); compare the
   krot criterion with Ai's rule; quote Wensrich only after reading it.
 - Search further for a measured repose angle of coarse SAG-feed or ROM ore
   (peer-reviewed or official CEMA 550 table).

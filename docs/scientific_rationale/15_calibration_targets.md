@@ -258,8 +258,8 @@ To do (Claude):
   for published plant toe / shoulder measurements (e.g. Burns et al. 2018,
   Lihir, cited by Toor et al. 2023) for claim 4.
 
-- Add Toor et al. 2023 and Pural & Boylu 2025 to Zotero (and Morrell 1993 /
-  1996a if obtainable); verify Morrell's shoulder equation in a primary
+- Zotero additions for this topic: see the checklist in [README](README.md) ("Pending Zotero additions"), plus Morrell
+  1993 / 1996a if obtainable; verify Morrell's shoulder equation in a primary
   source before quoting a Morrell shoulder value.
 - Implement bulk toe / shoulder extraction from the time-averaged position
   density (plus the liner-force cross-check).
