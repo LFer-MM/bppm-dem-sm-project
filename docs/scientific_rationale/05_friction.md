@@ -21,7 +21,15 @@ Friction is the **primary calibration variable**.
   per pair with a `frictAngle` `MatchMaker`. Without it YADE takes the
   **minimum** of the two materials' angles, so mu_w could never exceed mu_p:
   the MatchMaker is **required** for the calibration, not only for the Owen
-  run. Grid: open, see Open items.
+  run.
+- **Calibration grid** (decided 2026-10-20): mu_p x mu_w in
+  {0.3, 0.5, 0.7} x {0.3, 0.5, 0.7} (9 runs), then refined around the best
+  point; mu_w extended to 0.8-0.9 if the shoulder / toe are not reached
+  (the SAG_B toe is high for its fill, [15](15_calibration_targets.md)).
+  All runs start from **one shared settled initial condition** and spin up
+  to a steady charge shape (~6 revolutions, ~1.3 h per run at full scale,
+  ~12 h for the grid). Score: simulated bulk toe / shoulder (position-density
+  contour) vs. SAG_B.
 
 ## Evidence
 
@@ -125,13 +133,8 @@ Cleary & Morrison 2016 (Table 2), with Owen's set as a sensitivity case."
   calibrated mu_w), compared with the uniform case on toe / shoulder and on
   steel / rock segregation. Small change -> uniform mu_p justified; large
   change -> report as a limitation or revisit.
-- Open: the grid / cost of calibrating mu_p x mu_w.
 - Restitution for the new liner pairs (liner-steel, liner-rock) comes from
   [07](07_restitution.md); default: same values as the steel pairs.
-- Calibration grid (old proposal, to be replaced by the mu_p x mu_w grid):
-  mu_particle in {0.3, 0.5, 0.7} x mu_liner in {0.3, 0.5, 0.7} x
-  mu_roll(rock) in {0, 0.05, 0.1}; 3 revolutions each to steady state;
-  score = distance to SAG_B toe / shoulder.
 - Re-measure the packing fraction after calibration ([12](12_charge_fill_and_particles.md)):
   packing depends on friction.
 
