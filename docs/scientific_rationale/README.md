@@ -46,7 +46,7 @@ target anyway).
 | 03 | [03_stiffness_young_modulus.md](03_stiffness_young_modulus.md) | Physical moduli (207 / 55 GPa) / 26 = 7.96 / 2.115 GPa, uniform to keep the stiffness ratio; overlaps checked |
 | 04 | [04_numerical_damping.md](04_numerical_damping.md) | NewtonIntegrator damping = 0 everywhere; the "explosions" it hid were an unstable dt (tested) |
 | 05 | [05_friction.md](05_friction.md) | Calibrate; uniform particle friction mu_p (baseline 0.5) plus liner friction mu_w; Owen 0.4 / 0.5 / 0.8 as a sensitivity run |
-| 06 | [06_rolling_resistance.md](06_rolling_resistance.md) | Add rolling resistance for rock (spheres stand in for angular ore); calibrate |
+| 06 | [06_rolling_resistance.md](06_rolling_resistance.md) | Uniform rolling resistance mu_r (YADE eta) on all contacts, fixed by an angle-of-repose heap test (target 37 deg, band 33-41); ktwist = 0 |
 | 07 | [07_restitution.md](07_restitution.md) | e = 0.3 / 0.5 / 0.8 (rock-rock / rock-steel / steel-steel) |
 | 08 | [08_density.md](08_density.md) | 7850 / 2650 kg/m^3 (literature; no plant measurement); not calibrated; sensitivity 2650 vs 2850 |
 | 09 | [09_poisson_ratio.md](09_poisson_ratio.md) | 0.292 steel, 0.25 rock |
@@ -73,6 +73,7 @@ end.
 | [03](03_stiffness_young_modulus.md) | C03-1 ... C03-3 | **C03-1** (moduli), C03-2 |
 | [04](04_numerical_damping.md) | C04-1 ... C04-5 | **C04-1** (damping), C04-2, C04-4 |
 | [05](05_friction.md) | C05-1 ... C05-3 | **C05-1**, **C05-2**, **C05-3** |
+| [06](06_rolling_resistance.md) | C06-1 ... C06-4 | **C06-1**, C06-2, **C06-3** |
 
 Related items from later topics (not yet reviewed): `MILL_DIAMETER_M`
 11.0 -> 11.8375 ([10](10_mill_geometry.md)); split the runner into
@@ -132,6 +133,12 @@ The Johnson PDF (`LECT8BKG`) is attached to the book record `PDKNRX4P`
 | **Toor et al. 2023** | P. Toor, W. Valery, S. Morrell, K. Duffy, *Real-Time Estimation of SAG Mill Charge Characteristics for Process Optimization*, SAG Conference, Vancouver, 2023 (page footers read "SAG CONFERENCE 2019 VANCOUVER \| June 18, 2023") | ceecthefuture.org publication 4122 | printed page numbers |
 | **Pural & Boylu 2025** | Y.E. Pural, F. Boylu, *Prediction and visualization of charge shape and ball trajectory in tumbling mills: a python-based tool for liner design and operational optimizations*, Physicochem. Probl. Miner. Process. 61(3) (2025) 204533 | 10.37190/ppmp/204533 | PDF pages |
 | **Maleki-Moghaddam et al. 2013** | M. Maleki-Moghaddam, M. Yahyaei, S. Banisi, *A method to predict shape and trajectory of charge in industrial mills*, Miner. Eng. 46-47 (2013) 157-166 -- abstract only so far | 10.1016/j.mineng.2013.04.013 | -- |
+| **Wei et al. 2022** | S. Wei, H. Wei, H. Saxen, Y. Yu, *Numerical analysis of the relationship between friction coefficient and repose angle of blast furnace raw materials by discrete element method*, Materials 15(3) (2022) 903 | 10.3390/ma15030903 | open access |
+| **Engineering Toolbox** | *Angles of Repose* (table), engineeringtoolbox.com/dumping-angles-d_1531.html | -- | web table, no primary source |
+| **PDHonline M344** | J. Primo, *Belt Conveyor for Bulk Materials -- Practical Calculations*, PDHonline course M344 | -- | course notes (CEMA-based) |
+| **Marin Perez et al. 2024** | J. Marin Perez, T. Comlekci, Y. Gorash, D. MacKenzie, *Calibration of the DEM sliding friction and rolling friction parameters of a cohesionless bulk material*, preprint (Strathprints 89399), 28 May 2024 | -- | preprint |
+| **Wensrich & Katterfeld 2012** | C.M. Wensrich, A. Katterfeld, *Rolling friction as a technique for modelling particle shape in DEM*, Powder Technol. 217 (2012) 409-417 -- **not read** | 10.1016/j.powtec.2011.10.057 | -- |
+| **Ai et al. 2011** | J. Ai, J.-F. Chen, J.M. Rotter, J.Y. Ooi, *Assessment of rolling resistance models in discrete element simulations*, Powder Technol. 206 (2011) 269-282 -- **not read** | 10.1016/j.powtec.2010.09.030 | -- |
 | **Morrell 1993** | S. Morrell, *The prediction of power draw in wet tumbling mills*, PhD thesis, University of Queensland, 1993 -- cited through Toor et al. 2023 only | -- | -- |
 
 ## Citation problems found in the PPT

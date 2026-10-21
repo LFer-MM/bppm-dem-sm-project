@@ -8,7 +8,8 @@ Use the **Hertz-Mindlin** model in YADE
 - pair-wise normal restitution through a `MatchMaker` on `en` (see [07](07_restitution.md));
 - pair-wise friction through a `MatchMaker` on `frictAngle` (see [05](05_friction.md));
   without it YADE uses the **minimum** of the two materials' friction angles;
-- rolling resistance through `includeMoment=True`, `krot`, `eta`, which needs the
+- rolling resistance through `includeMoment=True`, `krot`, `eta` (one value for all
+  contacts: not per-pair in base YADE, see [06](06_rolling_resistance.md)), which needs the
   6-DOF geometry functors `Ig2_Sphere_Sphere_ScGeom6D` / `Ig2_Facet_Sphere_ScGeom6D`
   (see [06](06_rolling_resistance.md)).
 
@@ -81,7 +82,7 @@ from the linear models used in the mill papers is not a fidelity concern.
 
 | ID | Change | Current code | When |
 |---|---|---|---|
-| C01-1 | Pair-wise friction through a `frictAngle` `MatchMaker` on `Ip2_FrictMat_FrictMat_MindlinPhys`, built from material labels | Not set: YADE uses the minimum of the two materials' friction angles | Wiring with values from [05](05_friction.md) |
-| C01-2 | 6-DOF geometry (`Ig2_Sphere_Sphere_ScGeom6D`, `Ig2_Facet_Sphere_ScGeom6D`) and `Law2_ScGeom_MindlinPhys_Mindlin(includeMoment=True)` with `krot`, `ktwist`, `eta` | `ScGeom`, no moment law (`engines.py`) | With values from [06](06_rolling_resistance.md); also needed to investigate the residual-spin floor ([13](13_initial_conditions.md)) |
+| C01-1 | **Merged into C05-2** ([05](05_friction.md)): `frictAngle` `MatchMaker` built from material labels | Not set: YADE uses the minimum of the two materials' friction angles | See C05-2 |
+| C01-2 | 6-DOF geometry (`Ig2_Sphere_Sphere_ScGeom6D`, `Ig2_Facet_Sphere_ScGeom6D`) and `Law2_ScGeom_MindlinPhys_Mindlin(includeMoment=True)` with `krot`, `ktwist`, `eta` | `ScGeom`, no moment law (`engines.py`) | Implemented as C06-1 with values from [06](06_rolling_resistance.md) (uniform eta, ktwist = 0); also needed to investigate the residual-spin floor ([13](13_initial_conditions.md)) |
 | C01-3 | Remove the `cundall_strack` contact option (no collisional dissipation in YADE), optionally replacing it with the `ViscElMat` linear fallback | Still offered (`engines.py`, `scenario.CONTACT_MODELS`) | Any time |
 | C01-4 | V1 restitution-recovery script: one binary collision per material pair at the run's dt, measured vs input e | None | With the run-type split ([14](14_dataset_runs_and_recording.md)) |
