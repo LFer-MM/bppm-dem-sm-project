@@ -151,8 +151,8 @@ Cleary & Morrison 2016 (Table 2), with Owen's set as a sensitivity case."
   calibrated mu_w), compared with the uniform case on toe / shoulder and on
   steel / rock segregation. Small change -> uniform mu_p justified; large
   change -> report as a limitation or revisit.
-- Restitution for the new liner pairs (liner-steel, liner-rock) comes from
-  [07](07_restitution.md); default: same values as the steel pairs.
+- Restitution for the liner pairs: steel values (liners are steel), decided
+  in [07](07_restitution.md).
 - Re-measure the packing fraction after calibration ([12](12_charge_fill_and_particles.md)):
   packing depends on friction.
 

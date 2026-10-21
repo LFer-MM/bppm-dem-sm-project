@@ -47,7 +47,7 @@ target anyway).
 | 04 | [04_numerical_damping.md](04_numerical_damping.md) | NewtonIntegrator damping = 0 everywhere; the "explosions" it hid were an unstable dt (tested) |
 | 05 | [05_friction.md](05_friction.md) | Calibrate; uniform particle friction mu_p (baseline 0.5) plus liner friction mu_w; Owen 0.4 / 0.5 / 0.8 as a sensitivity run |
 | 06 | [06_rolling_resistance.md](06_rolling_resistance.md) | Uniform rolling resistance mu_r (YADE eta) on all contacts, fixed by an angle-of-repose heap test (target 37 deg, band 33-41); ktwist = 0 |
-| 07 | [07_restitution.md](07_restitution.md) | e = 0.3 / 0.5 / 0.8 (rock-rock / rock-steel / steel-steel) |
+| 07 | [07_restitution.md](07_restitution.md) | Fixed pair-wise e (Cleary & Morrison 2016): 0.3 / 0.5 / 0.8; steel liners take the steel values; es = en |
 | 08 | [08_density.md](08_density.md) | 7850 / 2650 kg/m^3 (literature; no plant measurement); not calibrated; sensitivity 2650 vs 2850 |
 | 09 | [09_poisson_ratio.md](09_poisson_ratio.md) | 0.292 steel, 0.25 rock |
 | 10 | [10_mill_geometry.md](10_mill_geometry.md) | STL slice, 30 lifters, D = 11.8375 m, 0.375 m depth; test end-wall friction |
@@ -74,6 +74,7 @@ end.
 | [04](04_numerical_damping.md) | C04-1 ... C04-5 | **C04-1** (damping), C04-2, C04-4 |
 | [05](05_friction.md) | C05-1 ... C05-3 | **C05-1**, **C05-2**, **C05-3** |
 | [06](06_rolling_resistance.md) | C06-1 ... C06-4 | **C06-1**, C06-2, **C06-3** |
+| [07](07_restitution.md) | C07-1, C07-2 | **C07-1** |
 
 Related items from later topics (not yet reviewed): `MILL_DIAMETER_M`
 11.0 -> 11.8375 ([10](10_mill_geometry.md)); split the runner into
@@ -144,6 +145,7 @@ registry with its item / file keys and page mapping.
 | **Ai et al. 2011** | J. Ai, J.-F. Chen, J.M. Rotter, J.Y. Ooi, *Assessment of rolling resistance models in discrete element simulations*, Powder Technol. 206 (2011) 269-282 | 10.1016/j.powtec.2010.09.030 | [06](06_rolling_resistance.md) | **Not read** (citation only) | Add by DOI; PDF via library access; then compare its krot rule with doc 06 |
 | **Engineering Toolbox** | *Angles of Repose* (table) | engineeringtoolbox.com/dumping-angles-d_1531.html | [06](06_rolling_resistance.md) | Read (web page) | Add as web page with a snapshot (accessed 2026-10-21) |
 | **PDHonline M344** | J. Primo, *Belt Conveyor for Bulk Materials -- Practical Calculations*, PDHonline course M344, 2026 | pdhonline.com/courses/m344/m344content.pdf | [06](06_rolling_resistance.md) | Read (PDF) | Add as document; attach the PDF (the edition changes yearly) |
+| **Thornton et al. 2013** | C. Thornton, S.J. Cummins, P.W. Cleary, *An investigation of the comparative behaviour of alternative contact force models during inelastic collisions*, Powder Technol. 233 (2013) 30-46 | 10.1016/j.powtec.2012.08.012 | [07](07_restitution.md) | **Not read** (cited through the YADE source) | Add by DOI; PDF via library; verify Eqs. B6-B7 |
 | **YADE source** | YADE, source code at commit `7c8d01e` (the installed `yadedaily` 20260115 build), files `pkg/dem/HertzMindlin.{hpp,cpp}`, `ViscoelasticPM.*`, `CohesiveFrictionalContactLaw.*` | gitlab.com/yade-dev/trunk, commit 7c8d01e | [06](06_rolling_resistance.md) | Read (source) | Optional: add as "computer program" with the commit; line numbers are quoted in doc 06 |
 
 Cited only **through** another source (add only if you want to cite them
