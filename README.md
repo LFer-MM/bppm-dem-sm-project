@@ -6,7 +6,7 @@
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-RNN-FF6F00?logo=tensorflow&logoColor=white)
 ![YADE](https://img.shields.io/badge/YADE-DEM-2C5282)
 
-Repository dedicated to the development of the project titled **Polyhedral-Based DEM Surrogate Modeling for Time Series Prediction in Bidisperse Particle Mixing and Segregation** as terminal project, conformant of the UNISON MCD academic program.
+Repository dedicated to the development of the project titled **DEM Surrogate Modeling for Time Series Prediction in Bidisperse Particle Mixing and Segregation** as terminal project, conformant of the UNISON MCD academic program.
 
 ## Contents
 
