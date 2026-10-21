@@ -10,7 +10,7 @@
 | liner-steel | **0.8** |
 | liner-rock | **0.5** |
 
-- The liner material ([05](05_friction.md)) is **steel** (SAG_B shell liners
+- The liner material ([05](05_friction.md)) is **steel** (SAG_A shell liners
   and lifters are steel, stated by the author 2026-10-21), so its pairs take
   the steel values; only its friction differs. The frictionless end walls
   take their restitution from the liner.

@@ -10,26 +10,26 @@ Z in YADE). The charge rises on the right: shoulder in the first quadrant
 symmetric, so this orientation is a free choice in simulation.
 
 **Role of the reference mills** (SAG_A, SAG_B, SAG_C; SAG_D and SAG_E
-may be added). **SAG_B is the reference**: its operating point sets the
+may be added). **SAG_A is the reference**: its operating point sets the
 simulation and its charge-shape angles are the targets the simulation is
 compared to. **The other mills are evidence that the selected values are
 typical**: their designs and dimensions differ, so they are not simulated
-or used as validation cases, but they show that SAG_B's operating point and
+or used as validation cases, but they show that SAG_A's operating point and
 angles sit inside the normal operating ranges of real SAG mills. The full
 argument, joining plant data and literature, is in the Analysis
 ("Reference-mill argument").
 
-**Calibration target (SAG_B, at SAG_B's operating point Jb 17 %, Jc 26 %,
+**Calibration target (SAG_A, at SAG_A's operating point Jb 17 %, Jc 26 %,
 9 rpm):**
 
-| Target | SAG_B median | SAG_B interquartile range (box) | Range over the three mills (medians) |
+| Target | SAG_A median | SAG_A interquartile range (box) | Range over the three mills (medians) |
 |---|---|---|---|
 | **Bulk** toe angle | **215 deg** | ~214.6-215.8 deg | 206-215 deg |
 | Shoulder angle | **24.6 deg** | ~22-26.4 deg | 24.6-38.2 deg |
 
 Friction and rolling resistance ([05](05_friction.md),
 [06](06_rolling_resistance.md)) are tuned until the simulated steady-state
-bulk toe and shoulder fall inside the SAG_B interquartile ranges.
+bulk toe and shoulder fall inside the SAG_A interquartile ranges.
 
 **Measurement in simulation:** the plant reports the **bulk** toe, so the
 simulated toe and shoulder are read from the boundary of the main charge
@@ -52,10 +52,16 @@ toe / shoulder angles (Maleki-Moghaddam's model is fitted to toe and
 shoulder read from photographs of a model mill, i.e. bulk positions), and
 the simulated angles are read with the bulk position-density contour.
 
-**Power:** not a calibration target and no plant power data is used
-(decided 2026-10-18). Power is computed in YADE only for the internal energy
-balance ([16](16_validation_checks.md), V4). The analysis below records why
-plant power would not be a determining target.
+**Power:** not a calibration target (decided 2026-10-18). Power is used
+twice, neither time to choose parameters:
+- the internal energy balance of every run ([16](16_validation_checks.md),
+  V4);
+- **one post-calibration check against the plant** (decided 2026-10-21,
+  V15): the simulated power at the calibrated point, scaled from the slice
+  to the full mill, is compared with SAG_A's plant power in the same
+  operating window, and the **percentage deviation** is reported. No
+  parameter is changed because of it. The analysis below records why plant
+  power is not a calibration target and how the comparison is made.
 
 ## Evidence
 
@@ -77,9 +83,10 @@ plant power would not be a determining target.
 
 | Slide | Content |
 |---|---|
+| -- | **Naming:** the PPT labels the reference mill SAG_B and the other one SAG_A; swapped in these docs (reference = SAG_A), see [README](README.md) |
 | 2 | Jb and Jc box plots for SAG_A/B/C (operating-range justification) |
-| 3 | Toe and shoulder box plots for SAG_A/B/C; SAG_B toe 215 deg, shoulder 24.6 deg |
-| 4 | Speed box plots; range 8.6-10 rpm; SAG_B 8.99 rpm |
+| 3 | Toe and shoulder box plots for SAG_A/B/C; SAG_A toe 215 deg, shoulder 24.6 deg |
+| 4 | Speed box plots; range 8.6-10 rpm; SAG_A 8.99 rpm |
 | 31 | Simulation snapshot annotated 212 deg / 26.5 deg (read by eye; likely run with the friction bug, see [05](05_friction.md)) |
 
 ## Current state
@@ -95,13 +102,13 @@ every monitor interval.
 Owen's mill turns the other way (charge on the left), so their angles map to
 this convention as theta' = 180 deg - theta:
 
-| Feature | Owen Table 5, 12 cases (their convention) | In this convention | Owen 27.5 % fill, 175 mm lifters | SAG_B |
+| Feature | Owen Table 5, 12 cases (their convention) | In this convention | Owen 27.5 % fill, 175 mm lifters | SAG_A |
 |---|---|---|---|---|
 | Shoulder | 146-164 | **16-34** | 28-32 | **24.6** |
 | Bulk toe | 306-324 | **216-234** | 226 | **215** |
 | Impact toe | 306-338 | 202-234 | 208-210 | -- |
 
-The SAG_B shoulder lies inside Owen's range. The SAG_B bulk toe (215 deg)
+The SAG_A shoulder lies inside Owen's range. The SAG_A bulk toe (215 deg)
 is just past the edge of Owen's bulk-toe range (216 deg, reached in Owen's
 highest-fill case, 32.8 %), i.e. the plant charge extends ~10 deg further
 round the mill than Owen's 27.5 % case. Plausible causes: different mill
@@ -112,13 +119,13 @@ contradiction.
 ### Plant values vs. nominal SAG values
 
 All angles in this convention (0 deg at 3 o'clock, counter-clockwise).
-Morrell's toe is evaluated at SAG_B's operating point (J_t = 0.26,
+Morrell's toe is evaluated at SAG_A's operating point (J_t = 0.26,
 phi = 0.728 -> phi_c = 1.086).
 
 | Source | Mill / conditions | Shoulder (deg) | Bulk toe (deg) |
 |---|---|---|---|
-| **SAG_B (target)** | 11.84 m, 9 rpm (72.8 % CS), Jc 26 % | **24.6** | **215** |
-| SAG_A, SAG_C (plant, medians) | Similar SAG mills | up to 38.2 | 206-215 |
+| **SAG_A (target)** | 11.84 m, 9 rpm (72.8 % CS), Jc 26 % | **24.6** | **215** |
+| SAG_B, SAG_C (plant, medians) | Similar SAG mills | up to 38.2 | 206-215 |
 | Owen & Cleary 2015, Table 5 (DEM) | 8.4 m SAG, 75 % CS, 12 cases of fill and lifter height | 16-34 | 216-234 |
 | Owen & Cleary 2015 (DEM) | Same, 27.5 % fill, 175 mm lifters | 28-32 | 226 |
 | Govender 2015, Fig. 26 (DEM tuned to a measured profile) | Los Bronces SAG, 10.12 m, 10 rpm (~75 % CS), 41 % fill | ~30 ("nearly at 2 o'clock") | 210-240 ("between 7 and 8 o'clock") |
@@ -134,7 +141,7 @@ range of the three plant mills (206-215 deg), and at the edge of Owen's DEM
 range (216 deg, reached at Owen's highest fill, 32.8 %). It is, however,
 **higher than the correlations predict at 26 % fill**: Owen's comparable
 case gives 226 deg and Morrell's correlation 238 deg. In Morrell's
-correlation 215 deg corresponds to J_t ~ 0.42, i.e. SAG_B's toe looks like
+correlation 215 deg corresponds to J_t ~ 0.42, i.e. SAG_A's toe looks like
 that of a fuller mill (compare Govender's 41 % fill). That all three plant
 mills report 206-215 deg suggests a systematic feature, not noise in one
 mill: the plant angles come from Maleki-Moghaddam's model, which includes
@@ -152,13 +159,13 @@ The comparison above uses angles at different operating points, which a
 reviewer can dismiss as coincidence. The argument is rebuilt as four
 claims, each compared at matched conditions:
 
-1. **SAG_B's operating point is typical.** Jc, Jb and % CS of SAG_B against
+1. **SAG_A's operating point is typical.** Jc, Jb and % CS of SAG_A against
    SAG_A-E (box plots) and against usual SAG practice (total filling
    ~20-35 %, 70-80 % CS; "SAG mills typically operate at mill fillings below
    40 %", Toor et al. 2023, p10). Jc / Jb are trustworthy because they are
    measured (load cells / bearing pressure plus power model) and calibrated
    with crash stops / grind-outs.
-2. **The target is SAG_B's angle at the simulated operating point**, not
+2. **The target is SAG_A's angle at the simulated operating point**, not
    its all-time median: from the 10 s time series, keep steady periods with
    Jc, Jb and speed near the simulated values (e.g. Jc 26 +- 1.5 %,
    9 +- 0.2 rpm) and, if the liner state is known, close to the liner
@@ -167,7 +174,7 @@ claims, each compared at matched conditions:
 3. **The angle model is published and reproducible.** The angles come from
    Maleki-Moghaddam et al. (2013), an empirical model fitted to bulk toe /
    shoulder in a model mill and checked on an industrial SAG liner.
-   Re-evaluating its equations with SAG_B's inputs and recovering the
+   Re-evaluating its equations with SAG_A's inputs and recovering the
    reported angles verifies the plant implementation.
    Note: regressing the plant toe on Jc / speed only reproduces the model's
    own sensitivities, so it is **not** used as physical evidence.
@@ -175,7 +182,7 @@ claims, each compared at matched conditions:
    this convention with the fill, speed and liner of each entry: Morrell's
    correlation and lab data (trend and level), Owen & Cleary's DEM cases,
    Govender's Los Bronces, and published plant measurements if found.
-   SAG_B is compared with entries at similar fill and speed; any remaining
+   SAG_A is compared with entries at similar fill and speed; any remaining
    offset is quantified and explained (claim 3: liner geometry in Maleki,
    not in Morrell).
 
@@ -210,20 +217,38 @@ for three reasons:
 What power **is** used for: the **energy balance inside the simulation**
 (V4) -- supplied energy (from the YADE contact torque) vs. collisional
 dissipation. This needs no plant data and is a strong numerical-quality
-check. Plant power would at most have offered an order-of-magnitude sanity
-check; it is not pursued.
+check.
+
+**Post-calibration plant power check (V15).** After calibration, and only
+then:
+- Simulated power: mean drive power P = -T_z omega of the slice over the
+  steady window ([16](16_validation_checks.md), V7), scaled to the full mill
+  as P_mill = P_slice x L_eff / L_slice, with L_slice = 0.375 m and L_eff
+  the effective grinding length of SAG_A (cylinder plus a cone-end
+  allowance, from the mill reports).
+- Plant power: median SAG_A power in the same operating window used for the
+  toe / shoulder target (claim 2: Jc, Jb, speed near the simulated point).
+- Report the deviation (P_mill - P_plant) / P_plant in %, together with
+  what the plant figure includes (motor / drive losses, slurry, real size
+  distribution) so the sign of the expected bias is clear: the model has
+  no drive losses, no slurry and a binary charge.
+- Interpretation only: deviations within roughly +-20 % are consistent
+  with the comparison uncertainty (Govender et al. 2015 obtained 6.8 vs
+  7.1 MW, -4 %, for a full-length SAG model); a much larger deviation
+  points to a gross error (fill, density, geometry) and is investigated,
+  not tuned away.
 
 ## Verdict and how to defend it
 
-"SAG_B is the reference mill: the operating point (9 rpm, Jb 17 %, Jc 26 %)
+"SAG_A is the reference mill: the operating point (9 rpm, Jb 17 %, Jc 26 %)
 and the charge-shape targets were taken from it; the plant angles are
 computed with the Maleki-Moghaddam et al. (2013) charge-shape model from the
-measured operating point and liner geometry. SAG_A and SAG_C are evidence
-that the selected values are typical: their operating data place SAG_B's
+measured operating point and liner geometry. SAG_B and SAG_C are evidence
+that the selected values are typical: their operating data place SAG_A's
 values within the normal ranges of SAG operation (speed 8.6-10 rpm, bulk toe
 206-215 deg, shoulder 24.6-38.2 deg). Contact parameters were calibrated so the simulated
 steady-state bulk toe and shoulder, read from the position-density contour
-(Boemer & Ponthot 2017, §2.3), fall within the SAG_B interquartile ranges
+(Boemer & Ponthot 2017, §2.3), fall within the SAG_A interquartile ranges
 (215 deg, 24.6 deg; counter-clockwise from 3 o'clock). The shoulder lies within the
 ranges of DEM SAG studies (Owen & Cleary 2015, Table 5: 16-34 deg; Govender
 et al. 2015: ~30 deg). The toe lies within the plant range of the three SAG
@@ -233,13 +258,16 @@ correlation predicts at 26 % fill (238 deg), a difference shared by all
 three plant mills and attributed to the liner geometry included in the
 Maleki-Moghaddam model. Power was not used as a calibration target, since it is
 insensitive to the contact parameters (Boemer & Ponthot 2017, §3.1.4); it
-was used only to check the internal energy balance of the simulations."
+was used to check the internal energy balance of the simulations and, after
+calibration, compared with the reference mill's plant power as an
+independent check (deviation reported in %)."
 
 ## Open items
 
 To get (author, from plant data and reports):
 - **Time series, SAG_A-E**, 10 s resolution: toe, shoulder, Jc, Jb, speed
-  (and power, liner-campaign / reline dates). Period: at least one full
+  (and **power** -- needed for V15 -- plus liner-campaign / reline dates;
+  state whether the power tag is motor input or mill shaft power). Period: at least one full
   shell-liner campaign (reline to reline), so that the operating window of
   claim 2 can also be matched to a liner state; minimum ~3 months, ideally
   6-12 months. At 10 s, 6 months is ~1.6 million rows per mill.
@@ -253,7 +281,7 @@ To do (Claude):
 - Get Maleki-Moghaddam, Yahyaei & Banisi 2013 (Minerals Engineering 46-47,
   157-166, doi 10.1016/j.mineng.2013.04.013) into Zotero; verify its
   equations, validation errors and angle convention; implement it to
-  reproduce SAG_B's angles (claim 3).
+  reproduce SAG_A's angles (claim 3).
 - Build the claim 1-4 analysis once the data arrive; search the literature
   for published plant toe / shoulder measurements (e.g. Burns et al. 2018,
   Lihir, cited by Toor et al. 2023) for claim 4.

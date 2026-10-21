@@ -20,15 +20,20 @@ file; "j." is the printed journal page. Slide numbers refer to
 
 ## Plant data: one reference mill, two supporting mills
 
+**Mill naming (2026-10-21):** the reference mill is **SAG_A** in these
+docs. The PPT (slides 2-5) labels it SAG_B and calls the other mill SAG_A;
+the two labels are swapped here so the reference comes first. SAG_C keeps
+its name. These docs, not the PPT, are the source of truth.
+
 Operational data from three SAG mills (SAG_A, SAG_B, SAG_C; PPT slides 2-5)
 is used in one specific way throughout these documents:
 
-- **SAG_B is the reference.** Its operating point (9 rpm, Jb 17 %, Jc 26 %)
+- **SAG_A is the reference.** Its operating point (9 rpm, Jb 17 %, Jc 26 %)
   sets the simulation, and its bulk toe and shoulder angles (215 deg,
   24.6 deg) are the targets the simulation is compared to.
-- **SAG_A and SAG_C are evidence that the selected values are typical.**
-  Their designs and dimensions differ slightly from SAG_B, so they are not
-  simulated or used as validation cases; their box plots show that SAG_B's
+- **SAG_B and SAG_C are evidence that the selected values are typical.**
+  Their designs and dimensions differ slightly from SAG_A, so they are not
+  simulated or used as validation cases; their box plots show that SAG_A's
   values sit inside the normal operating ranges of SAG mills (speed
   8.6-10 rpm, Jb 15.2-18.5 %, Jc 24.9-35.1 %, bulk toe 206-215 deg,
   shoulder 24.6-38.2 deg).
@@ -55,7 +60,7 @@ target anyway).
 | 12 | [12_charge_fill_and_particles.md](12_charge_fill_and_particles.md) | Jb = 17 %, Jc = 26 %, 2:1 sizes, counts from measured in-slice packing |
 | 13 | [13_initial_conditions.md](13_initial_conditions.md) | SIC / RMIC at rest, undamped settle with a geometric stop rule, velocities zeroed; SIC = rock bottom, balls top |
 | 14 | [14_dataset_runs_and_recording.md](14_dataset_runs_and_recording.md) | Record from rest; durations in revolutions; training window after measured quasi-steady state |
-| 15 | [15_calibration_targets.md](15_calibration_targets.md) | Match the SAG_B (reference) bulk toe 215 / shoulder 24.6 deg (0 deg at 3 o'clock, CCW); SAG_A / SAG_C show these values are typical; power only for the internal energy balance |
+| 15 | [15_calibration_targets.md](15_calibration_targets.md) | Match the SAG_A (reference) bulk toe 215 / shoulder 24.6 deg (0 deg at 3 o'clock, CCW); SAG_B / SAG_C show these values are typical; power only for the internal energy balance |
 | 16 | [16_validation_checks.md](16_validation_checks.md) | Acceptance tests every run must pass |
 
 ## Pending code changes

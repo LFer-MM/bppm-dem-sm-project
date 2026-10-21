@@ -12,13 +12,14 @@ written to the run manifest so each dataset can be defended individually.
 | V5 | No artificial damping | `NewtonIntegrator.damping == 0`, set explicitly, in **every** stage (fill, settle, packing measurement, calibration, dataset) | [04](04_numerical_damping.md) |
 | V6 | Inventory | Same particle counts per species in every frame; no particle outside the shell | Integrity check of `data_processing` |
 | V7 | Quasi-steady time | Kinetic energy / power / charge angle quasi-steady before the training window | Kishida 2025 §3, PDF p6; SM Fig. S1 |
-| V8 | Charge shape (calibration runs) | Bulk toe and shoulder within the interquartile range of SAG_B (the reference mill) | [15](15_calibration_targets.md) |
+| V8 | Charge shape (calibration runs) | Bulk toe and shoulder within the interquartile range of SAG_A (the reference mill) | [15](15_calibration_targets.md) |
 | V9 | dt sensitivity (once) | dt vs dt/2: toe, shoulder, power within run-to-run scatter | [02](02_time_step.md) |
 | V10 | Stiffness sensitivity (once; kept 2026-10-19) | Both moduli x 0.5 (f = 52) and x 2 (f = 13), same dt = 2.5e-5 s, 3 revolutions each: toe, shoulder, power and charge angle within the replicate scatter (V12). Tests in this mixed steel-rock charge the insensitivity Boemer found for steel balls only | Boemer abstract and §4 (PDF p13); [03](03_stiffness_young_modulus.md) |
 | V11 | End-wall sensitivity (once) | Liner-friction vs frictionless end walls | [10](10_mill_geometry.md) |
 | V11b | Ore-density sensitivity (once) | 2650 vs 2850 kg/m^3: toe, shoulder, power within scatter | [08](08_density.md) |
 | V12 | Replicate scatter | Spread of toe / shoulder / Lacey curves over seeds reported | Owen & Cleary Table 5 / §4.1 (4 centre-point replicates, PDF p4) |
 | V13 | No initial overlaps | Zero sphere-sphere and sphere-facet overlaps before the first step of every fill batch; abort otherwise. Spawning inside a facet ejects particles through it | [04](04_numerical_damping.md), [13](13_initial_conditions.md) |
+| V15 | Plant power (once, after calibration) | Slice power at the calibrated point scaled to SAG_A's effective length vs SAG_A plant power in the same operating window; report the % deviation (not a pass / fail target; ~+-20 % consistent with the comparison uncertainty) | [15](15_calibration_targets.md); Govender 2015 §3 (6.8 vs 7.1 MW) |
 | V14 | No escapes | Zero particles outside the shell radius or slice depth at the end of every stage | [04](04_numerical_damping.md) (instability test) |
 
 ## Notes

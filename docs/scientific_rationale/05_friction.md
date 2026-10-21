@@ -25,11 +25,11 @@ Friction is the **primary calibration variable**.
 - **Calibration grid** (decided 2026-10-20): mu_p x mu_w in
   {0.3, 0.5, 0.7} x {0.3, 0.5, 0.7} (9 runs), then refined around the best
   point; mu_w extended to 0.8-0.9 if the shoulder / toe are not reached
-  (the SAG_B toe is high for its fill, [15](15_calibration_targets.md)).
+  (the SAG_A toe is high for its fill, [15](15_calibration_targets.md)).
   All runs start from **one shared settled initial condition** and spin up
   to a steady charge shape (~6 revolutions, ~1.3 h per run at full scale,
   ~12 h for the grid). Score: simulated bulk toe / shoulder (position-density
-  contour) vs. SAG_B.
+  contour) vs. SAG_A.
 
 ## Evidence
 

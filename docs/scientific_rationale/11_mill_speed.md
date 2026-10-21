@@ -2,8 +2,8 @@
 
 ## Decision
 
-**9 rpm**, the median speed of **SAG_B, the reference mill**, i.e.
-**72.8 % of critical speed**. SAG_A and SAG_C are evidence that this value is
+**9 rpm**, the median speed of **SAG_A, the reference mill**, i.e.
+**72.8 % of critical speed**. SAG_B and SAG_C are evidence that this value is
 typical: across the three mills the usual range is 8.6-10 rpm (slide 4). Rotation direction:
 counter-clockwise seen from +Z (positive angular velocity in YADE), so the
 charge rises on the +X side. Angles are measured counter-clockwise from the
@@ -24,7 +24,7 @@ The liner is symmetric, so the orientation is a free choice in simulation.
 
 | Slide | Content |
 |---|---|
-| 4 | "Rangos de Velocidad de Rotacion (RPM) usuales: Valor Superior = 10 RPM, Valor Inferior = 8.6 RPM, Valor Seleccionado -> SAG_B = 8.99 RPM ~ 9 RPM" (plant data, box plots) |
+| 4 | "Rangos de Velocidad de Rotacion (RPM) usuales: Valor Superior = 10 RPM, Valor Inferior = 8.6 RPM, Valor Seleccionado -> SAG_B = 8.99 RPM ~ 9 RPM" (plant data, box plots; the PPT's SAG_B is SAG_A in these docs) |
 | 33, 34 | Snapshots "VELOCIDAD 8 RPM", "VELOCIDAD 6 RPM" |
 
 ## Current state
@@ -52,8 +52,8 @@ surrogate method is transferable, but time scales must be compared in
 
 ## Verdict and how to defend it
 
-"The mill turns at 9 rpm, the median operating speed of SAG_B, the reference
-mill; SAG_A and SAG_C are evidence that this value is typical, as the three
+"The mill turns at 9 rpm, the median operating speed of SAG_A, the reference
+mill; SAG_B and SAG_C are evidence that this value is typical, as the three
 mills normally operate between 8.6 and 10 rpm (slide 4). 9 rpm is 72.8 % of
 the critical speed of the 11.84 m mill -- the same regime
 as the SAG DEM studies of Owen & Cleary (75 %) and Govender et al. (10 rpm,

@@ -4,8 +4,8 @@
 
 | Quantity | Value | Basis |
 |---|---|---|
-| Ball filling Jb (bulk) | **17 %** | SAG_B, the reference mill (slide 2); SAG_A / SAG_C show it is typical (15.2-18.5 %) |
-| Total filling Jc (bulk) | **26 %** | SAG_B, the reference mill (slide 2); SAG_A / SAG_C show it is typical (24.9-35.1 %) |
+| Ball filling Jb (bulk) | **17 %** | SAG_A, the reference mill (slide 2); SAG_B / SAG_C show it is typical (15.2-18.5 %) |
+| Total filling Jc (bulk) | **26 %** | SAG_A, the reference mill (slide 2); SAG_B / SAG_C show it is typical (24.9-35.1 %) |
 | Rock bulk volume | Jc - Jb = **9 %** | modelling convention (see analysis) |
 | Ball diameter | **0.1397 m** (5.5 in) | plant practice (slide 5) |
 | Rock diameter | **0.06985 m** (2.75 in) | 2:1 size ratio (slide 6) |
@@ -38,7 +38,7 @@ the intermediate volumes.)
 
 | Slide | Content |
 |---|---|
-| 2 | Plant ranges: Jb 15.2-18.5 % (SAG_B 16.8 % ~ 17 %); Jc 24.9-35.1 % (SAG_B 25.9 % ~ 26 %) |
+| 2 | Plant ranges: Jb 15.2-18.5 % (SAG_A 16.8 % ~ 17 %); Jc 24.9-35.1 % (SAG_A 25.9 % ~ 26 %) |
 | 5 | 5.5 in steel balls used in SAG_A/B/C "a lo largo de multiples campanas"; recent trial of 6 in balls in SAG_A/B, not confirmed as permanent |
 | 6 | "2.75 pulgadas -> Ratio 2:1"; "relacion 2:1, 3:1, superior 5:1 es ineficiente y 2:1 permite reducir cantidad de particulas" (no citation) |
 | 7 | Counts with phi = 1.0: 4,696 balls, 19,888 rocks (text divides the rock volume by the ball volume -- typo; numbers use 1.786e-4 m^3) |
@@ -78,8 +78,8 @@ the intermediate volumes.)
 
 ## Verdict and how to defend it
 
-"The charge reproduces SAG_B, the reference mill: Jb = 17 %, Jc = 26 % (plant
-data); SAG_A and SAG_C are evidence that these fillings are typical (Jb
+"The charge reproduces SAG_A, the reference mill: Jb = 17 %, Jc = 26 % (plant
+data); SAG_B and SAG_C are evidence that these fillings are typical (Jb
 15.2-18.5 %, Jc 24.9-35.1 % across the three mills). The charge uses 5.5 in
 steel balls and 2.75 in rock (2:1, the ratio used by Kishida et al. 2025). Particle
 numbers follow N = phi J V / v with the packing fraction phi measured in the

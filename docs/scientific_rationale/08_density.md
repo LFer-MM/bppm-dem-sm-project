@@ -9,7 +9,7 @@
 
 These are the `density` values of the YADE `FrictMat` materials.
 Densities are **physical inputs, not calibration variables**. Because the ore
-value comes from the literature rather than from SAG_B, it is backed by a
+value comes from the literature rather than from SAG_A, it is backed by a
 one-off sensitivity run (2650 vs. 2850 kg/m^3, the Los Bronces value of
 Govender 2015) instead of a measurement.
 
