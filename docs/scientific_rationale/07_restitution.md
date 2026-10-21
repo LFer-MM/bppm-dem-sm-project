@@ -17,7 +17,8 @@
 - Applied per pair through a `MatchMaker` on
   `Ip2_FrictMat_FrictMat_MindlinPhys.en`, built from material **labels**.
   `es` is not set, so YADE uses the same value tangentially (es = en).
-- Fixed, not calibrated.
+- Fixed, not calibrated; checked by a +-0.1 sensitivity run on toe /
+  shoulder and segregation (Open items).
 
 ## Evidence
 
@@ -121,7 +122,7 @@ et al. (2013), so the coefficient holds at all impact velocities."
 - Binary-collision test in YADE at the chosen dt: measured e must match the
   input within ~2 % for each pair ([16](16_validation_checks.md)).
 - Interstitial slurry not modelled (limitation, see Analysis).
-- **Restitution sensitivity check (proposed):** at the calibrated point, one
+- **Restitution sensitivity check** (accepted 2026-10-21): at the calibrated point, one
   run with all e lowered and one with all raised (e.g. +-0.1, steel-steel
   capped at 0.9); compare toe / shoulder and steel / rock segregation with
   the reference. Small change -> fixing e is shown for segregation too.
