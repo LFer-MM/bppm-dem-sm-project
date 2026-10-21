@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+type: software
+title: "pm-dem-sm: Polyhedral-Based DEM Surrogate Modeling for Time Series Prediction in Bidisperse Particle Mixing and Segregation"
+abstract: >-
+  Terminal project of the UNISON MCD academic program. A YADE-based
+  polyhedral DEM simulation pipeline for bidisperse particle mixing and
+  segregation in a rotating mill, and an extended-RNNSR surrogate (GRU plus a
+  stochastic-random model) for time-series prediction of the particle frames,
+  with mixing/segregation metrics and visualization tools.
+authors:
+  - given-names: Fernando
+    family-names: Martinez
+    affiliation: "Universidad de Sonora"
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+repository-code: "https://github.com/LFer-MM/pm-dem-sm"
+license: MIT
+version: 0.0.1
+date-released: "2026-10-21"
+keywords:
+  - discrete element method
+  - DEM
+  - YADE
+  - polyhedral particles
+  - surrogate modeling
+  - recurrent neural network
+  - granular mixing
+  - segregation
+# After Zenodo mints a DOI for the first release, uncomment and fill in.
+# Use the concept DOI (resolves to all versions) unless citing one release.
+# doi: "10.5281/zenodo.XXXXXXX"
