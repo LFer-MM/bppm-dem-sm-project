@@ -37,16 +37,12 @@ contact-force distribution (Owen & Cleary §4.3) is a cross-check, not the
 primary measure, because it mainly detects the impact toe.
 
 **Origin of the plant angles** (stated by the author, 2026-10-20): the
-SAG_B toe and shoulder are **model estimates**, not direct observations. An
-acoustic impactometer (microphones on the shell) detects where the charge
-strikes the liner; its signal, together with process variables, feeds a
-model that outputs toe and shoulder. Consequences:
-- What the microphones sense directly is **impact location** (closest to the
-  impact toe); the bulk toe / shoulder come from the model. Which definition
-  the reported angles follow depends on that model (open item).
-- The narrow SAG_B toe box (~1 deg) partly reflects model smoothing, not
-  only measurement precision; the acceptance band in simulation should not
-  be tighter than the simulated measurement can resolve.
+SAG_B toe and shoulder are outputs of a plant model fed by an acoustic
+impactometer (microphones on the shell) and process variables. **Decision
+(2026-10-20): the plant values are taken as precise bulk toe / shoulder
+angles**, and the simulated angles are read with the bulk position-density
+contour. The literature check of these values is in the Analysis
+("Plant values vs. nominal SAG values").
 
 **Power:** not a calibration target and no plant power data is used
 (decided 2026-10-18). Power is computed in YADE only for the internal energy
@@ -64,6 +60,10 @@ plant power would not be a determining target.
 | Boemer & Ponthot 2017 | "Position density limit": contour of the time-averaged position density separating the main charge from where particles are ~10x less likely; toe and shoulder read from it | §2.3, PDF p6 / j.58; Fig. 9, PDF p7 / j.59 | Yes |
 | Boemer & Ponthot 2017 | Power 1311 / 1382 / 1391 W for mu = 0.25 / 0.5 / 0.75 (~6 % over a 3x change of friction); stiffness and restitution "only have a relatively small impact on the power draw"; power predicted within ~5 % | §3.1.4, PDF p10 / j.62; abstract, PDF p1 | Yes |
 | Govender 2015 | Full-length Los Bronces SAG: 6.8 MW computed vs 7.1 MW reported; "we could match the power consumption exactly by changing the coefficient of restitution" | §3, PDF p14 / j.165 | Yes |
+| Govender 2015 | Los Bronces SAG: 10.12 m x 4.7 m, 10 rpm, 31 % ore + 10 % balls by volume (41 % fill); "The charge shoulder is nearly at 2 o'clock and the toe is between 7 and 8 o'clock points on the mill circle" (Fig. 26); parameters "tuned ... to match the charge profile obtained by Rajamani et al. (2011)" | §3, PDF p12 / j.163; PDF p14 / j.165 | Yes |
+| Morrell 1993 (via Toor et al. 2023) | Empirical toe angle theta_T = 2.5307 (1.2796 - J_t)(1 - exp(-19.42 (phi_c - phi))) + pi/2 (rad), phi_c = 0.35 (3.364 - J_t) away from centrifuging; coordinate system: 0 at 3 o'clock, counter-clockwise, toe in the third quadrant (= this convention); toe "only significantly affected by mill speeds" above 80 % CS or 40 % fill | Toor et al. 2023: Eq. (5)-(6), p9-10; Fig. 7 (coordinate system) and Fig. 8 (Morrell's lab data), p10 | Yes (secondary source; Morrell 1993 not in the library) |
+| Pural & Boylu 2025 | Same toe equation (Morrell C model), Eq. (1) | §2.1, PDF p3 | Yes (their shoulder Eq. (3) is misprinted: it repeats Eq. (2)) |
+| Toor et al. 2023 | Measured toe location "is dependant on the signal ... used from the measurement device and how this signal is converted to a toe location"; sites should calibrate it with crash stops | p11 | Yes |
 | Cleary & Morrison 2016 | Power = torque applied to the mill by all particle contacts x rotation speed; must balance collisional dissipation within a few % | §2, PDF p3 / j.77 | Yes |
 
 ## PPT
@@ -101,6 +101,42 @@ round the mill than Owen's 27.5 % case. Plausible causes: different mill
 (8.4 m, 56 lifters, 75 % critical, wide PSD vs. 11.84 m, 30 lifters, 72.8 %,
 binary charge). This is a quantitative check of the targets, not a
 contradiction.
+
+### Plant values vs. nominal SAG values
+
+All angles in this convention (0 deg at 3 o'clock, counter-clockwise).
+Morrell's toe is evaluated at SAG_B's operating point (J_t = 0.26,
+phi = 0.728 -> phi_c = 1.086).
+
+| Source | Mill / conditions | Shoulder (deg) | Bulk toe (deg) |
+|---|---|---|---|
+| **SAG_B (target)** | 11.84 m, 9 rpm (72.8 % CS), Jc 26 % | **24.6** | **215** |
+| SAG_A, SAG_C (plant, medians) | Similar SAG mills | up to 38.2 | 206-215 |
+| Owen & Cleary 2015, Table 5 (DEM) | 8.4 m SAG, 75 % CS, 12 cases of fill and lifter height | 16-34 | 216-234 |
+| Owen & Cleary 2015 (DEM) | Same, 27.5 % fill, 175 mm lifters | 28-32 | 226 |
+| Govender 2015, Fig. 26 (DEM tuned to a measured profile) | Los Bronces SAG, 10.12 m, 10 rpm (~75 % CS), 41 % fill | ~30 ("nearly at 2 o'clock") | 210-240 ("between 7 and 8 o'clock") |
+| Morrell 1993 correlation (lab mills) | J_t = 0.26, 72.8 % CS | -- | 238 |
+
+**Shoulder:** 24.6 deg is inside Owen's DEM range (16-34 deg), a few degrees
+below Owen's comparable case (28-32 deg) and Govender's Los Bronces
+(~30 deg), and at the low end of the three plant mills. It is a nominal SAG
+shoulder.
+
+**Toe:** 215 deg lies inside the Los Bronces range (210-240 deg) and the
+range of the three plant mills (206-215 deg), and at the edge of Owen's DEM
+range (216 deg, reached at Owen's highest fill, 32.8 %). It is, however,
+**higher than the correlations predict at 26 % fill**: Owen's comparable
+case gives 226 deg and Morrell's correlation 238 deg. In Morrell's
+correlation 215 deg corresponds to J_t ~ 0.42, i.e. SAG_B's toe looks like
+that of a fuller mill (compare Govender's 41 % fill). That all three plant
+mills report 206-215 deg suggests a systematic plant-side feature (pulp,
+wide size distribution, lifter / liner design, or the way the plant model
+converts the acoustic signal to a toe angle; Toor et al. 2023, p11), not
+noise in one mill. It is taken as given (Decision); the consequence for
+calibration is that matching 215 deg at 26 % fill may require friction /
+rolling resistance at the upper end of the literature range. If the
+calibration cannot reach the toe within that range, this section is the
+explanation to report.
 
 ### Why the plant toe must be measured as a bulk toe in simulation
 
@@ -145,18 +181,21 @@ values within the normal ranges of SAG operation (speed 8.6-10 rpm, bulk toe
 206-215 deg, shoulder 24.6-38.2 deg). Contact parameters were calibrated so the simulated
 steady-state bulk toe and shoulder, read from the position-density contour
 (Boemer & Ponthot 2017, §2.3), fall within the SAG_B interquartile ranges
-(215 deg, 24.6 deg; counter-clockwise from 3 o'clock). These targets lie in
-or at the edge of the ranges of Owen & Cleary's SAG simulations in the same
-convention. Power was not used as a calibration target, since it is
+(215 deg, 24.6 deg; counter-clockwise from 3 o'clock). The shoulder lies within the
+ranges of DEM SAG studies (Owen & Cleary 2015, Table 5: 16-34 deg; Govender
+et al. 2015: ~30 deg). The toe lies within the plant range of the three SAG
+mills and of Govender's Los Bronces simulation (210-240 deg) and at the edge
+of Owen & Cleary's range (216-234 deg); it is higher than Morrell's empirical
+correlation predicts at 26 % fill (238 deg), a difference shared by all
+three plant mills and attributed to plant-specific charge and liner
+conditions. Power was not used as a calibration target, since it is
 insensitive to the contact parameters (Boemer & Ponthot 2017, §3.1.4); it
 was used only to check the internal energy balance of the simulations."
 
 ## Open items
 
-- Identify the plant charge-shape model / impactometer vendor and how it
-  defines toe and shoulder (bulk boundary vs. impact location). This decides
-  whether the bulk contour or the liner-impact distribution is the primary
-  simulated measure.
-
+- Add Toor et al. 2023 and Pural & Boylu 2025 to Zotero (and Morrell 1993 /
+  1996a if obtainable); verify Morrell's shoulder equation in a primary
+  source before quoting a Morrell shoulder value.
 - Implement bulk toe / shoulder extraction from the time-averaged position
   density (plus the liner-force cross-check).

@@ -125,6 +125,14 @@ Govender et al. 2016 (Blaze-DEMGPU framework, SoftwareX 5 (2016) 62-66,
 The Johnson PDF (`LECT8BKG`) is attached to the book record `PDKNRX4P`
 (created from the DOI via Crossref; verified 2026-10-19).
 
+### References found on 2026-10-20 (read online, not yet in Zotero)
+
+| Key used in docs | Reference | DOI / source | Page mapping |
+|---|---|---|---|
+| **Toor et al. 2023** | P. Toor, W. Valery, S. Morrell, K. Duffy, *Real-Time Estimation of SAG Mill Charge Characteristics for Process Optimization*, SAG Conference, Vancouver, 2023 (page footers read "SAG CONFERENCE 2019 VANCOUVER \| June 18, 2023") | ceecthefuture.org publication 4122 | printed page numbers |
+| **Pural & Boylu 2025** | Y.E. Pural, F. Boylu, *Prediction and visualization of charge shape and ball trajectory in tumbling mills: a python-based tool for liner design and operational optimizations*, Physicochem. Probl. Miner. Process. 61(3) (2025) 204533 | 10.37190/ppmp/204533 | PDF pages |
+| **Morrell 1993** | S. Morrell, *The prediction of power draw in wet tumbling mills*, PhD thesis, University of Queensland, 1993 -- cited through Toor et al. 2023 only | -- | -- |
+
 ## Citation problems found in the PPT
 
 These do not change the values, but the references must be corrected before
