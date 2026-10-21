@@ -131,6 +131,7 @@ The Johnson PDF (`LECT8BKG`) is attached to the book record `PDKNRX4P`
 |---|---|---|---|
 | **Toor et al. 2023** | P. Toor, W. Valery, S. Morrell, K. Duffy, *Real-Time Estimation of SAG Mill Charge Characteristics for Process Optimization*, SAG Conference, Vancouver, 2023 (page footers read "SAG CONFERENCE 2019 VANCOUVER \| June 18, 2023") | ceecthefuture.org publication 4122 | printed page numbers |
 | **Pural & Boylu 2025** | Y.E. Pural, F. Boylu, *Prediction and visualization of charge shape and ball trajectory in tumbling mills: a python-based tool for liner design and operational optimizations*, Physicochem. Probl. Miner. Process. 61(3) (2025) 204533 | 10.37190/ppmp/204533 | PDF pages |
+| **Maleki-Moghaddam et al. 2013** | M. Maleki-Moghaddam, M. Yahyaei, S. Banisi, *A method to predict shape and trajectory of charge in industrial mills*, Miner. Eng. 46-47 (2013) 157-166 -- abstract only so far | 10.1016/j.mineng.2013.04.013 | -- |
 | **Morrell 1993** | S. Morrell, *The prediction of power draw in wet tumbling mills*, PhD thesis, University of Queensland, 1993 -- cited through Toor et al. 2023 only | -- | -- |
 
 ## Citation problems found in the PPT
