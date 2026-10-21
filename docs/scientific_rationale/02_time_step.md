@@ -9,7 +9,9 @@ E_rock = 2.115 GPa**.
 
 dt and f are chosen together: f = 26 is the smallest uniform reduction for
 which **every contact type gets >= 20 integration steps at the worst-case
-impact speed** sqrt(2 g D) = 15.2 m/s with dt = 2.5e-5 s (20.1-36.2 steps).
+impact speed** sqrt(2 g D) = 15.2 m/s with dt = 2.5e-5 s for **both** rock
+densities used (2850 kg/m^3 baseline: 20.7-36.2 steps; 2650 sensitivity
+case: 20.1-36.2 steps; [08](08_density.md)).
 That satisfies both accuracy criteria of the literature -- 15-25 steps
 (Cleary 2001) and 20-70 steps (Boemer & Ponthot 2017) -- plus an energy
 balance within a few percent (see [16](16_validation_checks.md)).
@@ -19,9 +21,9 @@ larger dt needs a larger reduction for the same number of steps):
 
 | Option | dt | Uniform reduction f | E steel / rock | Max peak overlap at 15.2 m/s | Cost vs 1e-4 | Status |
 |---|---|---|---|---|---|---|
-| **A** | 2.5e-5 s | **26** | 7.96 / 2.115 GPa | 3.8 % | 4x | **chosen** |
-| C | 5e-5 s | 147 | 1.41 / 0.374 GPa | 7.6 % | 2x | fallback if compute is short |
-| B | 1e-4 s | 832 | 0.249 / 0.066 GPa | 15 % | 1x | rejected: exceeds Boemer's ~10 % limit |
+| **A** | 2.5e-5 s | **26** | 7.96 / 2.115 GPa | 3.9 % | 4x | **chosen** |
+| C | 5e-5 s | 147 | 1.41 / 0.374 GPa | 7.8 % | 2x | fallback if compute is short |
+| B | 1e-4 s | 832 | 0.249 / 0.066 GPa | 16 % | 1x | rejected: exceeds Boemer's ~10 % limit |
 
 The PPT's slide-12 set (33.16 / 2.868 GPa, i.e. steel / 6.2 and rock / 19.2)
 was first adopted with dt = 2.5e-5 s and then replaced by the uniform
@@ -148,7 +150,7 @@ Nan et al. 2022 (manuscript p18) add that the Rayleigh step "only provides
 the maximum limit of the time step" and recommend Delta t = 0.01-0.1
 Delta T_R to resolve the details of their elasto-plastic adhesive contact
 (e.g. the pull-off stage, their Fig. 1). That model has no adhesion here, so
-the range is context rather than a criterion; dt = 2.5e-5 s is 0.12 Delta T_R
+the range is context rather than a criterion; dt = 2.5e-5 s is 0.11 Delta T_R
 (rock), and the governing check remains the steps-per-collision criterion
 (E2).
 
@@ -156,11 +158,11 @@ the range is context rather than a criterion; dt = 2.5e-5 s is 0.12 Delta T_R
 
 | Estimate | Steel (r = 0.06985 m) | Rock (r = 0.034925 m) |
 |---|---|---|
-| YADE P-wave step r / sqrt(E / rho) | 6.94e-5 s | 3.91e-5 s |
-| PPT slide-9 formula r sqrt(rho (1 - nu^2) / E) | 6.63e-5 s | 3.79e-5 s |
-| Rayleigh step pi r sqrt(rho / G) / (0.8766 + 0.163 nu) (Li et al. 2005, Eq. 10), G = E / (2 (1 + nu)) | 3.79e-4 s | 2.12e-4 s |
+| YADE P-wave step r / sqrt(E / rho) | 6.94e-5 s | 4.05e-5 s (3.91e-5 at 2650) |
+| PPT slide-9 formula r sqrt(rho (1 - nu^2) / E) | 6.63e-5 s | 3.93e-5 s |
+| Rayleigh step pi r sqrt(rho / G) / (0.8766 + 0.163 nu) (Li et al. 2005, Eq. 10), G = E / (2 (1 + nu)) | 3.79e-4 s | 2.20e-4 s (2.12e-4 at 2650) |
 
-dt = 2.5e-5 s is 0.64x the smallest P-wave step and 0.12x the smallest
+dt = 2.5e-5 s is 0.62x the smallest P-wave step (0.64x at 2650) and 0.11x the smallest
 Rayleigh step: stability is respected with margin. The binding constraint is
 the accuracy criterion below.
 
@@ -171,19 +173,20 @@ step of the moduli it was used with.
 ### Steps per collision (the criterion the papers actually use)
 
 Hertz elastic impact duration t_c = 2.87 (m*^2 / (R* E*^2 v))^(1/5)
-(Johnson 1985, Eq. 11.24), f = 26 moduli:
+(Johnson 1985, Eq. 11.24), f = 26 moduli, rock density 2850 kg/m^3 (steel-steel rows do
+not depend on it):
 
 | Pair | v (m/s) | t_c (s) | steps @ 1e-4 | steps @ 5e-5 | steps @ 2.5e-5 |
 |---|---|---|---|---|---|
 | steel-steel | 1 | 1.56e-3 | 15.6 | 31.2 | 62.4 |
 | steel-steel | 8 | 1.03e-3 | 10.3 | 20.6 | 41.2 |
-| steel-rock | 5 | 6.40e-4 | 6.4 | 12.8 | 25.6 |
-| steel-rock | 8 | 5.82e-4 | 5.8 | 11.6 | 23.3 |
-| steel-rock | 12 | 5.37e-4 | 5.4 | 10.7 | 21.5 |
-| rock-rock | 8 | 5.72e-4 | 5.7 | 11.4 | 22.9 |
+| steel-rock | 5 | 6.58e-4 | 6.6 | 13.2 | 26.3 |
+| steel-rock | 8 | 5.99e-4 | 6.0 | 12.0 | 24.0 |
+| steel-rock | 12 | 5.52e-4 | 5.5 | 11.0 | 22.1 |
+| rock-rock | 8 | 5.89e-4 | 5.9 | 11.8 | 23.6 |
 | steel-steel | **15.2** (worst case) | 9.05e-4 | 9.0 | 18.1 | **36.2** |
-| steel-rock | **15.2** | 5.12e-4 | 5.1 | 10.2 | **20.5** |
-| rock-rock | **15.2** | 5.03e-4 | 5.0 | 10.1 | **20.1** |
+| steel-rock | **15.2** | 5.27e-4 | 5.3 | 10.5 | **21.1** (20.5 at 2650) |
+| rock-rock | **15.2** | 5.18e-4 | 5.2 | 10.4 | **20.7** (20.1 at 2650) |
 
 The worst case uses Boemer & Ponthot's choice of impact speed (§3.1.2,
 PDF p8): free fall across the mill, sqrt(2 g D) = 15.2 m/s for D = 11.84 m.

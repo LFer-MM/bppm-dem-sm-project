@@ -53,7 +53,7 @@ target anyway).
 | 05 | [05_friction.md](05_friction.md) | Calibrate; uniform particle friction mu_p (baseline 0.5) plus liner friction mu_w; Owen 0.4 / 0.5 / 0.8 as a sensitivity run |
 | 06 | [06_rolling_resistance.md](06_rolling_resistance.md) | Uniform rolling resistance mu_r (YADE eta) on all contacts, fixed by an angle-of-repose heap test (target 37 deg, band 33-41); ktwist = 0 |
 | 07 | [07_restitution.md](07_restitution.md) | Fixed pair-wise e (Cleary & Morrison 2016): 0.3 / 0.5 / 0.8; steel liners take the steel values; es = en |
-| 08 | [08_density.md](08_density.md) | 7850 / 2650 kg/m^3 (literature; no plant measurement); not calibrated; sensitivity 2650 vs 2850 |
+| 08 | [08_density.md](08_density.md) | Steel 7850 / ore 2850 kg/m^3 (Chilean porphyry copper: Vergara 2020, Govender 2015); not calibrated; sensitivity 2650 incl. segregation |
 | 09 | [09_poisson_ratio.md](09_poisson_ratio.md) | 0.292 steel, 0.25 rock |
 | 10 | [10_mill_geometry.md](10_mill_geometry.md) | STL slice, 30 lifters, D = 11.8375 m, 0.375 m depth; test end-wall friction |
 | 11 | [11_mill_speed.md](11_mill_speed.md) | 9 rpm = 72.8 % of critical |
@@ -80,6 +80,7 @@ end.
 | [05](05_friction.md) | C05-1 ... C05-3 | **C05-1**, **C05-2**, **C05-3** |
 | [06](06_rolling_resistance.md) | C06-1 ... C06-4 | **C06-1**, C06-2, **C06-3** |
 | [07](07_restitution.md) | C07-1, C07-2 | **C07-1** |
+| [08](08_density.md) | C08-1 | **C08-1** |
 
 Related items from later topics (not yet reviewed): `MILL_DIAMETER_M`
 11.0 -> 11.8375 ([10](10_mill_geometry.md)); split the runner into
@@ -184,8 +185,11 @@ Every derived number (Rayleigh time step, Hertz collision time, peak overlap,
 critical speed, particle counts) uses the formulas written out in the topic
 file, with the decided material set (physical moduli / 26, see
 [03](03_stiffness_young_modulus.md)): steel rho = 7850, E = 7.962e9,
-nu = 0.292, r = 0.06985 m; rock rho = 2650, E = 2.115e9, nu = 0.25,
-r = 0.034925 m. Particle masses: ball 11.206 kg, rock 0.4729 kg. Where a
+nu = 0.292, r = 0.06985 m; rock rho = 2850 (2650 until 2026-10-21, now the
+sensitivity case), E = 2.115e9, nu = 0.25, r = 0.034925 m. Particle masses:
+ball 11.206 kg, rock 0.5086 kg (0.4729 kg at 2650). Numbers in docs 02-04
+that depend on rock density were recomputed on 2026-10-21; the historical
+test setups in [04](04_numerical_damping.md) keep the 2650 they were run with. Where a
 doc compares with the PPT's slide-12 set (33.16e9 / 2.868e9), it says so.
 
 ## Code state referenced

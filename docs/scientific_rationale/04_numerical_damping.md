@@ -77,7 +77,7 @@ between the smoke test and the full mill):
 |---|---|---|
 | `config.py` moduli (155.7 / 13.47 GPa) at dt = 1e-4 s | ~1.2 | explodes |
 | PPT slide-12 moduli (33.16 / 2.868 GPa) at dt = 1e-4 s | ~0.55 | at the jittery edge |
-| **Decided set (f = 26) at dt = 2.5e-5 s** | **0.12** | stable with a wide margin |
+| **Decided set (f = 26) at dt = 2.5e-5 s** | **0.11** (0.12 with rock at 2650) | stable with a wide margin |
 
 **Contributing causes on `main`, fixed on the branch:**
 
@@ -171,7 +171,7 @@ kept below 1 % (Boemer & Ponthot 2017, §3.1). Damping had earlier appeared
 necessary to stop particles being ejected during filling; a test at five
 time steps showed this was an integration instability (all particles
 ejected at dt >= dt_R, none at dt <= 0.6 dt_R, without damping), which the
-chosen dt = 0.12 dt_R avoids. Initial conditions are therefore poured and
+chosen dt = 0.11 dt_R avoids. Initial conditions are therefore poured and
 settled by contact dissipation alone, with the same protocol used to measure
 the packing fraction."
 
