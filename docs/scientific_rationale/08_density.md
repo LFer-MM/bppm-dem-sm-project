@@ -56,8 +56,9 @@
 - 2650 (Cleary & Morrison 2016) is a generic rock value (quartz-like SG
   2.65); 3000 (Owen & Cleary 2015) is another generic choice. The literature
   range for SAG ore is therefore 2650-3000 kg/m^3, and 2850 sits inside it.
-- A plant measurement (ore SG from the mill or geometallurgical reports)
-  would replace the literature value if it becomes available.
+- No plant measurement of the ore SG is available (confirmed 2026-10-18 and
+  2026-10-21), so the literature value stands, backed by the sensitivity
+  run.
 
 ### Steel density: why 7850 and not 7800
 
@@ -70,8 +71,8 @@ Cleary 2015 (Table 4); 7800 in Govender 2015 (Table 7) and Shigley
   effect on the charge behaviour or on the specific power draw" (Cleary
   2001, §11), so the choice cannot affect the results measurably;
 - grinding balls are high-carbon / alloyed forged steel, for which
-  7.80-7.85 g/cm^3 are both nominal values; the ball supplier's data sheet
-  would settle it if obtained.
+  7.80-7.85 g/cm^3 are both nominal values. Kept at 7850 (confirmed by the
+  author 2026-10-21).
 
 ### Why density is not calibrated
 
@@ -120,9 +121,8 @@ ratio that drives segregation, a run with 2650 kg/m^3 (Cleary & Morrison
   shoulder, power **and steel / rock segregation** with the replicate
   scatter (V12). If they differ beyond it, ore density becomes a stated
   limitation.
-- Plant ore SG: whether to look for it in the mill / geometallurgical
-  reports is pending the author's decision. Ball supplier data sheet
-  (optional).
+- No plant ore SG will be available (confirmed by the author 2026-10-21):
+  2850 kg/m^3 stays a literature value, and the V11b run is its support.
 
 ## Pending code changes
 
