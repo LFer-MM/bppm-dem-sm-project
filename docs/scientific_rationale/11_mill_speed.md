@@ -10,6 +10,12 @@ charge rises on the +X side. Angles are measured counter-clockwise from the
 3 o'clock position (+X); fixed 2026-10-18, see [15](15_calibration_targets.md).
 The liner is symmetric, so the orientation is a free choice in simulation.
 
+- Provisional until the plant time series (author to-do A1): the target is
+  SAG_A's median speed in the same post-reline operating window used for
+  the toe / shoulder target ([15](15_calibration_targets.md), claim 2).
+- The % of critical speed is quoted with N_c = 42.3 / sqrt(D - d); it moves
+  with SAG_A's report diameter ([10](10_mill_geometry.md)).
+
 ## Evidence
 
 | Source | What it says | Where | Verified |
@@ -29,9 +35,11 @@ The liner is symmetric, so the orientation is a free choice in simulation.
 
 ## Current state
 
-The `main` scenario script never rotates (ingress only); rotation helpers in
-`engines.py` default to 9 rpm. The existing dataset's shell-contact particles
-move at ~8.7 rpm, consistent with 9 rpm.
+| Where | What |
+|---|---|
+| `scenario.py:78` | `speed_rpm = 9.0` (positive = counter-clockwise seen from +Z) -- matches |
+| `scenario.py:370-434` | `critical_speed_rpm()` and `fraction_critical` use `mill.diameter_m`, still defaulting to 11.0 m, so the reported fraction is wrong (70.1 % instead of 72.8 %) until C10-1 ([10](10_mill_geometry.md)) |
+| Existing dataset | Shell-contact particles move at ~8.7 rpm, consistent with 9 rpm |
 
 ## Analysis
 
@@ -41,6 +49,13 @@ Critical speed N_c = 42.3 / sqrt(D - d) rpm (D, d in m), equivalent to
 | Case | N_c | 9 rpm | 8.6 rpm | 10 rpm |
 |---|---|---|---|---|
 | D = 11.8375 m, d = 0.1397 m | 12.37 rpm | **72.8 %** | 69.5 % | 80.9 % |
+
+Convention: with N_c = 42.3 / sqrt(D) (no ball-diameter correction, also
+common in plant practice) 9 rpm is 73.2 % instead of 72.8 % -- a 0.4-point
+difference, small next to the 70-81 % operating band. The plant's own
+definition is collected with the mill data (author to-do A2); the
+literature comparisons hold under either: Owen & Cleary 74.7-75.4 %,
+Govender 74.7-75.2 %.
 
 The plant range 8.6-10 rpm is 70-81 % of critical, the band of the SAG DEM
 references (Owen 75 %, Govender ~75 %). One revolution takes 6.667 s; the

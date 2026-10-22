@@ -56,7 +56,7 @@ target anyway).
 | 08 | [08_density.md](08_density.md) | Steel 7850 / ore 2850 kg/m^3 (Chilean porphyry copper: Vergara 2020, Govender 2015); not calibrated; sensitivity 2650 incl. segregation |
 | 09 | [09_poisson_ratio.md](09_poisson_ratio.md) | Steel 0.292 (Shigley), rock 0.25 (Vergara 2020, El Teniente andesite); physical, not calibrated; effect < 7 % on contact stiffness |
 | 10 | [10_mill_geometry.md](10_mill_geometry.md) | SAG_A design with new liners (from reports, generated in code); 0.6 m slice (4.3 ball diameters, as Owen & Cleary); frictionless end walls, V11 checks liner friction |
-| 11 | [11_mill_speed.md](11_mill_speed.md) | 9 rpm = 72.8 % of critical |
+| 11 | [11_mill_speed.md](11_mill_speed.md) | SAG_A median 9 rpm = 72.8 % of critical (73.2 % with plain D); SAG_B / SAG_C typical (8.6-10 rpm); confirm from post-reline window (A1) |
 | 12 | [12_charge_fill_and_particles.md](12_charge_fill_and_particles.md) | Jb = 17 %, Jc = 26 %, 2:1 sizes, counts from measured in-slice packing |
 | 13 | [13_initial_conditions.md](13_initial_conditions.md) | SIC / RMIC at rest, undamped settle with a geometric stop rule, velocities zeroed; SIC = rock bottom, balls top |
 | 14 | [14_dataset_runs_and_recording.md](14_dataset_runs_and_recording.md) | Record from rest; durations in revolutions; training window after measured quasi-steady state |
