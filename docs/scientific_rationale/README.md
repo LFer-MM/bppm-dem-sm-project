@@ -54,7 +54,7 @@ target anyway).
 | 06 | [06_rolling_resistance.md](06_rolling_resistance.md) | Uniform rolling resistance mu_r (YADE eta) on all contacts, fixed by an angle-of-repose heap test (target 37 deg, band 33-41); ktwist = 0 |
 | 07 | [07_restitution.md](07_restitution.md) | Fixed pair-wise e (Cleary & Morrison 2016): 0.3 / 0.5 / 0.8; steel liners take the steel values; es = en |
 | 08 | [08_density.md](08_density.md) | Steel 7850 / ore 2850 kg/m^3 (Chilean porphyry copper: Vergara 2020, Govender 2015); not calibrated; sensitivity 2650 incl. segregation |
-| 09 | [09_poisson_ratio.md](09_poisson_ratio.md) | 0.292 steel, 0.25 rock |
+| 09 | [09_poisson_ratio.md](09_poisson_ratio.md) | Steel 0.292 (Shigley), rock 0.25 (Vergara 2020, El Teniente andesite); physical, not calibrated; effect < 7 % on contact stiffness |
 | 10 | [10_mill_geometry.md](10_mill_geometry.md) | STL slice, 30 lifters, D = 11.8375 m, 0.375 m depth; test end-wall friction |
 | 11 | [11_mill_speed.md](11_mill_speed.md) | 9 rpm = 72.8 % of critical |
 | 12 | [12_charge_fill_and_particles.md](12_charge_fill_and_particles.md) | Jb = 17 %, Jc = 26 %, 2:1 sizes, counts from measured in-slice packing |
