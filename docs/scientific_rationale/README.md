@@ -86,6 +86,24 @@ end.
 Related items from later topics (not yet reviewed): split the runner into
 calibrate / make-IC / dataset run types ([14](14_dataset_runs_and_recording.md)).
 
+## Author to-do list (after the review sweep)
+
+Everything the author must provide or do, collected from the topic files
+(each item links to where it is used). Claude's own follow-ups stay in the
+topics' open items.
+
+| # | Item | Details | Used in |
+|---|---|---|---|
+| A1 | Plant time series, SAG_A-E | 10 s resolution; toe, shoulder, Jc, Jb, speed, **power** (state motor input vs shaft power), reline dates; at least one full liner campaign (min ~3 months, ideally 6-12) | [15](15_calibration_targets.md) claims 1-2, V15 |
+| A2 | Mill design data, SAG_A-E (reports) | Inside diameter, length, lifter rows, lifter height, base / top width, face angle (new; worn if available), liner / grate design, plant's critical-speed definition | [10](10_mill_geometry.md), [15](15_calibration_targets.md) |
+| A3 | Plant Maleki-model inputs | Which liner geometry feeds the plant's Maleki-Moghaddam model, and whether it is updated with wear | [15](15_calibration_targets.md) claim 3 |
+| A4 | Mill generator code | Add the author's mill-generation code to the repo as the primary geometry source | [10](10_mill_geometry.md) C10-4 |
+| A5 | Zotero additions | Work through "Pending Zotero additions" below (priority: Maleki-Moghaddam 2013; read Wensrich & Katterfeld 2012, Ai 2011, Thornton 2013) | registry below |
+| A6 | Optional | Official CEMA 550 material table (ore angle of repose) | [06](06_rolling_resistance.md) |
+
+Confirmed unavailable (no action): plant ore SG ([08](08_density.md)),
+plant angle of repose ([06](06_rolling_resistance.md)).
+
 ## Source registry
 
 Bibliographic data below is taken from the Zotero records (checked against
