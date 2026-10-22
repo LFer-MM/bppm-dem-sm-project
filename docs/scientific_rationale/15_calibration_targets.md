@@ -168,8 +168,9 @@ claims, each compared at matched conditions:
 2. **The target is SAG_A's angle at the simulated operating point**, not
    its all-time median: from the 10 s time series, keep steady periods with
    Jc, Jb and speed near the simulated values (e.g. Jc 26 +- 1.5 %,
-   9 +- 0.2 rpm) and, if the liner state is known, close to the liner
-   geometry that is simulated. Target = median in that window; acceptance
+   9 +- 0.2 rpm) and, since the simulated liners are new
+   ([10](10_mill_geometry.md)), from the period just after a reline
+   (reline dates needed). Target = median in that window; acceptance
    band = its interquartile range.
 3. **The angle model is published and reproducible.** The angles come from
    Maleki-Moghaddam et al. (2013), an empirical model fitted to bulk toe /
@@ -203,8 +204,8 @@ for three reasons:
    stiffness and restitution move it even less. Power mostly reflects charge
    mass and centre-of-mass position, which are fixed by Jc, Jb, density and
    speed, not by friction.
-2. **Large comparison uncertainty.** A 0.375 m slice must be scaled to the
-   full mill (P_mill ~ P_slice x L_eff / 0.375 m), and the plant figure
+2. **Large comparison uncertainty.** A 0.6 m slice must be scaled to the
+   full mill (P_mill ~ P_slice x L_eff / 0.6 m), and the plant figure
    includes motor / drive losses, conical ends, slurry and a real size
    distribution. These systematic differences (likely 10-20 %) exceed the
    ~6 % signal from friction, so power cannot discriminate between candidate
@@ -223,7 +224,7 @@ check.
 then:
 - Simulated power: mean drive power P = -T_z omega of the slice over the
   steady window ([16](16_validation_checks.md), V7), scaled to the full mill
-  as P_mill = P_slice x L_eff / L_slice, with L_slice = 0.375 m and L_eff
+  as P_mill = P_slice x L_eff / L_slice, with L_slice = 0.6 m and L_eff
   the effective grinding length of SAG_A (cylinder plus a cone-end
   allowance, from the mill reports).
 - Plant power: median SAG_A power in the same operating window used for the

@@ -77,6 +77,12 @@ state of kinetic energy, the criterion used by Kishida et al. (§3, Fig. S1)."
 
 ## Open items / validation
 
+- **End-wall artefact in segregation metrics** ([10](10_mill_geometry.md)):
+  report the near-wall layers (~1-2 ball diameters from each frictionless
+  end wall) separately from the slice centre, or show they agree;
+  segregation next to the end walls has no counterpart in the real mill's
+  belly.
+
 - Pilot RMIC run: measure the time to quasi-steady kinetic energy / power /
   charge angle; set `start_frame` / `dt0` from it.
 - Check the Lacey index curves reach their plateau within the run length

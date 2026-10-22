@@ -88,6 +88,10 @@ than bulk binary packings (0.58-0.62, Shi & Zhang 2008)."
 
 ## Open items / validation
 
+- **Recompute the particle counts for the 0.6 m slice** (decided in
+  [10](10_mill_geometry.md); the counts here use the 0.375 m STL volume
+  39.4693 m^3) and again once SAG_A's design from the reports is in.
+
 - Re-measure phi with the calibrated friction and rolling resistance **and
   the damping-free IC protocol of [13](13_initial_conditions.md)** (slides
   13-15 measured it with damping 0.2 -> 0.0, which packs differently); fix

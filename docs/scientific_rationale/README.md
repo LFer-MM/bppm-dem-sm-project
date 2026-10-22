@@ -55,7 +55,7 @@ target anyway).
 | 07 | [07_restitution.md](07_restitution.md) | Fixed pair-wise e (Cleary & Morrison 2016): 0.3 / 0.5 / 0.8; steel liners take the steel values; es = en |
 | 08 | [08_density.md](08_density.md) | Steel 7850 / ore 2850 kg/m^3 (Chilean porphyry copper: Vergara 2020, Govender 2015); not calibrated; sensitivity 2650 incl. segregation |
 | 09 | [09_poisson_ratio.md](09_poisson_ratio.md) | Steel 0.292 (Shigley), rock 0.25 (Vergara 2020, El Teniente andesite); physical, not calibrated; effect < 7 % on contact stiffness |
-| 10 | [10_mill_geometry.md](10_mill_geometry.md) | STL slice, 30 lifters, D = 11.8375 m, 0.375 m depth; test end-wall friction |
+| 10 | [10_mill_geometry.md](10_mill_geometry.md) | SAG_A design with new liners (from reports, generated in code); 0.6 m slice (4.3 ball diameters, as Owen & Cleary); frictionless end walls, V11 checks liner friction |
 | 11 | [11_mill_speed.md](11_mill_speed.md) | 9 rpm = 72.8 % of critical |
 | 12 | [12_charge_fill_and_particles.md](12_charge_fill_and_particles.md) | Jb = 17 %, Jc = 26 %, 2:1 sizes, counts from measured in-slice packing |
 | 13 | [13_initial_conditions.md](13_initial_conditions.md) | SIC / RMIC at rest, undamped settle with a geometric stop rule, velocities zeroed; SIC = rock bottom, balls top |
@@ -81,9 +81,9 @@ end.
 | [06](06_rolling_resistance.md) | C06-1 ... C06-4 | **C06-1**, C06-2, **C06-3** |
 | [07](07_restitution.md) | C07-1, C07-2 | **C07-1** |
 | [08](08_density.md) | C08-1 | **C08-1** |
+| [10](10_mill_geometry.md) | C10-1 ... C10-4 | **C10-1**, **C10-2**, **C10-3**, **C10-4** |
 
-Related items from later topics (not yet reviewed): `MILL_DIAMETER_M`
-11.0 -> 11.8375 ([10](10_mill_geometry.md)); split the runner into
+Related items from later topics (not yet reviewed): split the runner into
 calibrate / make-IC / dataset run types ([14](14_dataset_runs_and_recording.md)).
 
 ## Source registry

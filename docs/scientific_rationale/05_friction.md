@@ -27,8 +27,8 @@ Friction is the **primary calibration variable**.
   point; mu_w extended to 0.8-0.9 if the shoulder / toe are not reached
   (the SAG_A toe is high for its fill, [15](15_calibration_targets.md)).
   All runs start from **one shared settled initial condition** and spin up
-  to a steady charge shape (~6 revolutions, ~1.3 h per run at full scale,
-  ~12 h for the grid). Score: simulated bulk toe / shoulder (position-density
+  to a steady charge shape (~6 revolutions, ~2.1 h per run at full scale with
+  the 0.6 m slice of [10](10_mill_geometry.md), ~19 h for the grid). Score: simulated bulk toe / shoulder (position-density
   contour) vs. SAG_A.
 
 ## Evidence
