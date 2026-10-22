@@ -9,9 +9,11 @@
 
 - Physical values, used unchanged: the stiffness reduction f = 26
   ([03](03_stiffness_young_modulus.md)) scales Young's moduli only.
-- Not calibrated and no sensitivity run of its own: the effect of nu on the
-  contact is a few percent, far inside the stiffness range already tested by
-  V10 (Analysis).
+- Not calibrated and no sensitivity run of its own: its effect on the
+  normal contact stiffness is a few percent, far inside the stiffness range
+  tested by V10; the small shift it causes in the tangential / normal
+  stiffness ratio is not tested and is argued minor (Analysis). Both depend
+  on V10 passing.
 
 ## Evidence
 
@@ -41,10 +43,18 @@
   (0.20-0.35) the rock-rock E* changes by -2.3 % to +6.8 % relative to
   nu = 0.25, so collision time and peak overlap (both ~ E*^-0.4) change by
   less than 3 %. The tangential / normal stiffness ratio,
-  2 (1 - nu) / (2 - nu), is 0.86 for rock and 0.83 for steel. These shifts
-  are far smaller than the x0.5 / x2 stiffness changes of V10, under which
-  the charge is expected to be insensitive ([03](03_stiffness_young_modulus.md);
-  Boemer & Ponthot 2017), so nu needs no sensitivity run of its own.
+  2 (1 - nu) / (2 - nu), is 0.86 for rock and 0.83 for steel.
+- **What V10 covers and what it does not.** nu acts only through the
+  contact stiffness. V10 runs the mill with both moduli x0.5 and x2, i.e.
+  E* -50 % / +100 %; if toe, shoulder and power are unchanged over that
+  fourfold range, a -2.3 % to +6.8 % change of E* from nu cannot change
+  them either. V10 scales E for normal and tangential stiffness together,
+  so it does **not** test the tangential / normal ratio, which nu shifts by
+  about +-8 % over 0.20-0.35 (0.89 to 0.79). That shift is argued minor,
+  not demonstrated: in a tumbling charge most tangential behaviour is set
+  by the friction limit mu |F_n| once contacts slide, not by the tangential
+  spring; no source in the library tests it. The argument holds only if
+  V10 passes; if the mill proves stiffness-sensitive, nu must be revisited.
 - **Rock value.** The SAG_A-C ore is Chilean porphyry copper ore
   ([03](03_stiffness_young_modulus.md), [08](08_density.md)). 0.25 is
   Vergara et al.'s value for El Teniente andesite, the same source as the
@@ -66,9 +76,13 @@ rocks (Gercek 2007, Fig. 4) and equal to the value for El Teniente andesite
 (Vergara et al. 2020, Table 1), the same source as the ore modulus and
 density. Their influence is limited to the contact stiffness, which changes
 by less than 7 % over the typical andesite range -- far less than the
-stiffness range over which the mill response was shown to be insensitive."
+stiffness range over which the mill response was shown to be insensitive
+(V10); the accompanying change of the tangential / normal stiffness ratio
+(about +-8 %) acts mainly below the friction limit and is considered
+minor."
 
 ## Open items
 
-None. Covered indirectly by the stiffness sensitivity V10
-([16](16_validation_checks.md)).
+- Depends on V10 ([16](16_validation_checks.md)): if the mill is
+  stiffness-sensitive, revisit nu (and its effect on the tangential /
+  normal stiffness ratio).
