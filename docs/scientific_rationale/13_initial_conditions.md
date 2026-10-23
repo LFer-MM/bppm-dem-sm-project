@@ -31,9 +31,12 @@ Common protocol for both (revised 2026-10-19):
    manifest.
 6. 30 replicates per IC type (PPT slide 30), differing only in the seed.
 
-The packing fraction phi that sets the particle counts
-([12](12_charge_fill_and_particles.md)) is measured with **this same
-protocol**, so the counts match the charge that is actually simulated.
+**Particle counts** come from the simulated grind-out / crash-stop
+procedure of [12](12_charge_fill_and_particles.md) (charge run, stopped and
+settled with this same damping-free settling), which matches the plant's
+definition of Jb and Jc. The ICs use those counts; a poured IC bed is not
+re-tuned to J, but its settled J is recorded in the manifest for
+information.
 
 Why not the PPT's criteria: without artificial damping a settled bed keeps
 a small residual motion (smoke test, 18 s of settling: mean speed 4-6 mm/s,
@@ -66,8 +69,9 @@ therefore never reached; a geometric criterion is.
 
 | Where | What |
 |---|---|
-| `main` `particles.py:178-205` | `ingress_segregated` pours **SMALL first, then LARGE** -> rock at the bottom, balls on top |
-| `main` `particles.py:147,158,162` | `ingress_random`: batches sized for 60 % solids (makeCloud cannot reach it), and resized spheres keep the **mass of a steel ball** (radius and material changed, mass / inertia not recomputed) -- fixed on the branch (commit `543208a`) |
+| `particles.py:196` | `ingress_segregated` pours **small first, then large** -> rock at the bottom, balls on top (matches the decision) |
+| `particles.py:119, 262-273` | `ingress_random`; mass and inertia recomputed from radius and density after resizing (the old steel-ball-mass bug is fixed) |
+| `run_simulation.py:7, 218` | Settle stage still "damped settling until the unbalanced force is small" (`run_until_forces_balanced`) -- to be replaced by the geometric stop rule (C04-5, [04](04_numerical_damping.md)) |
 | Existing SIC dataset, frame 0 | ore_rock mean y = -4.42 m, ball_steel mean y = -2.10 m -> rock bottom, balls top (opposite of Kishida's S-IC) |
 
 ## Analysis
@@ -83,11 +87,14 @@ therefore never reached; a geometric criterion is.
   species that migrates to the shell (rock) at the bottom and the balls on
   top. This is the orientation chosen.
 - **Percolation at rest.** A 2:1 size ratio does **not** let rock fall
-  through a resting ball bed by gravity alone: the pore throats of a packed
-  sphere bed only pass spheres smaller than ~0.15 of the large diameter (a
-  classical geometric result; no paper in the Zotero library covers it --
-  add a reference if this argument is used). So the "rock would go in
-  between" argument applies to the **sheared** charge (kinetic sieving, the
+  through a resting ball bed by gravity alone. By plane geometry, the
+  opening between three mutually touching spheres of diameter d passes a
+  sphere of at most (2/sqrt(3) - 1) d = 0.155 d, and the opening between
+  four touching spheres in a square passes at most (sqrt(2) - 1) d =
+  0.414 d. A rock of 0.5 d is larger than both, so it cannot pass between
+  touching balls; loose spots in a random bed are not continuous paths.
+  So the "rock would go in between" argument applies to the **sheared**
+  charge (kinetic sieving, the
   percolation mechanism Kishida cites, §2.2.2 PDF p5), in either orientation,
   not to the IC itself. With rock at the bottom the IC is static and well
   defined.
@@ -110,8 +117,9 @@ therefore never reached; a geometric criterion is.
 ## Verdict and how to defend it
 
 "Both initial conditions are static packings (Kishida et al. 2025, §3): the
-charge is poured, settled with artificial damping to an unbalanced force below
-1e-3 and all velocities are set to zero. The randomly mixed IC assigns
+charge is poured with the mill at rest, settled by contact dissipation
+alone (no artificial damping) until its geometry is stationary, and all
+velocities are set to zero. The randomly mixed IC assigns
 species at random in the global proportion. In the segregated IC the rock
 forms the bottom layer and the balls the top layer. This differs from the
 layering of Kishida et al. (large particles at the bottom, Fig. 6b) on
@@ -133,7 +141,9 @@ per IC differ only in the random seed."
   contacts switching between facets at shell / lifter edges; absence of
   rolling / twisting resistance (a first test that switched rolling
   resistance on in an already-settled bed was inconclusive because it had to
-  reset all contacts). Revisit with [06](06_rolling_resistance.md).
+  reset all contacts). Rolling resistance is now part of the model
+  ([06](06_rolling_resistance.md)); the settling test C06-4 checks whether
+  the floor disappears with it.
 - Store ICs under versioned names including the material-set id, so an IC is
   never reused with different materials.
 - Confirm in a calibrated run that balls do migrate towards the core (as in
