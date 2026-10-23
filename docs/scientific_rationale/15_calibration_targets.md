@@ -272,8 +272,9 @@ To get (author, from plant data and reports):
   shell-liner campaign (reline to reline), so that the operating window of
   claim 2 can also be matched to a liner state; minimum ~3 months, ideally
   6-12 months. At 10 s, 6 months is ~1.6 million rows per mill.
-- **Mill properties, SAG_A-E** (from reports): diameter and length (inside
-  liners), number of lifter rows, lifter height, base / top width and face
+- **Mill properties, SAG_A-E** (from reports): diameter inside shell and
+  liner plate thickness (Morrell's inputs, [12](12_charge_fill_and_particles.md)),
+  belly length inside liners, number of lifter rows, lifter height, base / top width and face
   angle (new; worn if available), liner / grate design, critical-speed
   definition used by the plant ([10](10_mill_geometry.md)).
 - The Maleki-Moghaddam model inputs used at the plant (which liner geometry,

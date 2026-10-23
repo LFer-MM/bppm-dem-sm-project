@@ -113,9 +113,11 @@ Decided 2026-10-22.
 
 ### Diameter
 
-Use SAG_A's inside diameter everywhere (currently the STL's 11.8375 m). The
-"effective" 11.576 m (from the volume net of lifters) is not used for
-critical speed: the classic formula uses the shell diameter.
+Use SAG_A's **diameter inside liners** (Morrell's D: inside shell minus
+2 x liner plate thickness; currently the STL's 11.8375 m) everywhere. The
+PPT's "effective" 11.576 m is a volume-equivalent diameter (lifters
+subtracted) and is not used; the word "effective" is avoided because its
+meaning varies ([12](12_charge_fill_and_particles.md)).
 
 ### Geometry source
 

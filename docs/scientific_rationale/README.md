@@ -57,7 +57,7 @@ target anyway).
 | 09 | [09_poisson_ratio.md](09_poisson_ratio.md) | Steel 0.292 (Shigley), rock 0.25 (Vergara 2020, El Teniente andesite); physical, not calibrated; effect < 7 % on contact stiffness |
 | 10 | [10_mill_geometry.md](10_mill_geometry.md) | SAG_A design with new liners (from reports, generated in code); 0.6 m slice (4.3 ball diameters, as Owen & Cleary); frictionless end walls, V11 checks liner friction |
 | 11 | [11_mill_speed.md](11_mill_speed.md) | SAG_A median 9 rpm = 72.8 % of critical (73.2 % with plain D); SAG_B / SAG_C typical (8.6-10 rpm); confirm from post-reline window (A1) |
-| 12 | [12_charge_fill_and_particles.md](12_charge_fill_and_particles.md) | Jb = 17 %, Jc = 26 %, 2:1 sizes, counts from measured in-slice packing |
+| 12 | [12_charge_fill_and_particles.md](12_charge_fill_and_particles.md) | Jb 17 % / Jc 26 % in Morrell's convention (D inside liners, lifters not subtracted); counts from a simulated grind-out + mixed crash stop; phi is a result |
 | 13 | [13_initial_conditions.md](13_initial_conditions.md) | SIC / RMIC at rest, undamped settle with a geometric stop rule, velocities zeroed; SIC = rock bottom, balls top |
 | 14 | [14_dataset_runs_and_recording.md](14_dataset_runs_and_recording.md) | Record from rest; durations in revolutions; training window after measured quasi-steady state |
 | 15 | [15_calibration_targets.md](15_calibration_targets.md) | Match the SAG_A (reference) bulk toe 215 / shoulder 24.6 deg (0 deg at 3 o'clock, CCW); SAG_B / SAG_C show these values are typical; power only for the internal energy balance |
@@ -82,6 +82,7 @@ end.
 | [07](07_restitution.md) | C07-1, C07-2 | **C07-1** |
 | [08](08_density.md) | C08-1 | **C08-1** |
 | [10](10_mill_geometry.md) | C10-1 ... C10-4 | **C10-1**, **C10-2**, **C10-3**, **C10-4** |
+| [12](12_charge_fill_and_particles.md) | C12-1 ... C12-3 | **C12-1**, **C12-2**, **C12-3** |
 
 Related items from later topics (not yet reviewed): split the runner into
 calibrate / make-IC / dataset run types ([14](14_dataset_runs_and_recording.md)).
@@ -95,7 +96,7 @@ topics' open items.
 | # | Item | Details | Used in |
 |---|---|---|---|
 | A1 | Plant time series, SAG_A-E | 10 s resolution; toe, shoulder, Jc, Jb, speed, **power** (state motor input vs shaft power), reline dates; at least one full liner campaign (min ~3 months, ideally 6-12) | [15](15_calibration_targets.md) claims 1-2, V15 |
-| A2 | Mill design data, SAG_A-E (reports) | Inside diameter, length, lifter rows, lifter height, base / top width, face angle (new; worn if available), liner / grate design, plant's critical-speed definition | [10](10_mill_geometry.md), [15](15_calibration_targets.md) |
+| A2 | Mill design data, SAG_A-E (reports) | Diameter inside shell + liner plate thickness (Morrell's inputs), belly length inside liners, lifter rows, lifter height, base / top width, face angle (new; worn if available), liner / grate design, plant's critical-speed definition | [10](10_mill_geometry.md), [15](15_calibration_targets.md) |
 | A3 | Plant Maleki-model inputs | Which liner geometry feeds the plant's Maleki-Moghaddam model, and whether it is updated with wear | [15](15_calibration_targets.md) claim 3 |
 | A4 | Mill generator code | Add the author's mill-generation code to the repo as the primary geometry source | [10](10_mill_geometry.md) C10-4 |
 | A5 | Zotero additions | Work through "Pending Zotero additions" below (priority: Maleki-Moghaddam 2013; read Wensrich & Katterfeld 2012, Ai 2011, Thornton 2013) | registry below |
@@ -170,6 +171,8 @@ registry with its item / file keys and page mapping.
 | **Engineering Toolbox** | *Angles of Repose* (table) | engineeringtoolbox.com/dumping-angles-d_1531.html | [06](06_rolling_resistance.md) | Read (web page) | Add as web page with a snapshot (accessed 2026-10-21) |
 | **PDHonline M344** | J. Primo, *Belt Conveyor for Bulk Materials -- Practical Calculations*, PDHonline course M344, 2026 | pdhonline.com/courses/m344/m344content.pdf | [06](06_rolling_resistance.md) | Read (PDF) | Add as document; attach the PDF (the edition changes yearly) |
 | **Thornton et al. 2013** | C. Thornton, S.J. Cummins, P.W. Cleary, *An investigation of the comparative behaviour of alternative contact force models during inelastic collisions*, Powder Technol. 233 (2013) 30-46 | 10.1016/j.powtec.2012.08.012 | [07](07_restitution.md) | **Not read** (cited through the YADE source) | Add by DOI; PDF via library; verify Eqs. B6-B7 |
+| **SMC gross power calculator** | SMC Testing, *Gross Power Calculator* help (model from Morrell 1993 thesis): definitions of inside-liner diameter, liner thickness, ball / total filling | smctesting.com/documents/gross_power_calculation_help.pdf | [12](12_charge_fill_and_particles.md) | Read (PDF, Fig. 4 rendered) | Add as document; attach the PDF |
+| **Hilden et al. 2021** | M.M. Hilden, M.S. Powell, M. Yahyaei, *An improved method for grinding mill filling measurement and the estimation of load volume and mass*, Miner. Eng. 160 (2021) 106638 | 10.1016/j.mineng.2020.106638 | [12](12_charge_fill_and_particles.md) | **Not read** (abstract / highlights via search) | Add by DOI; PDF via library; verify the smooth-cylinder statement |
 | **YADE source** | YADE, source code at commit `7c8d01e` (the installed `yadedaily` 20260115 build), files `pkg/dem/HertzMindlin.{hpp,cpp}`, `ViscoelasticPM.*`, `CohesiveFrictionalContactLaw.*` | gitlab.com/yade-dev/trunk, commit 7c8d01e | [06](06_rolling_resistance.md) | Read (source) | Optional: add as "computer program" with the commit; line numbers are quoted in doc 06 |
 
 Cited only **through** another source (add only if you want to cite them
