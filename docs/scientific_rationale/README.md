@@ -96,7 +96,7 @@ topics' open items.
 | # | Item | Details | Used in |
 |---|---|---|---|
 | A1 | Plant time series, SAG_A-E | 10 s resolution; toe, shoulder, Jc, Jb, speed, **power** (state motor input vs shaft power), reline dates; at least one full liner campaign (min ~3 months, ideally 6-12) | [15](15_calibration_targets.md) claims 1-2, V15 |
-| A2 | Mill design data, SAG_A-E (reports) | Diameter inside shell + liner plate thickness (Morrell's inputs), belly length inside liners, lifter rows, lifter height, base / top width, face angle (new; worn if available), liner / grate design, plant's critical-speed definition | [10](10_mill_geometry.md), [15](15_calibration_targets.md) |
+| A2 | Mill design data, SAG_A-E (reports) | Diameter inside shell **and** liner plate thickness (Morrell's two inputs; D inside liners = D shell - 2 x plate thickness), belly length inside liners, lifter rows, lifter height, base / top width, face angle (new; worn if available), liner / grate design, plant's critical-speed definition | [10](10_mill_geometry.md), [15](15_calibration_targets.md) |
 | A3 | Plant Maleki-model inputs | Which liner geometry feeds the plant's Maleki-Moghaddam model, and whether it is updated with wear | [15](15_calibration_targets.md) claim 3 |
 | A4 | Mill generator code | Add the author's mill-generation code to the repo as the primary geometry source | [10](10_mill_geometry.md) C10-4 |
 | A5 | Zotero additions | Work through "Pending Zotero additions" below (priority: Maleki-Moghaddam 2013; read Wensrich & Katterfeld 2012, Ai 2011, Thornton 2013) | registry below |

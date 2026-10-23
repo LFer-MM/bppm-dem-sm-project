@@ -21,7 +21,7 @@ in others (PPT slide 1: 11.576 m, lifters subtracted). These docs say:
 | Name | Value now | Use |
 |---|---|---|
 | D inside liners (Morrell's D) | 11.8375 m (STL liner surface; provisional until A2) | J, critical speed, Lacey cell, Morrell comparisons |
-| D inside shell, liner plate thickness | from the reports (A2) | the two inputs of Morrell's model |
+| D inside shell and liner plate thickness t | from the reports (A2) | the two inputs of Morrell's model; D inside liners = D inside shell - 2 t (40 ft and 11.8375 m would imply t = 177 mm, to be confirmed) |
 | Volume-equivalent diameter | 11.576 m | not used |
 
 **Procedure for the counts (simulated grind-out and crash stop).** Both
